@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v6 — iOS style fixed)
+// PRESENSI.JS — Logic halaman presensi (v7 — final)
 // ============================================================
 
 const presensiState = {
@@ -153,7 +153,6 @@ async function initPresensi() {
       if (el('geoStatus')) el('geoStatus').textContent = locText;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
-      // Map
       const mapIframe = el('miniMap');
       if (mapIframe) {
         const d = 0.003;
@@ -161,7 +160,6 @@ async function initPresensi() {
         mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
       }
 
-      // Reverse geocoding
       getNamaLokasi(loc.lat, loc.lng).then(nama => {
         if (el('camFsLoc')) el('camFsLoc').textContent = nama;
         if (el('geoStatus')) el('geoStatus').textContent = `${nama} · ${locText}`;
@@ -408,18 +406,18 @@ async function initFaceDetection(videoEl) {
   return true;
 }
 
+// ============================================================
+// UPDATE FACE UI — SESUAI STRUKTUR BARU
+// ============================================================
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
-  const status = document.getElementById('faceStatus');
-  const label = status?.querySelector('.face-label');
+  const label = document.querySelector('#faceStatus .face-label');
 
   if (detected) {
     guide?.classList.add('detected');
-    status?.classList.add('detected');
     if (label) label.textContent = 'Wajah terdeteksi ✓';
   } else {
     guide?.classList.remove('detected');
-    status?.classList.remove('detected');
     if (label) label.textContent = 'Posisikan wajah Anda di dalam oval';
   }
 }
@@ -431,9 +429,7 @@ function stopFaceDetection() {
   }
   faceDetector = null;
   const guide = document.getElementById('faceGuide');
-  const status = document.getElementById('faceStatus');
   guide?.classList.remove('detected');
-  status?.classList.remove('detected');
 }
 
 // ============================================================
