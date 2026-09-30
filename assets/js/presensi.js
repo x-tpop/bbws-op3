@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v7 — final)
+// PRESENSI.JS — Logic halaman presensi (v8 — final)
 // ============================================================
 
 const presensiState = {
@@ -407,7 +407,7 @@ async function initFaceDetection(videoEl) {
 }
 
 // ============================================================
-// UPDATE FACE UI — SESUAI STRUKTUR BARU
+// UPDATE FACE UI
 // ============================================================
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
