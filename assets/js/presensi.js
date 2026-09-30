@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v8 — final)
+// PRESENSI.JS — Logic halaman presensi (v9 — iOS HIG compliant)
 // ============================================================
 
 const presensiState = {
@@ -70,12 +70,23 @@ async function initPresensi() {
     const el = id => document.getElementById(id);
 
     // ============================================================
-    // JAM & TANGGAL
+    // JAM & TANGGAL — FORMAT iOS (pakai titik dua)
     // ============================================================
     function tickPres() {
       const d = new Date();
-      const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      
+      // Format HH:MM:SS dengan titik dua
+      const hms = [
+        String(d.getHours()).padStart(2, '0'),
+        String(d.getMinutes()).padStart(2, '0'),
+        String(d.getSeconds()).padStart(2, '0')
+      ].join(':');
+
+      // Format HH:MM
+      const hm = [
+        String(d.getHours()).padStart(2, '0'),
+        String(d.getMinutes()).padStart(2, '0')
+      ].join(':');
 
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -147,7 +158,6 @@ async function initPresensi() {
       const loc = await getLocation();
       presensiState.lokasi = loc;
       const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)} (±${Math.round(loc.accuracy)}m)`;
-      const locShort = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
 
       if (el('camLoc')) el('camLoc').textContent = '📍 ' + locText;
       if (el('geoStatus')) el('geoStatus').textContent = locText;
@@ -406,9 +416,6 @@ async function initFaceDetection(videoEl) {
   return true;
 }
 
-// ============================================================
-// UPDATE FACE UI
-// ============================================================
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
   const label = document.querySelector('#faceStatus .face-label');
@@ -557,7 +564,11 @@ function attachFullscreenHandlers() {
 // RENDER PRESENSI
 // ============================================================
 function renderPresensi() {
-  const fmt = d => d ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—';
+  const fmt = d => d ? [
+    String(d.getHours()).padStart(2, '0'),
+    String(d.getMinutes()).padStart(2, '0')
+  ].join(':') : '—';
+  
   const el = id => document.getElementById(id);
 
   if (el('ptMasukTime')) el('ptMasukTime').textContent = fmt(presensiState.masuk);
