@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v2)
+// PRESENSI.JS — Logic halaman presensi (v3 — fixed)
 // ============================================================
 
 const presensiState = {
@@ -61,26 +61,33 @@ async function initPresensi() {
       if (data) {
         presensiState.masuk = data.jam_masuk ? new Date(today + 'T' + data.jam_masuk) : null;
         presensiState.keluar = data.jam_keluar ? new Date(today + 'T' + data.jam_keluar) : null;
-        if (data.status) {
-          presensiState.status = data.status;
-          if (el('presStatus')) el('presStatus').value = data.status;
-        }
+        if (data.status) presensiState.status = data.status;
       }
     } catch (e) { console.error(e); }
 
     renderPresensi();
 
     // ============================================================
-    // STATUS CHANGE → tampilkan keterangan
+    // STATUS CHANGE — clone untuk bersihkan listener lama
     // ============================================================
     const statusSel = el('presStatus');
     if (statusSel) {
-      statusSel.addEventListener('change', () => {
-        presensiState.status = statusSel.value;
+      const newStatus = statusSel.cloneNode(true);
+      newStatus.value = presensiState.status;
+      statusSel.parentNode.replaceChild(newStatus, statusSel);
+
+      const updateKet = () => {
         const ketWrap = el('ketWrap');
         if (ketWrap) {
-          ketWrap.style.display = ['Izin', 'Sakit', 'Dinas Luar'].includes(statusSel.value) ? 'flex' : 'none';
+          ketWrap.style.display = ['Izin', 'Sakit', 'Dinas Luar'].includes(newStatus.value) ? 'flex' : 'none';
         }
+      };
+      updateKet();
+
+      newStatus.addEventListener('change', () => {
+        presensiState.status = newStatus.value;
+        updateKet();
+        console.log('Status:', newStatus.value);
       });
     }
 
@@ -106,10 +113,9 @@ async function initPresensi() {
       if (el('geoStatus')) el('geoStatus').textContent = locText;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
-      // Embed mini maps (OpenStreetMap)
       const mapIframe = el('miniMap');
       if (mapIframe) {
-        const d = 0.003; // zoom level
+        const d = 0.003;
         const bbox = `${loc.lng - d},${loc.lat - d},${loc.lng + d},${loc.lat + d}`;
         mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
       }
@@ -122,23 +128,11 @@ async function initPresensi() {
     }
 
     // ============================================================
-    // EVENT: CAPTURE
+    // PASANG HANDLER
     // ============================================================
     attachCaptureHandler(el('btnCapture'), el('video'));
-
-    // ============================================================
-    // EVENT: RETAKE
-    // ============================================================
     attachRetakeHandler(el('btnRetake'));
-
-    // ============================================================
-    // EVENT: SUBMIT
-    // ============================================================
     attachSubmitHandler(el('btnSubmit'), session, pegawai, today);
-
-    // ============================================================
-    // EVENT: FULLSCREEN CAMERA
-    // ============================================================
     attachFullscreenHandlers();
 
     if (window.refreshIcons) window.refreshIcons();
@@ -157,7 +151,10 @@ function attachCaptureHandler(btn, videoEl) {
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
 
-  newBtn.addEventListener('click', async () => {
+  newBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
 
     const v = videoEl || document.getElementById('video');
@@ -193,7 +190,9 @@ function attachRetakeHandler(btn) {
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
 
-  newBtn.addEventListener('click', () => {
+  newBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     presensiState.fotoBase64 = null;
     const el = id => document.getElementById(id);
     if (el('camPreview')) el('camPreview').hidden = true;
@@ -213,12 +212,14 @@ function attachSubmitHandler(btn, session, pegawai, today) {
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
 
-  newBtn.addEventListener('click', async () => {
+  newBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!presensiState.fotoBase64 || !presensiState.lokasi) {
       toast('Foto atau lokasi belum siap', 'warn'); return;
     }
 
-    // Cek keterangan jika status butuh
     const status = presensiState.status;
     const ketEl = document.getElementById('presKet');
     const ket = ketEl ? ketEl.value.trim() : '';
@@ -244,10 +245,8 @@ function attachSubmitHandler(btn, session, pegawai, today) {
       const jam = now.toTimeString().slice(0, 8);
       const lokasiStr = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
 
-      let savedData = null;
-
       if (tipe === 'masuk') {
-        const [result] = await dbInsert('presensi', {
+        await dbInsert('presensi', {
           id_pegawai: session.id_pegawai,
           tanggal: today,
           jam_masuk: jam,
@@ -257,23 +256,18 @@ function attachSubmitHandler(btn, session, pegawai, today) {
           keterangan: ket || null,
           poin: status === 'Hadir' ? 1 : 0
         });
-        savedData = result;
         presensiState.masuk = now;
       } else {
-        const [result] = await dbUpdate('presensi', 'id_pegawai', session.id_pegawai, {
+        await dbUpdate('presensi', 'id_pegawai', session.id_pegawai, {
           jam_keluar: jam,
           lokasi_keluar: lokasiStr,
           foto_keluar: uploadResult.linkLh3
         });
-        savedData = result;
         presensiState.keluar = now;
       }
 
       renderPresensi();
 
-      // ============================================================
-      // TAMPILKAN MODAL SUKSES
-      // ============================================================
       showSuksesModal({
         tipe: tipe,
         status: status,
@@ -283,7 +277,6 @@ function attachSubmitHandler(btn, session, pegawai, today) {
         keterangan: ket
       });
 
-      // Reset UI
       const el = id => document.getElementById(id);
       if (el('camPreview')) el('camPreview').hidden = true;
       if (el('camWrap')) el('camWrap').hidden = false;
@@ -343,66 +336,89 @@ function attachFullscreenHandlers() {
   const el = id => document.getElementById(id);
 
   // Buka fullscreen
-  el('btnFullscreen')?.addEventListener('click', async () => {
-    const modal = el('camFullscreen');
-    const videoFs = el('videoFullscreen');
-    if (!modal || !videoFs) return;
+  const btnFs = el('btnFullscreen');
+  if (btnFs) {
+    const newBtn = btnFs.cloneNode(true);
+    btnFs.parentNode.replaceChild(newBtn, btnFs);
 
-    // Pakai stream dari kamera utama
-    if (window.cameraStream) {
-      videoFs.srcObject = window.cameraStream;
-      await videoFs.play();
-    } else {
-      const ok = await startCamera(videoFs, presensiState.facingMode);
-      if (!ok) { toast('Gagal buka kamera fullscreen', 'error'); return; }
-    }
+    newBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = el('camFullscreen');
+      const videoFs = el('videoFullscreen');
+      if (!modal || !videoFs) return;
 
-    modal.classList.add('open');
-    // Update lokasi
-    if (presensiState.lokasi) {
-      const locText = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
-      if (el('camFsLoc')) el('camFsLoc').textContent = '📍 ' + locText;
-    }
-  });
+      if (window.cameraStream) {
+        videoFs.srcObject = window.cameraStream;
+        await videoFs.play();
+      } else {
+        const ok = await startCamera(videoFs, presensiState.facingMode);
+        if (!ok) { toast('Gagal buka kamera fullscreen', 'error'); return; }
+      }
+
+      modal.classList.add('open');
+      if (presensiState.lokasi) {
+        const locText = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
+        if (el('camFsLoc')) el('camFsLoc').textContent = '📍 ' + locText;
+      }
+    });
+  }
 
   // Tutup fullscreen
-  el('btnFsClose')?.addEventListener('click', () => {
-    el('camFullscreen')?.classList.remove('open');
-  });
+  const btnClose = el('btnFsClose');
+  if (btnClose) {
+    const newBtn = btnClose.cloneNode(true);
+    btnClose.parentNode.replaceChild(newBtn, btnClose);
+    newBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el('camFullscreen')?.classList.remove('open');
+    });
+  }
 
   // Ambil foto dari fullscreen
-  el('btnFsCapture')?.addEventListener('click', async () => {
-    const videoFs = el('videoFullscreen');
-    if (!videoFs) return;
+  const btnCapFs = el('btnFsCapture');
+  if (btnCapFs) {
+    const newBtn = btnCapFs.cloneNode(true);
+    btnCapFs.parentNode.replaceChild(newBtn, btnCapFs);
+    newBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
-    const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
-    presensiState.fotoBase64 = compressed;
+      const videoFs = el('videoFullscreen');
+      if (!videoFs) return;
 
-    // Tampilkan preview di halaman utama
-    if (el('previewImg')) el('previewImg').src = compressed;
-    if (el('camPreview')) el('camPreview').hidden = false;
-    if (el('camWrap')) el('camWrap').hidden = true;
-    if (el('btnCapture')) el('btnCapture').hidden = true;
-    if (el('btnRetake')) el('btnRetake').hidden = false;
-    if (el('btnSubmit')) el('btnSubmit').hidden = false;
-    if (el('infoAfter')) el('infoAfter').hidden = false;
+      const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
+      const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
+      presensiState.fotoBase64 = compressed;
 
-    // Tutup fullscreen
-    el('camFullscreen')?.classList.remove('open');
+      if (el('previewImg')) el('previewImg').src = compressed;
+      if (el('camPreview')) el('camPreview').hidden = false;
+      if (el('camWrap')) el('camWrap').hidden = true;
+      if (el('btnCapture')) el('btnCapture').hidden = true;
+      if (el('btnRetake')) el('btnRetake').hidden = false;
+      if (el('btnSubmit')) el('btnSubmit').hidden = false;
+      if (el('infoAfter')) el('infoAfter').hidden = false;
 
-    toast('Foto berhasil diambil', 'success');
-  });
+      el('camFullscreen')?.classList.remove('open');
+      toast('Foto berhasil diambil', 'success');
+    });
+  }
 
-  // Ganti kamera depan/belakang
-  el('btnFsSwitch')?.addEventListener('click', async () => {
-    presensiState.facingMode = presensiState.facingMode === 'user' ? 'environment' : 'user';
-    const videoFs = el('videoFullscreen');
-    if (videoFs) {
-      await startCamera(videoFs, presensiState.facingMode);
-    }
-    toast('Kamera: ' + (presensiState.facingMode === 'user' ? 'Depan' : 'Belakang'), 'info');
-  });
+  // Ganti kamera
+  const btnSwitch = el('btnFsSwitch');
+  if (btnSwitch) {
+    const newBtn = btnSwitch.cloneNode(true);
+    btnSwitch.parentNode.replaceChild(newBtn, btnSwitch);
+    newBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      presensiState.facingMode = presensiState.facingMode === 'user' ? 'environment' : 'user';
+      const videoFs = el('videoFullscreen');
+      if (videoFs) await startCamera(videoFs, presensiState.facingMode);
+      toast('Kamera: ' + (presensiState.facingMode === 'user' ? 'Depan' : 'Belakang'), 'info');
+    });
+  }
 }
 
 // ============================================================
