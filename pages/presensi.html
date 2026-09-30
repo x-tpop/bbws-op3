@@ -91,7 +91,7 @@
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS STYLE (FINAL) -->
+<!-- MODAL FULLSCREEN KAMERA — iOS STYLE v3 -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
@@ -119,6 +119,7 @@
   <!-- OVAL GUIDE & MASK -->
   <div class="cam-viewport">
     <div class="cam-oval-guide" id="faceGuide">
+      <div class="cam-scan-line"></div>
       <div class="cam-face-status" id="faceStatus">
         <div class="face-dot"></div>
         <span class="face-label">Posisikan wajah Anda di dalam oval</span>
@@ -195,7 +196,7 @@
 .cam-fullscreen-btn svg{width:20px;height:20px}
 
 /* ============================================================
-   FULLSCREEN CAMERA — PERFECT iOS STYLE
+   FULLSCREEN CAMERA — PERFECT iOS STYLE v3
    ============================================================ */
 .cam-fullscreen{
   position:fixed;
@@ -261,6 +262,7 @@
   display:flex;
   align-items:center;
   justify-content:center;
+  padding-bottom:80px;
 }
 .cam-oval-guide{
   position:relative;
@@ -268,58 +270,110 @@
   height:min(100vw, 390px);
   border-radius:50%;
   border:2px solid rgba(255,255,255,.85);
-  /* MASK ANTI-BOCOR: box-shadow spread 9999px */
   box-shadow:0 0 0 9999px rgba(0,0,0,.55);
   transition:border-color .3s ease, box-shadow .3s ease;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  padding-bottom:24px;
+  overflow:visible;
 }
 .cam-oval-guide.detected{
   border-color:#34C759;
   box-shadow:0 0 0 9999px rgba(0,0,0,.55), 0 0 20px rgba(52,199,89,.5);
 }
 
-/* STATUS SENSOR WAJAH */
+/* ============================================================
+   SCAN LINE — Garis Laser Tipis
+   ============================================================ */
+.cam-scan-line{
+  position:absolute;
+  left:12%;
+  right:12%;
+  height:2px;
+  background:linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,.3) 15%,
+    rgba(255,255,255,.9) 50%,
+    rgba(255,255,255,.3) 85%,
+    transparent 100%
+  );
+  border-radius:99px;
+  top:15%;
+  animation:scanMove 2.8s ease-in-out infinite;
+  pointer-events:none;
+  z-index:3;
+  box-shadow:0 0 10px rgba(255,255,255,.7), 0 0 20px rgba(255,255,255,.3);
+  transition:background .3s ease, box-shadow .3s ease;
+}
+.cam-oval-guide.detected .cam-scan-line{
+  background:linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(52,199,89,.3) 15%,
+    rgba(52,199,89,.95) 50%,
+    rgba(52,199,89,.3) 85%,
+    transparent 100%
+  );
+  box-shadow:0 0 12px rgba(52,199,89,.8), 0 0 24px rgba(52,199,89,.4);
+}
+
+@keyframes scanMove{
+  0%, 100% { top:12%; opacity:.7; }
+  50% { top:80%; opacity:1; }
+}
+
+/* ============================================================
+   FACE STATUS — POSISI DI BAWAH OVAL
+   ============================================================ */
 .cam-face-status{
-  background:rgba(28,28,30,.8);
+  position:absolute;
+  bottom:-64px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(28,28,30,.85);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   border:0.5px solid rgba(255,255,255,.15);
   border-radius:99px;
-  padding:8px 16px;
+  padding:9px 18px;
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:9px;
   color:#fff;
-  font:500 12px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
-  transition:all .3s ease;
-  transform:translateY(50px);
+  font:500 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
   white-space:nowrap;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+  z-index:4;
 }
 .cam-oval-guide.detected .cam-face-status{
-  background:rgba(52,199,89,.9);
+  background:rgba(52,199,89,.92);
   border-color:rgba(255,255,255,.3);
 }
+
+/* FACE DOT — KUNING → HIJAU */
 .face-dot{
-  width:7px;
-  height:7px;
+  width:8px;
+  height:8px;
   border-radius:50%;
   background:#FFCC00;
   position:relative;
   flex:none;
+  transition:background .3s ease;
 }
 .face-dot::before{
   content:'';
   position:absolute;
-  inset:-3px;
+  inset:-4px;
   border-radius:50%;
-  border:1px solid rgba(255,204,0,.5);
+  border:1.5px solid rgba(255,204,0,.5);
   animation:facePulse 1.8s ease-in-out infinite;
+  transition:border-color .3s ease;
 }
-.cam-oval-guide.detected .face-dot{background:#fff}
-.cam-oval-guide.detected .face-dot::before{border-color:rgba(255,255,255,.6)}
+.cam-oval-guide.detected .face-dot{
+  background:#34C759;
+}
+.cam-oval-guide.detected .face-dot::before{
+  border-color:rgba(52,199,89,.6);
+}
 @keyframes facePulse{
   0%,100%{transform:scale(1);opacity:1}
   50%{transform:scale(1.6);opacity:0}
@@ -414,9 +468,16 @@
   .map-wrap iframe{height:160px}
 }
 @media (max-width:560px){
+  .cam-viewport{padding-bottom:60px}
   .cam-oval-guide{
     width:min(78vw, 260px);
     height:min(110vw, 360px);
+  }
+  .cam-face-status{
+    font-size:11.5px;
+    padding:8px 14px;
+    bottom:-58px;
+    gap:7px;
   }
   .cam-dock{
     padding:10px 18px;
@@ -427,6 +488,5 @@
   .shutter-inner{width:46px;height:46px}
   .pill-item{font-size:11.5px;gap:5px}
   .pill-item svg{width:13px;height:13px}
-  .cam-face-status{font-size:11.5px;padding:7px 14px;transform:translateY(42px)}
 }
 </style>
