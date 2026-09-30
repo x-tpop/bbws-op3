@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v5 — iOS style)
+// PRESENSI.JS — Logic halaman presensi (v6 — iOS style fixed)
 // ============================================================
 
 const presensiState = {
@@ -13,7 +13,7 @@ const presensiState = {
 };
 
 // ============================================================
-// REVERSE GEOCODING (OSM Nominatim — gratis, no API key)
+// REVERSE GEOCODING
 // ============================================================
 async function getNamaLokasi(lat, lng) {
   try {
@@ -27,7 +27,6 @@ async function getNamaLokasi(lat, lng) {
     const kota = addr.city || addr.town || addr.village || addr.county || addr.state_district || '';
     const prov = addr.state || '';
 
-    // Singkat provinsi
     const provShort = prov
       .replace('Jawa Timur', 'Jatim')
       .replace('Jawa Tengah', 'Jateng')
@@ -76,11 +75,12 @@ async function initPresensi() {
     function tickPres() {
       const d = new Date();
       const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (el('camTime')) el('camTime').textContent = '🕐 ' + hms + ' WIB';
-      if (el('camFsTime')) el('camFsTime').textContent = hms + ' WIB';
+      if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
     }
     tickPres();
     if (window.__presInterval) clearInterval(window.__presInterval);
@@ -150,7 +150,6 @@ async function initPresensi() {
       const locShort = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
 
       if (el('camLoc')) el('camLoc').textContent = '📍 ' + locText;
-      if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
       if (el('geoStatus')) el('geoStatus').textContent = locText;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
@@ -162,7 +161,7 @@ async function initPresensi() {
         mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
       }
 
-      // Reverse geocoding untuk nama kota
+      // Reverse geocoding
       getNamaLokasi(loc.lat, loc.lng).then(nama => {
         if (el('camFsLoc')) el('camFsLoc').textContent = nama;
         if (el('geoStatus')) el('geoStatus').textContent = `${nama} · ${locText}`;
@@ -468,10 +467,6 @@ function attachFullscreenHandlers() {
       modal.classList.add('open');
 
       if (presensiState.lokasi) {
-        const locShort = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
-        if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
-
-        // Nama kota
         getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
           if (el('camFsLoc')) el('camFsLoc').textContent = nama;
         });
@@ -496,7 +491,7 @@ function attachFullscreenHandlers() {
     });
   }
 
-  // AMBIL FOTO dari fullscreen
+  // AMBIL FOTO
   const btnCapFs = el('btnFsCapture');
   if (btnCapFs) {
     const newBtn = btnCapFs.cloneNode(true);
