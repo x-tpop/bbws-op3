@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Router + Logic Shell (FIXED)
+// APP.JS — Router + Logic Shell (v2 — no loop)
 // ============================================================
 
 const $ = s => document.querySelector(s);
@@ -15,17 +15,15 @@ if (!session) throw new Error('Not logged in');
 const pegawai = session.pegawai || {};
 const namaLengkap = pegawai.nama || session.nama_lengkap || 'Pegawai';
 
-// Isi data session ke shell
 $$('.js-nama').forEach(el => el.textContent = namaLengkap);
 $$('.js-role').forEach(el => el.textContent = session.role);
 
-// Avatar
 if (pegawai.link_foto_2 || pegawai.link_foto_1) {
   $$('.js-avatar').forEach(el => el.src = pegawai.link_foto_2 || pegawai.link_foto_1);
 }
 
 // ============================================================
-// DAFTAR HALAMAN + FUNGSI INIT
+// DAFTAR HALAMAN
 // ============================================================
 const PAGES = {
   dashboard:  { k: 'Portal Pegawai', t: 'Dashboard',                file: 'pages/dashboard.html',  init: 'initDashboard',  roles: ['*'] },
@@ -37,9 +35,7 @@ const PAGES = {
   biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    init: null,             roles: ['*'] }
 };
 
-// ============================================================
-// SEMBUNYIKAN MENU SESUAI ROLE
-// ============================================================
+// Sembunyikan menu sesuai role
 Object.entries(PAGES).forEach(([key, page]) => {
   if (page.roles[0] === '*') return;
   if (!page.roles.includes(session.role)) {
@@ -49,19 +45,21 @@ Object.entries(PAGES).forEach(([key, page]) => {
 });
 
 // ============================================================
-// CLEANUP: Bersihkan interval & stream saat pindah halaman
+// STATE
+// ============================================================
+let currentPage = null;
+let isNavigating = false;      // flag: sedang pindah halaman?
+let isInitialLoad = true;      // flag: load pertama?
+
+// ============================================================
+// CLEANUP
 // ============================================================
 function cleanupPage() {
-  // Clear semua interval yang kita daftarkan
   if (window.__presInterval) { clearInterval(window.__presInterval); window.__presInterval = null; }
   if (window.__dashInterval) { clearInterval(window.__dashInterval); window.__dashInterval = null; }
-
-  // Stop kamera
   if (typeof window.stopCamera === 'function') {
     try { window.stopCamera(); } catch (e) {}
   }
-
-  // Reset flag init
   window.__presensiInit = false;
   window.__dashboardInit = false;
 }
@@ -69,110 +67,128 @@ function cleanupPage() {
 // ============================================================
 // ROUTER
 // ============================================================
-let currentPage = null;
-
-async function go(pageName) {
+async function go(pageName, isFromHash = false) {
+  // GUARD 1: Halaman tidak dikenal
   if (!PAGES[pageName]) {
     console.warn('Halaman tidak dikenal:', pageName);
     return;
   }
 
-  currentPage = pageName;
-  const page = PAGES[pageName];
+  // GUARD 2: Sudah di halaman ini → skip
+  if (currentPage === pageName && !isFromHash) {
+    console.log('Sudah di halaman', pageName, '— skip');
+    return;
+  }
 
-  // Cleanup halaman sebelumnya
-  cleanupPage();
+  // GUARD 3: Sedang navigasi → skip
+  if (isNavigating) {
+    console.log('Sedang navigasi — skip');
+    return;
+  }
 
-  // Update sidebar & bottom nav
-  $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
-  $$('.bnav-item').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
-
-  // Update judul
-  $('#tbKicker').textContent = page.k;
-  $('#tbTitle').textContent = page.t;
-
-  // Update URL hash
-  location.hash = pageName;
-
-  // Scroll ke atas
-  window.scrollTo(0, 0);
-
-  // ============================================================
-  // CLONE CONTAINER — bersihkan listener & state halaman lama
-  // ============================================================
-  const oldContainer = document.getElementById('pageContainer');
-  const container = oldContainer.cloneNode(false); // clone tanpa child
-  oldContainer.parentNode.replaceChild(container, oldContainer);
-
-  // Show loading
-  container.innerHTML = `
-    <div style="text-align:center;padding:60px;color:var(--muted)">
-      <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
-      <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
-    </div>`;
+  isNavigating = true;
 
   try {
-    // 1. Fetch HTML
+    currentPage = pageName;
+    const page = PAGES[pageName];
+
+    // Cleanup halaman sebelumnya
+    cleanupPage();
+
+    // Update sidebar & bottom nav
+    $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
+    $$('.bnav-item').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
+
+    // Update judul
+    $('#tbKicker').textContent = page.k;
+    $('#tbTitle').textContent = page.t;
+
+    // Update URL hash TANPA trigger hashchange
+    if (!isFromHash && location.hash !== '#' + pageName) {
+      // Pakai history.replaceState agar tidak trigger hashchange
+      history.replaceState(null, '', '#' + pageName);
+    }
+
+    // Scroll ke atas
+    window.scrollTo(0, 0);
+
+    // CLONE container
+    const oldContainer = document.getElementById('pageContainer');
+    const container = oldContainer.cloneNode(false);
+    oldContainer.parentNode.replaceChild(container, oldContainer);
+
+    // Loading
+    container.innerHTML = `
+      <div style="text-align:center;padding:60px;color:var(--muted)">
+        <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
+        <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
+      </div>`;
+
+    // Fetch HTML
     const res = await fetch(page.file + '?v=' + Date.now());
     if (!res.ok) throw new Error('Gagal memuat halaman: ' + res.status);
     const html = await res.text();
 
-    // 2. Inject HTML
+    // Inject
     container.innerHTML = html;
 
-    // 3. Jalankan <script> di dalam HTML (jika ada)
+    // Jalankan <script> di HTML
     const scripts = container.querySelectorAll('script');
     for (const oldScript of scripts) {
       const newScript = document.createElement('script');
-      [...oldScript.attributes].forEach(attr => {
-        newScript.setAttribute(attr.name, attr.value);
-      });
+      [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
       newScript.textContent = oldScript.textContent;
       oldScript.parentNode.replaceChild(newScript, oldScript);
     }
 
-    // 4. Panggil init function halaman
+    // Panggil init
     const initFn = page.init;
     console.log('Router:', pageName, '| init:', initFn);
 
     if (initFn && typeof window[initFn] === 'function') {
       console.log('→ Memanggil', initFn);
       await window[initFn]();
-    } else if (initFn) {
-      console.warn('✗ Init function TIDAK ditemukan:', initFn);
     }
 
     refreshIcons();
 
   } catch (err) {
     console.error('Router error:', err);
-    container.innerHTML = `
-      <div class="card">
-        <div class="empty">
-          <i data-lucide="alert-circle"></i>
-          <div>Gagal memuat halaman: ${err.message}</div>
-        </div>
-      </div>`;
-    refreshIcons();
+    const container = document.getElementById('pageContainer');
+    if (container) {
+      container.innerHTML = `
+        <div class="card">
+          <div class="empty">
+            <i data-lucide="alert-circle"></i>
+            <div>Gagal memuat halaman: ${err.message}</div>
+          </div>
+        </div>`;
+      refreshIcons();
+    }
+  } finally {
+    isNavigating = false;
+    isInitialLoad = false;
   }
 }
 
 // ============================================================
-// EVENT: Klik menu
+// EVENT: Klik menu (listener terpasang SEKALI saja)
 // ============================================================
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-page]');
-  if (btn) {
-    e.preventDefault();
-    go(btn.dataset.page);
-    return;
-  }
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const pageName = btn.dataset.page;
+  console.log('Menu klik:', pageName);
+  go(pageName);
 });
 
 // ============================================================
 // EVENT: Logout
 // ============================================================
-$('#btnLogout').addEventListener('click', () => {
+$('#btnLogout')?.addEventListener('click', () => {
   if (confirm('Keluar dari Portal Pegawai?')) logout();
 });
 
@@ -237,16 +253,10 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ============================================================
-// INIT
+// INIT — Load halaman pertama
 // ============================================================
 const initialPage = location.hash.replace('#', '') || 'dashboard';
-go(PAGES[initialPage] ? initialPage : 'dashboard');
-
-// Handle back/forward browser
-window.addEventListener('hashchange', () => {
-  const p = location.hash.replace('#', '');
-  if (p && p !== currentPage && PAGES[p]) go(p);
-});
+go(PAGES[initialPage] ? initialPage : 'dashboard', true);
 
 // ============================================================
 // EXPOSE GLOBAL
