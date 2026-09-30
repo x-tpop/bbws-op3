@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v4)
+// PRESENSI.JS — Logic halaman presensi (v5 — iOS style)
 // ============================================================
 
 const presensiState = {
@@ -11,6 +11,44 @@ const presensiState = {
   facingMode: 'user',
   fullscreenStream: null
 };
+
+// ============================================================
+// REVERSE GEOCODING (OSM Nominatim — gratis, no API key)
+// ============================================================
+async function getNamaLokasi(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+      { headers: { 'Accept-Language': 'id' } }
+    );
+    const data = await res.json();
+
+    const addr = data.address || {};
+    const kota = addr.city || addr.town || addr.village || addr.county || addr.state_district || '';
+    const prov = addr.state || '';
+
+    // Singkat provinsi
+    const provShort = prov
+      .replace('Jawa Timur', 'Jatim')
+      .replace('Jawa Tengah', 'Jateng')
+      .replace('Jawa Barat', 'Jabar')
+      .replace('DKI Jakarta', 'Jakarta')
+      .replace('DI Yogyakarta', 'DIY')
+      .replace('Banten', 'Banten')
+      .replace('Bali', 'Bali');
+
+    if (kota && provShort) return `${kota}, ${provShort}`;
+    if (kota) return kota;
+    if (data.display_name) {
+      const parts = data.display_name.split(',').slice(0, 2);
+      return parts.join(',').trim();
+    }
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (e) {
+    console.warn('Reverse geocoding gagal:', e);
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}
 
 // ============================================================
 // INIT
@@ -43,7 +81,6 @@ async function initPresensi() {
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (el('camTime')) el('camTime').textContent = '🕐 ' + hms + ' WIB';
       if (el('camFsTime')) el('camFsTime').textContent = hms + ' WIB';
-      if (el('camFsTime2')) el('camFsTime2').textContent = '🕐 ' + hms + ' WIB';
     }
     tickPres();
     if (window.__presInterval) clearInterval(window.__presInterval);
@@ -113,17 +150,23 @@ async function initPresensi() {
       const locShort = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
 
       if (el('camLoc')) el('camLoc').textContent = '📍 ' + locText;
-      if (el('camFsLoc')) el('camFsLoc').textContent = locShort;
       if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
       if (el('geoStatus')) el('geoStatus').textContent = locText;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
+      // Map
       const mapIframe = el('miniMap');
       if (mapIframe) {
         const d = 0.003;
         const bbox = `${loc.lng - d},${loc.lat - d},${loc.lng + d},${loc.lat + d}`;
         mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
       }
+
+      // Reverse geocoding untuk nama kota
+      getNamaLokasi(loc.lat, loc.lng).then(nama => {
+        if (el('camFsLoc')) el('camFsLoc').textContent = nama;
+        if (el('geoStatus')) el('geoStatus').textContent = `${nama} · ${locText}`;
+      });
 
       console.log('Location:', loc);
     } catch (err) {
@@ -426,8 +469,12 @@ function attachFullscreenHandlers() {
 
       if (presensiState.lokasi) {
         const locShort = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
-        if (el('camFsLoc')) el('camFsLoc').textContent = locShort;
         if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
+
+        // Nama kota
+        getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
+          if (el('camFsLoc')) el('camFsLoc').textContent = nama;
+        });
       }
 
       initFaceDetection(videoFs);
@@ -548,3 +595,4 @@ window.renderPresensi = renderPresensi;
 window.closeSuksesModal = closeSuksesModal;
 window.initFaceDetection = initFaceDetection;
 window.stopFaceDetection = stopFaceDetection;
+window.getNamaLokasi = getNamaLokasi;
