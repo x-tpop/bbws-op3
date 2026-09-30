@@ -1,9 +1,11 @@
 <section class="page active" data-page="presensi">
   <div class="grid-pres">
+    <!-- Kartu Kiri: Info & Status -->
     <div class="card">
       <span class="kicker">E-Kehadiran</span>
       <h2 class="today-date" id="presDate">—</h2>
       <div class="big-clock"><span id="presClock">--.--.--</span> <small>WIB</small></div>
+      
       <div class="ptl" id="ptl">
         <div class="ptl-node" id="ptMasuk">
           <span class="ptl-ic"><i data-lucide="log-in"></i></span>
@@ -15,31 +17,170 @@
           <div><span>Check-out</span><b id="ptKeluarTime">—</b></div>
         </div>
       </div>
+      
+      <!-- STATUS PRESENSI -->
+      <div class="field" style="margin-top:12px">
+        <label>Status Kehadiran</label>
+        <select id="presStatus">
+          <option value="Hadir">Hadir</option>
+          <option value="Izin">Izin</option>
+          <option value="Sakit">Sakit</option>
+          <option value="Dinas Luar">Dinas Luar</option>
+          <option value="Kerja Gabungan">Kerja Gabungan</option>
+        </select>
+      </div>
+
+      <!-- KETERANGAN (khusus Izin/Sakit/Dinas) -->
+      <div class="field" id="ketWrap" style="display:none">
+        <label>Keterangan</label>
+        <textarea id="presKet" rows="2" placeholder="Contoh: izin keperluan keluarga / sakit demam / dinas ke kantor pusat..."></textarea>
+      </div>
+
       <div class="pres-note" id="presNote">Memuat...</div>
-      <p style="font:500 13px var(--font);color:var(--muted);display:flex;gap:8px;align-items:center">
-        <i data-lucide="map-pin" style="width:16px;height:16px"></i>
-        <span id="geoStatus">Mendeteksi lokasi...</span>
-      </p>
+
+      <!-- MINI MAPS -->
+      <div class="field" style="margin-top:8px">
+        <label>Lokasi Anda</label>
+        <div class="map-wrap">
+          <iframe 
+            id="miniMap" 
+            src="about:blank"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            style="border:0;width:100%;height:200px;border-radius:14px">
+          </iframe>
+          <div class="map-overlay" id="mapOverlay">
+            <i data-lucide="map-pin"></i>
+            <span id="geoStatus">Mendeteksi lokasi...</span>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Kartu Kanan: Kamera -->
     <div class="card">
       <span class="kicker">Kamera Presensi</span>
       <h3 style="margin:8px 0 16px">Ambil Foto</h3>
+
+      <!-- KAMERA WRAP -->
       <div class="cam-wrap" id="camWrap">
         <video id="video" autoplay playsinline muted></video>
         <div class="cam-watermark">
           <div class="loc" id="camLoc">📍 Mendeteksi lokasi...</div>
           <div class="time" id="camTime">🕐 —</div>
         </div>
+        <button class="cam-fullscreen-btn" id="btnFullscreen" title="Mode layar penuh">
+          <i data-lucide="maximize"></i>
+        </button>
       </div>
+
+      <!-- PREVIEW -->
       <div class="cam-preview" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
       </div>
+
+      <!-- TOMBOL AKSI -->
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-blue" id="btnCapture" disabled><i data-lucide="camera"></i>Ambil Foto</button>
-        <button class="btn btn-ghost" id="btnRetake" hidden><i data-lucide="rotate-ccw"></i>Ulangi</button>
-        <button class="btn btn-green" id="btnSubmit" hidden><i data-lucide="check"></i>Kirim Presensi</button>
+        <button class="btn btn-blue" id="btnCapture" disabled>
+          <i data-lucide="camera"></i>Ambil Foto
+        </button>
+        <button class="btn btn-ghost" id="btnRetake" hidden>
+          <i data-lucide="rotate-ccw"></i>Ulangi
+        </button>
+        <button class="btn btn-green" id="btnSubmit" hidden>
+          <i data-lucide="check"></i>Kirim Presensi
+        </button>
+      </div>
+
+      <!-- INFO SETELAH FOTO -->
+      <div class="info-after" id="infoAfter" hidden>
+        <i data-lucide="info"></i>
+        <div>
+          <b>Foto berhasil diambil</b><br>
+          Periksa foto di atas, lalu klik <b>Kirim Presensi</b> untuk menyimpan.
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- MODAL FULLSCREEN KAMERA -->
+<div id="camFullscreen" class="cam-fullscreen">
+  <video id="videoFullscreen" autoplay playsinline muted></video>
+  <div class="cam-fs-watermark">
+    <div class="fs-loc" id="camFsLoc">📍 Mendeteksi lokasi...</div>
+    <div class="fs-time" id="camFsTime">🕐 —</div>
+  </div>
+  <div class="cam-fs-controls">
+    <button class="cam-fs-btn" id="btnFsClose" title="Tutup">
+      <i data-lucide="x"></i>
+    </button>
+    <button class="cam-fs-capture" id="btnFsCapture" title="Ambil Foto">
+      <span></span>
+    </button>
+    <button class="cam-fs-btn" id="btnFsSwitch" title="Ganti Kamera">
+      <i data-lucide="refresh-cw"></i>
+    </button>
+  </div>
+</div>
+
+<!-- MODAL SUKSES -->
+<div id="suksesModal" class="modal-overlay">
+  <div class="modal-bg" onclick="closeSuksesModal()"></div>
+  <div class="modal-card" style="max-width:420px">
+    <div class="m-center">
+      <div class="m-success">
+        <i data-lucide="check"></i>
+      </div>
+      <h4 id="suksesTitle">Presensi Berhasil!</h4>
+      <p id="suksesMsg">Presensi Anda telah tercatat.</p>
+      <div class="sukses-detail" id="suksesDetail"></div>
+      <div class="m-foot center" style="margin-top:20px">
+        <button class="btn btn-blue" onclick="closeSuksesModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Map */
+.map-wrap{position:relative;border-radius:14px;overflow:hidden;background:#E2E8F0}
+.map-overlay{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(30,58,138,.85);color:#fff;padding:8px 12px;border-radius:10px;font:600 12px var(--mono);display:flex;align-items:center;gap:8px}
+.map-overlay svg{width:14px;height:14px;flex:none}
+
+/* Info After Capture */
+.info-after{margin-top:14px;background:var(--blue-soft);border-left:4px solid var(--blue);border-radius:12px;padding:12px 14px;font:500 13px/1.5 var(--font);color:var(--blue-dark);display:flex;gap:10px;align-items:flex-start}
+.info-after svg{width:18px;height:18px;flex:none;margin-top:2px}
+
+/* Fullscreen Camera */
+.cam-fullscreen{position:fixed;inset:0;background:#000;z-index:200;display:none;overflow:hidden}
+.cam-fullscreen.open{display:block}
+.cam-fullscreen video{width:100%;height:100%;object-fit:cover}
+.cam-fs-watermark{position:absolute;bottom:140px;left:0;right:0;background:rgba(30,58,138,.85);color:#fff;padding:12px 20px;font:600 14px var(--mono);text-align:center;border-top:3px solid var(--yellow)}
+.cam-fs-watermark .fs-time{font-size:18px;font-weight:700;margin-top:4px}
+.cam-fs-controls{position:absolute;bottom:20px;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:0 30px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.cam-fs-btn{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);display:grid;place-items:center;cursor:pointer;transition:.2s}
+.cam-fs-btn:hover{background:rgba(255,255,255,.3);transform:scale(1.05)}
+.cam-fs-btn svg{width:22px;height:22px}
+.cam-fs-capture{width:80px;height:80px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.4);display:grid;place-items:center;cursor:pointer;transition:.2s;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.cam-fs-capture:hover{transform:scale(1.08)}
+.cam-fs-capture:active{transform:scale(0.95)}
+.cam-fs-capture span{width:60px;height:60px;border-radius:50%;background:#DC2626;border:3px solid #fff}
+.cam-fullscreen-btn{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:0;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(4px)}
+.cam-fullscreen-btn svg{width:20px;height:20px}
+
+/* Modal Sukses */
+.m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
+.m-success svg{width:40px;height:40px}
+.m-center h4{font:800 22px var(--font);margin:18px 0 8px;color:var(--ink)}
+.m-center p{font:500 14px/1.6 var(--font);color:var(--ink-2);margin-bottom:14px}
+.sukses-detail{background:var(--bg);border-radius:14px;padding:16px;text-align:left;font:500 13.5px/1.7 var(--font);color:var(--ink-2)}
+.sukses-detail b{color:var(--ink)}
+.sukses-detail .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.sukses-detail .row:last-child{border-bottom:0}
+
+@media (max-width:920px){
+  .map-wrap iframe{height:160px}
+  .cam-fs-watermark{bottom:130px}
+}
+</style>
