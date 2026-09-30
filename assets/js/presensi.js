@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v3 — fixed)
+// PRESENSI.JS — Logic halaman presensi (v4 — face detection)
 // ============================================================
 
 const presensiState = {
@@ -38,10 +38,13 @@ async function initPresensi() {
     function tickPres() {
       const d = new Date();
       const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (el('camTime')) el('camTime').textContent = '🕐 ' + hms + ' WIB';
       if (el('camFsTime')) el('camFsTime').textContent = '🕐 ' + hms + ' WIB';
+      if (el('camFsTime2')) el('camFsTime2').textContent = '🕐 ' + hms + ' WIB';
     }
     tickPres();
     if (window.__presInterval) clearInterval(window.__presInterval);
@@ -68,7 +71,7 @@ async function initPresensi() {
     renderPresensi();
 
     // ============================================================
-    // STATUS CHANGE — clone untuk bersihkan listener lama
+    // STATUS CHANGE
     // ============================================================
     const statusSel = el('presStatus');
     if (statusSel) {
@@ -108,8 +111,11 @@ async function initPresensi() {
       const loc = await getLocation();
       presensiState.lokasi = loc;
       const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)} (±${Math.round(loc.accuracy)}m)`;
+      const locShort = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
+
       if (el('camLoc')) el('camLoc').textContent = '📍 ' + locText;
-      if (el('camFsLoc')) el('camFsLoc').textContent = '📍 ' + locText;
+      if (el('camFsLoc')) el('camFsLoc').textContent = locShort;
+      if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
       if (el('geoStatus')) el('geoStatus').textContent = locText;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
@@ -330,12 +336,75 @@ function closeSuksesModal() {
 }
 
 // ============================================================
+// FACE DETECTION
+// ============================================================
+let faceDetector = null;
+let faceDetectInterval = null;
+
+async function initFaceDetection(videoEl) {
+  if (!('FaceDetector' in window)) {
+    console.log('FaceDetector tidak didukung browser ini');
+    return false;
+  }
+
+  try {
+    faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+    console.log('FaceDetector aktif');
+  } catch (e) {
+    console.warn('Gagal init FaceDetector:', e);
+    return false;
+  }
+
+  if (faceDetectInterval) clearInterval(faceDetectInterval);
+  faceDetectInterval = setInterval(async () => {
+    if (!videoEl || videoEl.readyState < 2) return;
+    try {
+      const faces = await faceDetector.detect(videoEl);
+      updateFaceUI(faces.length > 0);
+    } catch (e) {
+      // Silent fail
+    }
+  }, 500);
+
+  return true;
+}
+
+function updateFaceUI(detected) {
+  const guide = document.getElementById('faceGuide');
+  const status = document.getElementById('faceStatus');
+  const label = status?.querySelector('.face-label');
+
+  if (detected) {
+    guide?.classList.add('detected');
+    status?.classList.add('detected');
+    if (label) label.textContent = 'Wajah terdeteksi ✓';
+  } else {
+    guide?.classList.remove('detected');
+    status?.classList.remove('detected');
+    if (label) label.textContent = 'Posisikan wajah Anda di dalam oval';
+  }
+}
+
+function stopFaceDetection() {
+  if (faceDetectInterval) {
+    clearInterval(faceDetectInterval);
+    faceDetectInterval = null;
+  }
+  faceDetector = null;
+  // Reset UI
+  const guide = document.getElementById('faceGuide');
+  const status = document.getElementById('faceStatus');
+  guide?.classList.remove('detected');
+  status?.classList.remove('detected');
+}
+
+// ============================================================
 // FULLSCREEN CAMERA
 // ============================================================
 function attachFullscreenHandlers() {
   const el = id => document.getElementById(id);
 
-  // Buka fullscreen
+  // BUKA fullscreen
   const btnFs = el('btnFullscreen');
   if (btnFs) {
     const newBtn = btnFs.cloneNode(true);
@@ -344,6 +413,7 @@ function attachFullscreenHandlers() {
     newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
+
       const modal = el('camFullscreen');
       const videoFs = el('videoFullscreen');
       if (!modal || !videoFs) return;
@@ -357,30 +427,41 @@ function attachFullscreenHandlers() {
       }
 
       modal.classList.add('open');
+
+      // Update lokasi di top bar
       if (presensiState.lokasi) {
-        const locText = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
-        if (el('camFsLoc')) el('camFsLoc').textContent = '📍 ' + locText;
+        const locShort = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
+        if (el('camFsLoc')) el('camFsLoc').textContent = locShort;
+        if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
       }
+
+      // Init face detection
+      initFaceDetection(videoFs);
+
+      if (window.refreshIcons) window.refreshIcons();
     });
   }
 
-  // Tutup fullscreen
+  // TUTUP fullscreen
   const btnClose = el('btnFsClose');
   if (btnClose) {
     const newBtn = btnClose.cloneNode(true);
     btnClose.parentNode.replaceChild(newBtn, btnClose);
+
     newBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       el('camFullscreen')?.classList.remove('open');
+      stopFaceDetection();
     });
   }
 
-  // Ambil foto dari fullscreen
+  // AMBIL FOTO dari fullscreen
   const btnCapFs = el('btnFsCapture');
   if (btnCapFs) {
     const newBtn = btnCapFs.cloneNode(true);
     btnCapFs.parentNode.replaceChild(newBtn, btnCapFs);
+
     newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -388,34 +469,57 @@ function attachFullscreenHandlers() {
       const videoFs = el('videoFullscreen');
       if (!videoFs) return;
 
-      const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
-      const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
-      presensiState.fotoBase64 = compressed;
+      if (!presensiState.lokasi) {
+        toast('Lokasi belum terdeteksi', 'warn');
+        return;
+      }
 
-      if (el('previewImg')) el('previewImg').src = compressed;
-      if (el('camPreview')) el('camPreview').hidden = false;
-      if (el('camWrap')) el('camWrap').hidden = true;
-      if (el('btnCapture')) el('btnCapture').hidden = true;
-      if (el('btnRetake')) el('btnRetake').hidden = false;
-      if (el('btnSubmit')) el('btnSubmit').hidden = false;
-      if (el('infoAfter')) el('infoAfter').hidden = false;
+      try {
+        const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
+        const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
+        presensiState.fotoBase64 = compressed;
 
-      el('camFullscreen')?.classList.remove('open');
-      toast('Foto berhasil diambil', 'success');
+        // Tampilkan preview di halaman utama
+        if (el('previewImg')) el('previewImg').src = compressed;
+        if (el('camPreview')) el('camPreview').hidden = false;
+        if (el('camWrap')) el('camWrap').hidden = true;
+        if (el('btnCapture')) el('btnCapture').hidden = true;
+        if (el('btnRetake')) el('btnRetake').hidden = false;
+        if (el('btnSubmit')) el('btnSubmit').hidden = false;
+        if (el('infoAfter')) el('infoAfter').hidden = false;
+
+        // Tutup fullscreen
+        el('camFullscreen')?.classList.remove('open');
+        stopFaceDetection();
+
+        toast('Foto berhasil diambil', 'success');
+      } catch (err) {
+        console.error(err);
+        toast('Gagal ambil foto: ' + err.message, 'error');
+      }
     });
   }
 
-  // Ganti kamera
+  // GANTI kamera
   const btnSwitch = el('btnFsSwitch');
   if (btnSwitch) {
     const newBtn = btnSwitch.cloneNode(true);
     btnSwitch.parentNode.replaceChild(newBtn, btnSwitch);
+
     newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
+
       presensiState.facingMode = presensiState.facingMode === 'user' ? 'environment' : 'user';
       const videoFs = el('videoFullscreen');
-      if (videoFs) await startCamera(videoFs, presensiState.facingMode);
+
+      if (videoFs) {
+        await startCamera(videoFs, presensiState.facingMode);
+        // Re-init face detection untuk stream baru
+        stopFaceDetection();
+        initFaceDetection(videoFs);
+      }
+
       toast('Kamera: ' + (presensiState.facingMode === 'user' ? 'Depan' : 'Belakang'), 'info');
     });
   }
@@ -452,3 +556,5 @@ function renderPresensi() {
 window.initPresensi = initPresensi;
 window.renderPresensi = renderPresensi;
 window.closeSuksesModal = closeSuksesModal;
+window.initFaceDetection = initFaceDetection;
+window.stopFaceDetection = stopFaceDetection;
