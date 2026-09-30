@@ -69,7 +69,7 @@
           <div class="loc" id="camLoc">📍 Mendeteksi lokasi...</div>
           <div class="time" id="camTime">🕐 —</div>
         </div>
-        <button class="cam-fullscreen-btn" id="btnFullscreen" title="Mode layar penuh">
+        <button type="button" class="cam-fullscreen-btn" id="btnFullscreen" title="Mode layar penuh">
           <i data-lucide="maximize"></i>
         </button>
       </div>
@@ -81,13 +81,13 @@
 
       <!-- TOMBOL AKSI -->
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-blue" id="btnCapture" disabled>
+        <button type="button" class="btn btn-blue" id="btnCapture" disabled>
           <i data-lucide="camera"></i>Ambil Foto
         </button>
-        <button class="btn btn-ghost" id="btnRetake" hidden>
+        <button type="button" class="btn btn-ghost" id="btnRetake" hidden>
           <i data-lucide="rotate-ccw"></i>Ulangi
         </button>
-        <button class="btn btn-green" id="btnSubmit" hidden>
+        <button type="button" class="btn btn-green" id="btnSubmit" hidden>
           <i data-lucide="check"></i>Kirim Presensi
         </button>
       </div>
@@ -107,18 +107,57 @@
 <!-- MODAL FULLSCREEN KAMERA -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
-  <div class="cam-fs-watermark">
-    <div class="fs-loc" id="camFsLoc">📍 Mendeteksi lokasi...</div>
-    <div class="fs-time" id="camFsTime">🕐 —</div>
+  
+  <!-- GRID OVERLAY -->
+  <div class="cam-grid">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
   </div>
-  <div class="cam-fs-controls">
-    <button class="cam-fs-btn" id="btnFsClose" title="Tutup">
+  
+  <!-- FACE GUIDE OVAL -->
+  <div class="cam-face-guide" id="faceGuide">
+    <svg viewBox="0 0 300 400" preserveAspectRatio="none">
+      <ellipse cx="150" cy="200" rx="120" ry="165" />
+    </svg>
+  </div>
+  
+  <!-- FACE DETECTION INDICATOR -->
+  <div class="cam-face-status" id="faceStatus">
+    <div class="face-ring"></div>
+    <span class="face-label">Posisikan wajah Anda di dalam oval</span>
+  </div>
+  
+  <!-- TOP INFO BAR -->
+  <div class="cam-top">
+    <div class="cam-top-item">
+      <i data-lucide="map-pin"></i>
+      <span id="camFsLoc">Mendeteksi...</span>
+    </div>
+    <div class="cam-top-item">
+      <i data-lucide="clock"></i>
+      <span id="camFsTime">—</span>
+    </div>
+  </div>
+
+  <!-- WATERMARK -->
+  <div class="cam-fs-watermark">
+    <div class="fs-loc" id="camFsLoc2">📍 Mendeteksi lokasi...</div>
+    <div class="fs-time" id="camFsTime2">🕐 —</div>
+  </div>
+
+  <!-- BOTTOM CONTROLS -->
+  <div class="cam-bottom">
+    <button type="button" class="cam-side-btn" id="btnFsClose" title="Tutup">
       <i data-lucide="x"></i>
     </button>
-    <button class="cam-fs-capture" id="btnFsCapture" title="Ambil Foto">
-      <span></span>
+    
+    <button type="button" class="cam-shutter" id="btnFsCapture" title="Ambil Foto">
+      <span class="shutter-ring"></span>
+      <span class="shutter-inner"></span>
     </button>
-    <button class="cam-fs-btn" id="btnFsSwitch" title="Ganti Kamera">
+    
+    <button type="button" class="cam-side-btn" id="btnFsSwitch" title="Ganti Kamera">
       <i data-lucide="refresh-cw"></i>
     </button>
   </div>
@@ -136,40 +175,263 @@
       <p id="suksesMsg">Presensi Anda telah tercatat.</p>
       <div class="sukses-detail" id="suksesDetail"></div>
       <div class="m-foot center" style="margin-top:20px">
-        <button class="btn btn-blue" onclick="closeSuksesModal()">Tutup</button>
+        <button type="button" class="btn btn-blue" onclick="closeSuksesModal()">Tutup</button>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-/* Map */
+/* ============ MAP ============ */
 .map-wrap{position:relative;border-radius:14px;overflow:hidden;background:#E2E8F0}
 .map-overlay{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(30,58,138,.85);color:#fff;padding:8px 12px;border-radius:10px;font:600 12px var(--mono);display:flex;align-items:center;gap:8px}
 .map-overlay svg{width:14px;height:14px;flex:none}
 
-/* Info After Capture */
+/* ============ INFO AFTER CAPTURE ============ */
 .info-after{margin-top:14px;background:var(--blue-soft);border-left:4px solid var(--blue);border-radius:12px;padding:12px 14px;font:500 13px/1.5 var(--font);color:var(--blue-dark);display:flex;gap:10px;align-items:flex-start}
 .info-after svg{width:18px;height:18px;flex:none;margin-top:2px}
 
-/* Fullscreen Camera */
-.cam-fullscreen{position:fixed;inset:0;background:#000;z-index:200;display:none;overflow:hidden}
-.cam-fullscreen.open{display:block}
-.cam-fullscreen video{width:100%;height:100%;object-fit:cover}
-.cam-fs-watermark{position:absolute;bottom:140px;left:0;right:0;background:rgba(30,58,138,.85);color:#fff;padding:12px 20px;font:600 14px var(--mono);text-align:center;border-top:3px solid var(--yellow)}
-.cam-fs-watermark .fs-time{font-size:18px;font-weight:700;margin-top:4px}
-.cam-fs-controls{position:absolute;bottom:20px;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:0 30px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
-.cam-fs-btn{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);display:grid;place-items:center;cursor:pointer;transition:.2s}
-.cam-fs-btn:hover{background:rgba(255,255,255,.3);transform:scale(1.05)}
-.cam-fs-btn svg{width:22px;height:22px}
-.cam-fs-capture{width:80px;height:80px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.4);display:grid;place-items:center;cursor:pointer;transition:.2s;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-.cam-fs-capture:hover{transform:scale(1.08)}
-.cam-fs-capture:active{transform:scale(0.95)}
-.cam-fs-capture span{width:60px;height:60px;border-radius:50%;background:#DC2626;border:3px solid #fff}
-.cam-fullscreen-btn{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:0;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(4px)}
-.cam-fullscreen-btn svg{width:20px;height:20px}
+/* ============ FULLSCREEN CAMERA — MODERN ============ */
+.cam-fullscreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 200;
+  display: none;
+  overflow: hidden;
+}
+.cam-fullscreen.open { display: block; }
 
-/* Modal Sukses */
+.cam-fullscreen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* GRID OVERLAY */
+.cam-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  pointer-events: none;
+  opacity: 0.15;
+}
+.cam-grid span {
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+.cam-grid span:nth-child(3n) { border-right: 0; }
+.cam-grid span:nth-child(n+7) { border-bottom: 0; }
+
+/* FACE GUIDE OVAL */
+.cam-face-guide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.cam-face-guide svg {
+  width: 70vw;
+  max-width: 360px;
+  height: 70vh;
+  max-height: 520px;
+}
+.cam-face-guide ellipse {
+  fill: none;
+  stroke: rgba(255,255,255,.35);
+  stroke-width: 2;
+  stroke-dasharray: 12 8;
+  transition: stroke .3s, stroke-dasharray .3s;
+}
+.cam-face-guide.detected ellipse {
+  stroke: #4ADE80;
+  stroke-dasharray: none;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(74,222,128,.6));
+}
+
+/* FACE STATUS */
+.cam-face-status {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 99px;
+  padding: 8px 18px 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font: 600 12px var(--font);
+  transition: .3s;
+  white-space: nowrap;
+  z-index: 5;
+}
+.cam-face-status.detected {
+  background: rgba(22, 163, 74, .7);
+  border-color: rgba(74, 222, 128, .4);
+}
+.face-ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FBB917;
+  position: relative;
+  flex: none;
+}
+.face-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(251,185,23,.5);
+  animation: pulse 1.5s infinite;
+}
+.cam-face-status.detected .face-ring { background: #4ADE80; }
+.cam-face-status.detected .face-ring::before { border-color: rgba(74,222,128,.5); }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+
+/* TOP INFO BAR */
+.cam-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  background: linear-gradient(180deg, rgba(0,0,0,.7) 0%, transparent 100%);
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  pointer-events: none;
+  z-index: 4;
+}
+.cam-top-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 99px;
+  padding: 6px 14px;
+  color: #fff;
+  font: 600 11.5px var(--mono);
+  white-space: nowrap;
+}
+.cam-top-item svg { width: 14px; height: 14px; }
+.cam-top-item i[data-lucide="map-pin"] { color: #FBB917; }
+.cam-top-item i[data-lucide="clock"] { color: #DBEAFE; }
+
+/* BOTTOM CONTROLS */
+.cam-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 30px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(0deg, rgba(0,0,0,.8) 0%, transparent 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 4;
+}
+
+/* SIDE BUTTONS */
+.cam-side-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: .2s;
+}
+.cam-side-btn:hover {
+  background: rgba(255,255,255,.2);
+  transform: scale(1.08);
+}
+.cam-side-btn:active { transform: scale(0.95); }
+.cam-side-btn svg { width: 22px; height: 22px; }
+
+/* SHUTTER BUTTON */
+.cam-shutter {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  transition: .2s;
+}
+.shutter-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.5);
+}
+.shutter-inner {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F87171 0%, #DC2626 100%);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.3), 0 2px 10px rgba(220,38,38,.5);
+  transition: .15s;
+}
+.cam-shutter:hover .shutter-inner { transform: scale(1.05); }
+.cam-shutter:active .shutter-inner {
+  transform: scale(0.9);
+  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+}
+
+/* WATERMARK */
+.cam-fs-watermark {
+  position: absolute;
+  bottom: 130px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #fff;
+  font: 600 14px var(--mono);
+  padding: 0 20px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.6);
+  pointer-events: none;
+  z-index: 3;
+}
+.cam-fs-watermark .fs-loc {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+.cam-fs-watermark .fs-time {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+/* MODAL SUKSES */
 .m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
 .m-success svg{width:40px;height:40px}
 .m-center h4{font:800 22px var(--font);margin:18px 0 8px;color:var(--ink)}
@@ -181,6 +443,14 @@
 
 @media (max-width:920px){
   .map-wrap iframe{height:160px}
-  .cam-fs-watermark{bottom:130px}
+  .cam-fs-watermark{bottom:120px}
+}
+@media (max-width: 560px) {
+  .cam-face-guide svg { width: 80vw; height: 60vh; }
+  .cam-shutter { width: 76px; height: 76px; }
+  .cam-side-btn { width: 46px; height: 46px; }
+  .cam-top { padding: 12px 14px; gap: 10px; }
+  .cam-top-item { font-size: 10.5px; padding: 5px 10px; }
+  .cam-face-status { top: 76px; font-size: 11px; padding: 6px 14px 6px 10px; }
 }
 </style>
