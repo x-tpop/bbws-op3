@@ -1,10 +1,10 @@
 <section class="page active" data-page="presensi">
   <div class="grid-pres">
-    <!-- Kartu Kiri: Info & Status -->
+    <!-- Kartu Kiri -->
     <div class="card">
       <span class="kicker">E-Kehadiran</span>
       <h2 class="today-date" id="presDate">—</h2>
-      <div class="big-clock"><span id="presClock">--.--.--</span> <small>WIB</small></div>
+      <div class="big-clock"><span id="presClock">--:--:--</span> <small>WIB</small></div>
       
       <div class="ptl" id="ptl">
         <div class="ptl-node" id="ptMasuk">
@@ -48,7 +48,7 @@
       </div>
     </div>
 
-    <!-- Kartu Kanan: Kamera -->
+    <!-- Kartu Kanan -->
     <div class="card">
       <span class="kicker">Kamera Presensi</span>
       <h3 style="margin:8px 0 16px">Ambil Foto</h3>
@@ -91,7 +91,7 @@
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS STYLE v3 -->
+<!-- MODAL FULLSCREEN KAMERA — iOS HIG COMPLIANT v4 -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
@@ -103,7 +103,7 @@
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span id="camFsTime">21:40 WIB</span>
+        <span id="camFsTime">22:36 WIB</span>
       </div>
       <div class="pill-divider"></div>
       <div class="pill-item">
@@ -127,7 +127,7 @@
     </div>
   </div>
 
-  <!-- BOTTOM FLOATING DOCK -->
+  <!-- BOTTOM FLOATING DOCK + HOME BAR -->
   <div class="cam-dock-wrap">
     <div class="cam-dock">
       <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
@@ -151,6 +151,8 @@
         </svg>
       </button>
     </div>
+    <!-- HOME INDICATOR iOS -->
+    <div class="cam-home-bar"></div>
   </div>
 </div>
 
@@ -196,7 +198,7 @@
 .cam-fullscreen-btn svg{width:20px;height:20px}
 
 /* ============================================================
-   FULLSCREEN CAMERA — PERFECT iOS STYLE v3
+   FULLSCREEN CAMERA — iOS HIG COMPLIANT v4
    ============================================================ */
 .cam-fullscreen{
   position:fixed;
@@ -218,20 +220,20 @@
   z-index:1;
 }
 
-/* TOP DYNAMIC ISLAND PILL */
+/* TOP DYNAMIC ISLAND PILL — SAFE AREA */
 .cam-top{
   position:relative;
   z-index:10;
   width:100%;
   display:flex;
   justify-content:center;
-  padding-top:max(16px, env(safe-area-inset-top));
+  padding-top:max(52px, env(safe-area-inset-top));
   padding-bottom:12px;
 }
 .cam-pill{
   background:rgba(20,20,22,.65);
-  backdrop-filter:blur(25px);
-  -webkit-backdrop-filter:blur(25px);
+  backdrop-filter:blur(25px) saturate(180%);
+  -webkit-backdrop-filter:blur(25px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.18);
   border-radius:99px;
   padding:8px 16px;
@@ -254,7 +256,7 @@
 .pill-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.85);flex:none}
 .pill-divider{width:1px;height:12px;background:rgba(255,255,255,.2);flex:none}
 
-/* VIEWPORT & PERFECT OVAL MASK */
+/* VIEWPORT & OVAL MASK */
 .cam-viewport{
   position:relative;
   z-index:5;
@@ -262,7 +264,7 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  padding-bottom:80px;
+  padding-bottom:60px;
 }
 .cam-oval-guide{
   position:relative;
@@ -271,17 +273,18 @@
   border-radius:50%;
   border:2px solid rgba(255,255,255,.85);
   box-shadow:0 0 0 9999px rgba(0,0,0,.55);
-  transition:border-color .3s ease, box-shadow .3s ease;
+  transition:border-color .4s ease, box-shadow .4s ease;
   overflow:visible;
 }
 .cam-oval-guide.detected{
   border-color:#34C759;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.55), 0 0 20px rgba(52,199,89,.5);
+  box-shadow:
+    0 0 0 9999px rgba(0,0,0,.55),
+    0 0 20px rgba(52,199,89,.4),
+    0 0 40px rgba(52,199,89,.2);
 }
 
-/* ============================================================
-   SCAN LINE — Garis Laser Tipis
-   ============================================================ */
+/* SCAN LINE */
 .cam-scan-line{
   position:absolute;
   left:12%;
@@ -320,17 +323,15 @@
   50% { top:80%; opacity:1; }
 }
 
-/* ============================================================
-   FACE STATUS — POSISI DI BAWAH OVAL
-   ============================================================ */
+/* FACE STATUS — JARAK TAMBAHAN 12px */
 .cam-face-status{
   position:absolute;
-  bottom:-64px;
+  bottom:-76px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(28,28,30,.85);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.15);
   border-radius:99px;
   padding:9px 18px;
@@ -349,7 +350,7 @@
   border-color:rgba(255,255,255,.3);
 }
 
-/* FACE DOT — KUNING → HIJAU */
+/* FACE DOT */
 .face-dot{
   width:8px;
   height:8px;
@@ -379,34 +380,38 @@
   50%{transform:scale(1.6);opacity:0}
 }
 
-/* BOTTOM DOCK PANEL */
+/* ============================================================
+   BOTTOM DOCK — iOS FROSTED GLASS + SAFE AREA
+   ============================================================ */
 .cam-dock-wrap{
   position:relative;
   z-index:10;
   width:100%;
   display:flex;
-  justify-content:center;
-  padding-bottom:max(24px, env(safe-area-inset-bottom));
+  flex-direction:column;
+  align-items:center;
+  padding-bottom:max(34px, env(safe-area-inset-bottom));
   padding-top:12px;
+  gap:10px;
 }
 .cam-dock{
-  background:rgba(250,250,250,.15);
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
-  border:0.5px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:0.5px solid rgba(255,255,255,.28);
   border-radius:44px;
   padding:10px 24px;
   display:flex;
   align-items:center;
   gap:32px;
-  box-shadow:0 10px 40px rgba(0,0,0,.4);
+  box-shadow:0 16px 36px rgba(0,0,0,.35);
 }
 .cam-dock-btn{
   width:44px;
   height:44px;
   border-radius:50%;
-  background:rgba(255,255,255,.12);
-  border:0.5px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.15);
+  border:0.5px solid rgba(255,255,255,.25);
   color:#fff;
   display:grid;
   place-items:center;
@@ -416,11 +421,11 @@
 }
 .cam-dock-btn:active{
   transform:scale(.92);
-  background:rgba(255,255,255,.25);
+  background:rgba(255,255,255,.3);
 }
 .cam-dock-btn svg{width:20px;height:20px}
 
-/* SHUTTER BUTTON iOS */
+/* SHUTTER BUTTON */
 .cam-shutter{
   position:relative;
   width:68px;
@@ -453,6 +458,16 @@
 }
 .cam-shutter:active .shutter-ring{transform:scale(.96)}
 
+/* HOME INDICATOR iOS */
+.cam-home-bar{
+  width:134px;
+  height:5px;
+  background:rgba(255,255,255,.85);
+  border-radius:10px;
+  margin-top:2px;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+
 /* ============ MODAL SUKSES ============ */
 .m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
 .m-success svg{width:40px;height:40px}
@@ -468,7 +483,7 @@
   .map-wrap iframe{height:160px}
 }
 @media (max-width:560px){
-  .cam-viewport{padding-bottom:60px}
+  .cam-viewport{padding-bottom:50px}
   .cam-oval-guide{
     width:min(78vw, 260px);
     height:min(110vw, 360px);
@@ -476,7 +491,7 @@
   .cam-face-status{
     font-size:11.5px;
     padding:8px 14px;
-    bottom:-58px;
+    bottom:-70px;
     gap:7px;
   }
   .cam-dock{
@@ -488,5 +503,6 @@
   .shutter-inner{width:46px;height:46px}
   .pill-item{font-size:11.5px;gap:5px}
   .pill-item svg{width:13px;height:13px}
+  .cam-home-bar{width:120px;height:4px}
 }
 </style>
