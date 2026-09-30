@@ -385,37 +385,45 @@ function closeSuksesModal() {
 }
 
 // ============================================================
-// FACE DETECTION — MediaPipe (Pengganti FaceDetector)
+// FACE DETECTION — MediaPipe (Pengganti FaceDetector native)
 // ============================================================
 let faceDetector = null;
 let faceDetectInterval = null;
-let faceDetectionLib = null;
+let faceDetectionReady = false;
 
 async function initFaceDetection(videoEl) {
+  if (faceDetectionReady) {
+    console.log('MediaPipe sudah siap');
+    return true;
+  }
+
   try {
-    // Load MediaPipe Vision Library
+    console.log('Loading MediaPipe...');
+
+    // Load library dari CDN
     const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
-    faceDetectionLib = vision;
-    
+
     const filesetResolver = await vision.FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
     );
-    
+
     faceDetector = await vision.FaceDetector.createFromOptions(filesetResolver, {
       baseOptions: {
         modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
         delegate: "GPU"
       },
-      runningMode: "VIDEO"
+      runningMode: "VIDEO",
+      minDetectionConfidence: 0.5
     });
-    
+
+    faceDetectionReady = true;
     console.log('MediaPipe FaceDetector aktif');
-    
-    // Loop deteksi
+
+    // Loop deteksi setiap 300ms
     if (faceDetectInterval) clearInterval(faceDetectInterval);
-    faceDetectInterval = setInterval(async () => {
+    faceDetectInterval = setInterval(() => {
       if (!videoEl || videoEl.readyState < 2 || !faceDetector) return;
-      
+
       try {
         const result = faceDetector.detectForVideo(videoEl, performance.now());
         const detected = result.detections && result.detections.length > 0;
@@ -424,9 +432,9 @@ async function initFaceDetection(videoEl) {
         // Silent fail
       }
     }, 300);
-    
+
     return true;
-    
+
   } catch (e) {
     console.warn('MediaPipe init gagal:', e);
     return false;
@@ -453,9 +461,11 @@ function stopFaceDetection() {
     faceDetectInterval = null;
   }
   if (faceDetector) {
-    faceDetector.close();
+    try { faceDetector.close(); } catch (e) {}
     faceDetector = null;
   }
+  faceDetectionReady = false;
+
   const guide = document.getElementById('faceGuide');
   guide?.classList.remove('detected');
 }
