@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi
+// PRESENSI.JS — Logic halaman presensi (FIXED)
 // ============================================================
 
 const presensiState = {
@@ -15,10 +15,25 @@ const presensiState = {
 async function initPresensi() {
   console.log('=== Init Presensi ===');
 
+  // Guard: jangan dobel init
+  if (window.__presensiInit) {
+    console.log('Presensi sudah di-init, skip.');
+    return;
+  }
+  window.__presensiInit = true;
+
   try {
     const session = getSession();
-    const pegawai = session?.pegawai || {};
+    if (!session) {
+      console.warn('No session');
+      return;
+    }
+
+    const pegawai = session.pegawai || {};
     const today = new Date().toISOString().slice(0, 10);
+
+    // Helper null-safe
+    const el = id => document.getElementById(id);
 
     console.log('Session:', session);
     console.log('Today:', today);
@@ -29,9 +44,9 @@ async function initPresensi() {
     function tickPres() {
       const d = new Date();
       const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const clock = document.getElementById('presClock');
-      const dateEl = document.getElementById('presDate');
-      const camTime = document.getElementById('camTime');
+      const clock = el('presClock');
+      const dateEl = el('presDate');
+      const camTime = el('camTime');
       if (clock) clock.textContent = hms;
       if (dateEl) dateEl.textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (camTime) camTime.textContent = '🕐 ' + hms + ' WIB';
@@ -62,7 +77,7 @@ async function initPresensi() {
     // ============================================================
     // INIT KAMERA
     // ============================================================
-    const video = document.getElementById('video');
+    const video = el('video');
     if (video) {
       const ok = await startCamera(video, 'user');
       console.log('Camera:', ok);
@@ -76,16 +91,16 @@ async function initPresensi() {
       const loc = await getLocation();
       presensiState.lokasi = loc;
       const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)} (±${Math.round(loc.accuracy)}m)`;
-      const camLoc = document.getElementById('camLoc');
-      const geoStatus = document.getElementById('geoStatus');
+      const camLoc = el('camLoc');
+      const geoStatus = el('geoStatus');
       if (camLoc) camLoc.textContent = '📍 ' + locText;
       if (geoStatus) geoStatus.textContent = 'Lokasi terdeteksi: ' + locText;
-      const btnCapture = document.getElementById('btnCapture');
+      const btnCapture = el('btnCapture');
       if (btnCapture) btnCapture.disabled = false;
       console.log('Location:', loc);
     } catch (err) {
-      const camLoc = document.getElementById('camLoc');
-      const geoStatus = document.getElementById('geoStatus');
+      const camLoc = el('camLoc');
+      const geoStatus = el('geoStatus');
       if (camLoc) camLoc.textContent = '📍 Gagal deteksi lokasi';
       if (geoStatus) geoStatus.textContent = err.message;
       console.error('Location error:', err);
@@ -94,53 +109,84 @@ async function initPresensi() {
     // ============================================================
     // EVENT: CAPTURE
     // ============================================================
-    const btnCapture = document.getElementById('btnCapture');
+    const btnCapture = el('btnCapture');
     if (btnCapture) {
-      btnCapture.addEventListener('click', async () => {
-        if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
-        const v = document.getElementById('video');
-        const base64 = await captureWithWatermark(v, presensiState.lokasi);
-        const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
-        presensiState.fotoBase64 = compressed;
+      // Clone tombol untuk bersihkan listener lama
+      const newBtn = btnCapture.cloneNode(true);
+      btnCapture.parentNode.replaceChild(newBtn, btnCapture);
 
-        document.getElementById('previewImg').src = compressed;
-        document.getElementById('camPreview').hidden = false;
-        document.getElementById('camWrap').hidden = true;
-        btnCapture.hidden = true;
-        document.getElementById('btnRetake').hidden = false;
-        document.getElementById('btnSubmit').hidden = false;
-        toast('Foto berhasil diambil', 'success');
+      newBtn.addEventListener('click', async () => {
+        console.log('Capture clicked');
+        if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
+
+        const v = el('video');
+        if (!v) { toast('Video tidak ditemukan', 'error'); return; }
+
+        try {
+          const base64 = await captureWithWatermark(v, presensiState.lokasi);
+          const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
+          presensiState.fotoBase64 = compressed;
+
+          const previewImg = el('previewImg');
+          const camPreview = el('camPreview');
+          const camWrap = el('camWrap');
+          const btnRetake = el('btnRetake');
+          const btnSubmit = el('btnSubmit');
+
+          if (previewImg) previewImg.src = compressed;
+          if (camPreview) camPreview.hidden = false;
+          if (camWrap) camWrap.hidden = true;
+          if (newBtn) newBtn.hidden = true;
+          if (btnRetake) btnRetake.hidden = false;
+          if (btnSubmit) btnSubmit.hidden = false;
+
+          toast('Foto berhasil diambil', 'success');
+        } catch (err) {
+          console.error('Capture error:', err);
+          toast('Gagal ambil foto: ' + err.message, 'error');
+        }
       });
     }
 
     // ============================================================
     // EVENT: RETAKE
     // ============================================================
-    const btnRetake = document.getElementById('btnRetake');
+    const btnRetake = el('btnRetake');
     if (btnRetake) {
-      btnRetake.addEventListener('click', () => {
+      const newBtn = btnRetake.cloneNode(true);
+      btnRetake.parentNode.replaceChild(newBtn, btnRetake);
+
+      newBtn.addEventListener('click', () => {
         presensiState.fotoBase64 = null;
-        document.getElementById('camPreview').hidden = true;
-        document.getElementById('camWrap').hidden = false;
-        document.getElementById('btnCapture').hidden = false;
-        btnRetake.hidden = true;
-        document.getElementById('btnSubmit').hidden = true;
+        const camPreview = el('camPreview');
+        const camWrap = el('camWrap');
+        const btnCapture = el('btnCapture');
+        const btnSubmit = el('btnSubmit');
+
+        if (camPreview) camPreview.hidden = true;
+        if (camWrap) camWrap.hidden = false;
+        if (btnCapture) btnCapture.hidden = false;
+        if (newBtn) newBtn.hidden = true;
+        if (btnSubmit) btnSubmit.hidden = true;
       });
     }
 
     // ============================================================
     // EVENT: SUBMIT
     // ============================================================
-    const btnSubmit = document.getElementById('btnSubmit');
+    const btnSubmit = el('btnSubmit');
     if (btnSubmit) {
-      btnSubmit.addEventListener('click', async () => {
+      const newBtn = btnSubmit.cloneNode(true);
+      btnSubmit.parentNode.replaceChild(newBtn, btnSubmit);
+
+      newBtn.addEventListener('click', async () => {
         if (!presensiState.fotoBase64 || !presensiState.lokasi) {
           toast('Foto atau lokasi belum siap', 'warn');
           return;
         }
 
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Mengirim...';
+        newBtn.disabled = true;
+        newBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Mengirim...';
 
         try {
           const now = new Date();
@@ -178,20 +224,25 @@ async function initPresensi() {
           toast(`Check-${tipe} berhasil pada ${jam.slice(0, 5)} WIB`, 'success');
           renderPresensi();
 
-          // Reset
-          document.getElementById('camPreview').hidden = true;
-          document.getElementById('camWrap').hidden = false;
-          document.getElementById('btnCapture').hidden = false;
-          document.getElementById('btnRetake').hidden = true;
-          document.getElementById('btnSubmit').hidden = true;
+          // Reset UI
+          const camPreview = el('camPreview');
+          const camWrap = el('camWrap');
+          const btnCapture = el('btnCapture');
+          const btnRetake = el('btnRetake');
+          if (camPreview) camPreview.hidden = true;
+          if (camWrap) camWrap.hidden = false;
+          if (btnCapture) btnCapture.hidden = false;
+          if (btnRetake) btnRetake.hidden = true;
+          if (newBtn) newBtn.hidden = true;
+
           presensiState.fotoBase64 = null;
 
         } catch (err) {
-          console.error(err);
+          console.error('Submit error:', err);
           toast('Gagal: ' + err.message, 'error');
         } finally {
-          btnSubmit.disabled = false;
-          btnSubmit.innerHTML = '<i data-lucide="check"></i>Kirim Presensi';
+          newBtn.disabled = false;
+          newBtn.innerHTML = '<i data-lucide="check"></i>Kirim Presensi';
           if (window.refreshIcons) window.refreshIcons();
         }
       });
