@@ -91,26 +91,10 @@
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS STYLE v2 -->
+<!-- MODAL FULLSCREEN KAMERA — iOS STYLE (FINAL) -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
-  
-  <!-- FACE CUTOUT OVERLAY — pakai CSS clip-path, bukan SVG -->
-  <div class="cam-mask"></div>
-  
-  <!-- FACE GUIDE OVAL -->
-  <div class="cam-face-guide" id="faceGuide">
-    <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
-      <ellipse cx="150" cy="200" rx="118" ry="162" />
-    </svg>
-  </div>
-  
-  <!-- FACE STATUS -->
-  <div class="cam-face-status" id="faceStatus">
-    <div class="face-dot"></div>
-    <span class="face-label">Posisikan wajah Anda di dalam oval</span>
-  </div>
-  
+
   <!-- TOP DYNAMIC ISLAND PILL -->
   <div class="cam-top">
     <div class="cam-pill">
@@ -132,28 +116,40 @@
     </div>
   </div>
 
+  <!-- OVAL GUIDE & MASK -->
+  <div class="cam-viewport">
+    <div class="cam-oval-guide" id="faceGuide">
+      <div class="cam-face-status" id="faceStatus">
+        <div class="face-dot"></div>
+        <span class="face-label">Posisikan wajah Anda di dalam oval</span>
+      </div>
+    </div>
+  </div>
+
   <!-- BOTTOM FLOATING DOCK -->
-  <div class="cam-dock">
-    <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-    
-    <button type="button" class="cam-shutter" id="btnFsCapture" title="Ambil Foto">
-      <span class="shutter-ring"></span>
-      <span class="shutter-inner"></span>
-    </button>
-    
-    <button type="button" class="cam-dock-btn" id="btnFsSwitch" title="Ganti Kamera">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/>
-        <polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/>
-        <path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/>
-        <polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/>
-      </svg>
-    </button>
+  <div class="cam-dock-wrap">
+    <div class="cam-dock">
+      <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      
+      <button type="button" class="cam-shutter" id="btnFsCapture" title="Ambil Foto">
+        <span class="shutter-ring"></span>
+        <span class="shutter-inner"></span>
+      </button>
+      
+      <button type="button" class="cam-dock-btn" id="btnFsSwitch" title="Ganti Kamera">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/>
+          <polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/>
+          <path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/>
+          <polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -198,219 +194,210 @@
 .cam-fullscreen-btn:hover{background:rgba(0,0,0,.8);transform:scale(1.1)}
 .cam-fullscreen-btn svg{width:20px;height:20px}
 
-/* ============ FULLSCREEN CAMERA — iOS STYLE v2 ============ */
-.cam-fullscreen{position:fixed;inset:0;background:#000;z-index:200;display:none;overflow:hidden}
-.cam-fullscreen.open{display:block}
-.cam-fullscreen video{width:100%;height:100%;object-fit:cover}
-
-/* FACE CUTOUT OVERLAY — pakai radial mask presisi */
-.cam-mask {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 30% 38% at 50% 45%,
-    transparent 0%,
-    transparent 98%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
-  pointer-events: none;
-  z-index: 2;
+/* ============================================================
+   FULLSCREEN CAMERA — PERFECT iOS STYLE
+   ============================================================ */
+.cam-fullscreen{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:9999;
+  display:none;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
 }
-
-/* FACE GUIDE OVAL */
-.cam-face-guide{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:3}
-.cam-face-guide svg{width:70vw;max-width:340px;height:65vh;max-height:480px}
-.cam-face-guide ellipse{
-  fill:none;
-  stroke:rgba(255,255,255,.85);
-  stroke-width:2.5;
-  stroke-linecap:round;
-  transition:stroke .4s ease,stroke-width .3s ease,filter .3s ease;
-}
-.cam-face-guide.detected ellipse{
-  stroke:#34C759;
-  stroke-width:3;
-  filter:drop-shadow(0 0 12px rgba(52,199,89,.7));
-}
-
-/* FACE STATUS */
-.cam-face-status{
+.cam-fullscreen.open{display:flex}
+.cam-fullscreen video{
   position:absolute;
-  bottom:calc(28% + 20px);
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(28,28,30,.85);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border:0.5px solid rgba(255,255,255,.15);
-  border-radius:99px;
-  padding:10px 20px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:#fff;
-  font:600 13.5px -apple-system,'Plus Jakarta Sans',sans-serif;
-  transition:all .3s cubic-bezier(.4,0,.2,1);
-  white-space:nowrap;
-  z-index:5;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);
-  max-width:90vw;
-}
-.cam-face-status.detected{
-  background:rgba(52,199,89,.9);
-  border-color:rgba(255,255,255,.3);
-}
-.face-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#FFCC00;
-  position:relative;
-  flex:none;
-  transition:background .3s;
-}
-.face-dot::before{
-  content:'';
-  position:absolute;
-  inset:-4px;
-  border-radius:50%;
-  border:1.5px solid rgba(255,204,0,.4);
-  animation:facePulse 1.8s ease-in-out infinite;
-}
-.cam-face-status.detected .face-dot{background:#fff}
-.cam-face-status.detected .face-dot::before{border-color:rgba(255,255,255,.4)}
-@keyframes facePulse{
-  0%,100%{transform:scale(1);opacity:1}
-  50%{transform:scale(1.5);opacity:0}
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:1;
 }
 
 /* TOP DYNAMIC ISLAND PILL */
 .cam-top{
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  padding:16px 20px;
-  padding-top:calc(20px + env(safe-area-inset-top, 0px));
+  position:relative;
+  z-index:10;
+  width:100%;
   display:flex;
   justify-content:center;
-  pointer-events:none;
-  z-index:4;
+  padding-top:max(16px, env(safe-area-inset-top));
+  padding-bottom:12px;
 }
 .cam-pill{
+  background:rgba(20,20,22,.65);
+  backdrop-filter:blur(25px);
+  -webkit-backdrop-filter:blur(25px);
+  border:0.5px solid rgba(255,255,255,.18);
+  border-radius:99px;
+  padding:8px 16px;
   display:flex;
   align-items:center;
-  gap:0;
-  background:rgba(28,28,30,.75);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border:0.5px solid rgba(255,255,255,.15);
-  border-radius:99px;
-  padding:8px 18px;
-  box-shadow:0 4px 20px rgba(0,0,0,.4);
-  max-width:95vw;
+  gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.3);
+  max-width:calc(100vw - 32px);
 }
 .pill-item{
   display:flex;
   align-items:center;
-  gap:7px;
+  gap:6px;
   color:#fff;
-  font:600 13px -apple-system,'Plus Jakarta Sans',sans-serif;
+  font:600 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.pill-item svg{
-  width:15px;
-  height:15px;
-  flex:none;
-  opacity:.85;
-}
-.pill-divider{
-  width:1px;
-  height:16px;
-  background:rgba(255,255,255,.25);
-  margin:0 14px;
-  flex:none;
-}
+.pill-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.85);flex:none}
+.pill-divider{width:1px;height:12px;background:rgba(255,255,255,.2);flex:none}
 
-/* BOTTOM FLOATING DOCK — FROSTED GLASS */
-.cam-dock{
-  position:absolute;
-  left:16px;
-  right:16px;
-  bottom:calc(16px + env(safe-area-inset-bottom, 16px));
-  background:rgba(255,255,255,.15);
-  backdrop-filter:blur(25px) saturate(180%);
-  -webkit-backdrop-filter:blur(25px) saturate(180%);
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:32px;
-  padding:16px 24px;
+/* VIEWPORT & PERFECT OVAL MASK */
+.cam-viewport{
+  position:relative;
+  z-index:5;
+  flex:1;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
-  z-index:6;
-  max-width:520px;
-  margin:0 auto;
+  justify-content:center;
+}
+.cam-oval-guide{
+  position:relative;
+  width:min(72vw, 280px);
+  height:min(100vw, 390px);
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.85);
+  /* MASK ANTI-BOCOR: box-shadow spread 9999px */
+  box-shadow:0 0 0 9999px rgba(0,0,0,.55);
+  transition:border-color .3s ease, box-shadow .3s ease;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding-bottom:24px;
+}
+.cam-oval-guide.detected{
+  border-color:#34C759;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.55), 0 0 20px rgba(52,199,89,.5);
 }
 
-/* DOCK SIDE BUTTONS — iOS STYLE */
-.cam-dock-btn{
-  width:48px;
-  height:48px;
+/* STATUS SENSOR WAJAH */
+.cam-face-status{
+  background:rgba(28,28,30,.8);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:0.5px solid rgba(255,255,255,.15);
+  border-radius:99px;
+  padding:8px 16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  font:500 12px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+  transition:all .3s ease;
+  transform:translateY(50px);
+  white-space:nowrap;
+}
+.cam-oval-guide.detected .cam-face-status{
+  background:rgba(52,199,89,.9);
+  border-color:rgba(255,255,255,.3);
+}
+.face-dot{
+  width:7px;
+  height:7px;
   border-radius:50%;
-  background:rgba(120,120,128,.32);
-  border:0;
+  background:#FFCC00;
+  position:relative;
+  flex:none;
+}
+.face-dot::before{
+  content:'';
+  position:absolute;
+  inset:-3px;
+  border-radius:50%;
+  border:1px solid rgba(255,204,0,.5);
+  animation:facePulse 1.8s ease-in-out infinite;
+}
+.cam-oval-guide.detected .face-dot{background:#fff}
+.cam-oval-guide.detected .face-dot::before{border-color:rgba(255,255,255,.6)}
+@keyframes facePulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.6);opacity:0}
+}
+
+/* BOTTOM DOCK PANEL */
+.cam-dock-wrap{
+  position:relative;
+  z-index:10;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  padding-bottom:max(24px, env(safe-area-inset-bottom));
+  padding-top:12px;
+}
+.cam-dock{
+  background:rgba(250,250,250,.15);
+  backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  border:0.5px solid rgba(255,255,255,.25);
+  border-radius:44px;
+  padding:10px 24px;
+  display:flex;
+  align-items:center;
+  gap:32px;
+  box-shadow:0 10px 40px rgba(0,0,0,.4);
+}
+.cam-dock-btn{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:rgba(255,255,255,.12);
+  border:0.5px solid rgba(255,255,255,.2);
   color:#fff;
   display:grid;
   place-items:center;
   cursor:pointer;
-  transition:all .2s cubic-bezier(.4,0,.2,1);
+  transition:transform .15s ease, background .2s ease;
   flex:none;
-}
-.cam-dock-btn:hover{
-  background:rgba(120,120,128,.5);
-  transform:scale(1.06);
 }
 .cam-dock-btn:active{
   transform:scale(.92);
+  background:rgba(255,255,255,.25);
 }
-.cam-dock-btn svg{
-  width:22px;
-  height:22px;
-  stroke-width:2.2;
-}
+.cam-dock-btn svg{width:20px;height:20px}
 
-/* SHUTTER — iOS CAMERA STYLE */
+/* SHUTTER BUTTON iOS */
 .cam-shutter{
-  width:76px;
-  height:76px;
-  border-radius:50%;
-  background:transparent;
-  border:0;
   position:relative;
+  width:68px;
+  height:68px;
+  background:transparent;
+  border:none;
   cursor:pointer;
+  display:grid;
+  place-items:center;
   padding:0;
-  transition:transform .15s ease;
   flex:none;
 }
 .shutter-ring{
   position:absolute;
   inset:0;
   border-radius:50%;
-  border:4px solid #FFFFFF;
-  background:transparent;
+  border:4px solid #fff;
+  transition:transform .15s ease;
 }
 .shutter-inner{
-  position:absolute;
-  inset:6px;
+  width:52px;
+  height:52px;
   border-radius:50%;
-  background:#FFFFFF;
-  transition:all .15s cubic-bezier(.4,0,.2,1);
+  background:#fff;
+  transition:transform .15s ease, background-color .2s;
 }
-.cam-shutter:hover .shutter-inner{transform:scale(1.04)}
-.cam-shutter:active .shutter-inner{transform:scale(.88);background:#E5E5EA}
+.cam-shutter:active .shutter-inner{
+  transform:scale(.88);
+  background:#E5E5EA;
+}
+.cam-shutter:active .shutter-ring{transform:scale(.96)}
 
 /* ============ MODAL SUKSES ============ */
 .m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
@@ -427,14 +414,19 @@
   .map-wrap iframe{height:160px}
 }
 @media (max-width:560px){
-  .cam-face-guide svg{width:78vw;height:58vh}
-  .cam-face-status{bottom:calc(26% + 12px);font-size:12.5px;padding:9px 16px;gap:8px}
-  .cam-dock{left:12px;right:12px;padding:14px 20px;border-radius:28px;bottom:calc(16px + env(safe-area-inset-bottom, 16px))}
-  .cam-dock-btn{width:44px;height:44px}
-  .cam-shutter{width:68px;height:68px}
-  .cam-pill{padding:7px 14px}
-  .pill-item{font-size:12px;gap:6px}
+  .cam-oval-guide{
+    width:min(78vw, 260px);
+    height:min(110vw, 360px);
+  }
+  .cam-dock{
+    padding:10px 18px;
+    gap:24px;
+  }
+  .cam-dock-btn{width:40px;height:40px}
+  .cam-shutter{width:62px;height:62px}
+  .shutter-inner{width:46px;height:46px}
+  .pill-item{font-size:11.5px;gap:5px}
   .pill-item svg{width:13px;height:13px}
-  .pill-divider{margin:0 10px;height:14px}
+  .cam-face-status{font-size:11.5px;padding:7px 14px;transform:translateY(42px)}
 }
 </style>
