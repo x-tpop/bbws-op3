@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v10 — iOS Redesign)
+// PRESENSI.JS — Logic halaman presensi (v11 — iOS Modal)
 // ============================================================
 
 const presensiState = {
@@ -109,7 +109,7 @@ async function initPresensi() {
     renderPresensi();
 
     // ============================================================
-    // SEGMENTED CONTROL (iOS Style)
+    // SEGMENTED CONTROL
     // ============================================================
     const segButtons = document.querySelectorAll('.seg-btn');
     segButtons.forEach(btn => {
@@ -118,7 +118,6 @@ async function initPresensi() {
         btn.classList.add('active');
         presensiState.status = btn.dataset.status;
         
-        // Tampilkan keterangan jika perlu
         const ketWrap = el('ketWrap');
         if (ketWrap) {
           ketWrap.style.display = ['Izin', 'Sakit', 'Dinas Luar'].includes(presensiState.status) ? 'flex' : 'none';
@@ -128,7 +127,6 @@ async function initPresensi() {
       });
     });
 
-    // Set active state saat init
     if (presensiState.status) {
       segButtons.forEach(b => {
         b.classList.toggle('active', b.dataset.status === presensiState.status);
@@ -136,7 +134,7 @@ async function initPresensi() {
     }
 
     // ============================================================
-    // INIT KAMERA (live widget)
+    // INIT KAMERA
     // ============================================================
     const video = el('video');
     if (video) {
@@ -150,9 +148,7 @@ async function initPresensi() {
     if (camWrap) {
       camWrap.addEventListener('click', (e) => {
         if (e.target.closest('#btnCapture')) return;
-        const btnFs = el('btnFullscreen');
-        if (btnFs) btnFs.click();
-        else openFullscreenDirect();
+        openFullscreenDirect();
       });
     }
 
@@ -328,12 +324,16 @@ function attachSubmitHandler(btn, session, pegawai, today) {
 
       renderPresensi();
 
+      // Ambil nama kota untuk modal
+      const namaKota = await getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng);
+
       showSuksesModal({
         tipe: tipe,
         status: status,
         jam: jam.slice(0, 5),
         tanggal: now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
         lokasi: lokasiStr,
+        lokasiNama: namaKota,
         keterangan: ket
       });
 
@@ -357,7 +357,7 @@ function attachSubmitHandler(btn, session, pegawai, today) {
 }
 
 // ============================================================
-// MODAL SUKSES
+// MODAL SUKSES — iOS Alert Sheet
 // ============================================================
 function showSuksesModal(data) {
   const modal = document.getElementById('suksesModal');
@@ -365,19 +365,28 @@ function showSuksesModal(data) {
 
   const title = document.getElementById('suksesTitle');
   const msg = document.getElementById('suksesMsg');
-  const detail = document.getElementById('suksesDetail');
+  const date = document.getElementById('succDate');
+  const time = document.getElementById('succTime');
+  const status = document.getElementById('succStatus');
+  const locName = document.getElementById('succLocName');
+  const locCoords = document.getElementById('succLocCoords');
+  const ketRow = document.getElementById('succKetRow');
+  const ket = document.getElementById('succKet');
 
   if (title) title.textContent = data.tipe === 'masuk' ? 'Check-in Berhasil!' : 'Check-out Berhasil!';
-  if (msg) msg.textContent = `Presensi ${data.tipe} Anda telah tercatat.`;
+  if (msg) msg.textContent = `Presensi ${data.tipe} Anda telah tercatat pada sistem e-kehadiran.`;
+  if (date) date.textContent = data.tanggal || '—';
+  if (time) time.textContent = (data.jam || '—') + ' WIB';
+  if (status) status.textContent = data.status || '—';
 
-  if (detail) {
-    detail.innerHTML = `
-      <div class="row"><span>Tanggal</span><b>${data.tanggal}</b></div>
-      <div class="row"><span>Jam ${data.tipe === 'masuk' ? 'Masuk' : 'Keluar'}</span><b>${data.jam} WIB</b></div>
-      <div class="row"><span>Status</span><b>${data.status}</b></div>
-      ${data.keterangan ? `<div class="row"><span>Keterangan</span><b>${data.keterangan}</b></div>` : ''}
-      <div class="row"><span>Lokasi</span><b style="font-size:12px">${data.lokasi}</b></div>
-    `;
+  if (locName) locName.textContent = data.lokasiNama || data.lokasi || '—';
+  if (locCoords) locCoords.textContent = data.lokasi || '—';
+
+  if (data.keterangan && ketRow && ket) {
+    ketRow.style.display = 'flex';
+    ket.textContent = data.keterangan;
+  } else if (ketRow) {
+    ketRow.style.display = 'none';
   }
 
   modal.classList.add('open');
