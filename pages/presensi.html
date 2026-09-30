@@ -18,7 +18,6 @@
         </div>
       </div>
       
-      <!-- STATUS PRESENSI -->
       <div class="field" style="margin-top:12px">
         <label>Status Kehadiran</label>
         <select id="presStatus">
@@ -30,7 +29,6 @@
         </select>
       </div>
 
-      <!-- KETERANGAN -->
       <div class="field" id="ketWrap" style="display:none">
         <label>Keterangan</label>
         <textarea id="presKet" rows="2" placeholder="Contoh: izin keperluan keluarga / sakit demam / dinas ke kantor pusat..."></textarea>
@@ -38,17 +36,10 @@
 
       <div class="pres-note" id="presNote">Memuat...</div>
 
-      <!-- MINI MAPS -->
       <div class="field" style="margin-top:8px">
         <label>Lokasi Anda</label>
         <div class="map-wrap">
-          <iframe 
-            id="miniMap" 
-            src="about:blank"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            style="border:0;width:100%;height:200px;border-radius:14px">
-          </iframe>
+          <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="border:0;width:100%;height:200px;border-radius:14px"></iframe>
           <div class="map-overlay" id="mapOverlay">
             <i data-lucide="map-pin"></i>
             <span id="geoStatus">Mendeteksi lokasi...</span>
@@ -62,7 +53,6 @@
       <span class="kicker">Kamera Presensi</span>
       <h3 style="margin:8px 0 16px">Ambil Foto</h3>
 
-      <!-- KAMERA WRAP -->
       <div class="cam-wrap" id="camWrap">
         <video id="video" autoplay playsinline muted></video>
         <div class="cam-watermark">
@@ -74,12 +64,10 @@
         </button>
       </div>
 
-      <!-- PREVIEW -->
       <div class="cam-preview" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
       </div>
 
-      <!-- TOMBOL AKSI -->
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button type="button" class="btn btn-blue" id="btnCapture" disabled>
           <i data-lucide="camera"></i>Ambil Foto
@@ -92,7 +80,6 @@
         </button>
       </div>
 
-      <!-- INFO SETELAH FOTO -->
       <div class="info-after" id="infoAfter" hidden>
         <i data-lucide="info"></i>
         <div>
@@ -104,27 +91,17 @@
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS STYLE -->
+<!-- MODAL FULLSCREEN KAMERA — iOS STYLE v2 -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
   
-  <!-- DARK OVERLAY + FACE CUTOUT -->
-  <div class="cam-overlay">
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="cam-overlay-svg">
-      <defs>
-        <mask id="faceMask">
-          <rect width="100" height="100" fill="white"/>
-          <ellipse cx="50" cy="45" rx="30" ry="38" fill="black"/>
-        </mask>
-      </defs>
-      <rect width="100" height="100" fill="rgba(0,0,0,0.55)" mask="url(#faceMask)"/>
-    </svg>
-  </div>
+  <!-- FACE CUTOUT OVERLAY — pakai CSS clip-path, bukan SVG -->
+  <div class="cam-mask"></div>
   
   <!-- FACE GUIDE OVAL -->
   <div class="cam-face-guide" id="faceGuide">
-    <svg viewBox="0 0 300 400" preserveAspectRatio="none">
-      <ellipse cx="150" cy="200" rx="120" ry="165" />
+    <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
+      <ellipse cx="150" cy="200" rx="118" ry="162" />
     </svg>
   </div>
   
@@ -138,7 +115,7 @@
   <div class="cam-top">
     <div class="cam-pill">
       <div class="pill-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
@@ -146,7 +123,7 @@
       </div>
       <div class="pill-divider"></div>
       <div class="pill-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
           <circle cx="12" cy="10" r="3"/>
         </svg>
@@ -155,15 +132,10 @@
     </div>
   </div>
 
-  <!-- WATERMARK COORDS -->
-  <div class="cam-fs-watermark">
-    <div class="fs-loc" id="camFsLoc2">📍 Mendeteksi lokasi...</div>
-  </div>
-
   <!-- BOTTOM FLOATING DOCK -->
   <div class="cam-dock">
     <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"/>
         <line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -175,11 +147,11 @@
     </button>
     
     <button type="button" class="cam-dock-btn" id="btnFsSwitch" title="Ganti Kamera">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 3a9 9 0 0 1 3 7v3"/>
-        <polyline points="20 13 17 16 14 13"/>
-        <path d="M7 21a9 9 0 0 1-3-7v-3"/>
-        <polyline points="4 11 7 8 10 11"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/>
+        <polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/>
+        <path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/>
+        <polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/>
       </svg>
     </button>
   </div>
@@ -226,16 +198,26 @@
 .cam-fullscreen-btn:hover{background:rgba(0,0,0,.8);transform:scale(1.1)}
 .cam-fullscreen-btn svg{width:20px;height:20px}
 
-/* ============ FULLSCREEN CAMERA — iOS STYLE ============ */
+/* ============ FULLSCREEN CAMERA — iOS STYLE v2 ============ */
 .cam-fullscreen{position:fixed;inset:0;background:#000;z-index:200;display:none;overflow:hidden}
 .cam-fullscreen.open{display:block}
 .cam-fullscreen video{width:100%;height:100%;object-fit:cover}
 
-/* DARK OVERLAY WITH FACE CUTOUT */
-.cam-overlay{position:absolute;inset:0;pointer-events:none;z-index:2}
-.cam-overlay-svg{width:100%;height:100%;display:block}
+/* FACE CUTOUT OVERLAY — pakai radial mask presisi */
+.cam-mask {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 30% 38% at 50% 45%,
+    transparent 0%,
+    transparent 98%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
 
-/* FACE GUIDE OVAL (SOLID) */
+/* FACE GUIDE OVAL */
 .cam-face-guide{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:3}
 .cam-face-guide svg{width:70vw;max-width:340px;height:65vh;max-height:480px}
 .cam-face-guide ellipse{
@@ -251,7 +233,7 @@
   filter:drop-shadow(0 0 12px rgba(52,199,89,.7));
 }
 
-/* FACE STATUS — CENTERED CAPSULE */
+/* FACE STATUS */
 .cam-face-status{
   position:absolute;
   bottom:calc(28% + 20px);
@@ -309,7 +291,7 @@
   left:0;
   right:0;
   padding:16px 20px;
-  padding-top:calc(20px + env(safe-area-inset-top));
+  padding-top:calc(20px + env(safe-area-inset-top, 0px));
   display:flex;
   justify-content:center;
   pointer-events:none;
@@ -335,6 +317,8 @@
   color:#fff;
   font:600 13px -apple-system,'Plus Jakarta Sans',sans-serif;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .pill-item svg{
   width:15px;
@@ -350,37 +334,16 @@
   flex:none;
 }
 
-/* SUBTLE WATERMARK */
-.cam-fs-watermark{
-  position:absolute;
-  bottom:130px;
-  left:0;
-  right:0;
-  text-align:center;
-  color:rgba(255,255,255,.75);
-  font:600 11px -apple-system,'SF Mono','Space Grotesk',monospace;
-  padding:0 20px;
-  text-shadow:0 2px 8px rgba(0,0,0,.6);
-  pointer-events:none;
-  z-index:3;
-  letter-spacing:.03em;
-}
-.cam-fs-watermark .fs-loc{
-  font-size:11px;
-  opacity:.7;
-}
-
-/* BOTTOM FLOATING DOCK */
+/* BOTTOM FLOATING DOCK — FROSTED GLASS */
 .cam-dock{
   position:absolute;
-  bottom:0;
   left:16px;
   right:16px;
-  bottom:calc(20px + env(safe-area-inset-bottom));
-  background:rgba(28,28,30,.7);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border:0.5px solid rgba(255,255,255,.12);
+  bottom:calc(16px + env(safe-area-inset-bottom, 16px));
+  background:rgba(255,255,255,.15);
+  backdrop-filter:blur(25px) saturate(180%);
+  -webkit-backdrop-filter:blur(25px) saturate(180%);
+  border:1px solid rgba(255,255,255,.2);
   border-radius:32px;
   padding:16px 24px;
   display:flex;
@@ -392,7 +355,7 @@
   margin:0 auto;
 }
 
-/* DOCK SIDE BUTTONS */
+/* DOCK SIDE BUTTONS — iOS STYLE */
 .cam-dock-btn{
   width:48px;
   height:48px;
@@ -412,11 +375,11 @@
 }
 .cam-dock-btn:active{
   transform:scale(.92);
-  background:rgba(120,120,128,.6);
 }
 .cam-dock-btn svg{
   width:22px;
   height:22px;
+  stroke-width:2.2;
 }
 
 /* SHUTTER — iOS CAMERA STYLE */
@@ -438,7 +401,6 @@
   border-radius:50%;
   border:4px solid #FFFFFF;
   background:transparent;
-  transition:border-color .15s ease;
 }
 .shutter-inner{
   position:absolute;
@@ -447,13 +409,8 @@
   background:#FFFFFF;
   transition:all .15s cubic-bezier(.4,0,.2,1);
 }
-.cam-shutter:hover .shutter-inner{
-  transform:scale(1.04);
-}
-.cam-shutter:active .shutter-inner{
-  transform:scale(.88);
-  background:#E5E5EA;
-}
+.cam-shutter:hover .shutter-inner{transform:scale(1.04)}
+.cam-shutter:active .shutter-inner{transform:scale(.88);background:#E5E5EA}
 
 /* ============ MODAL SUKSES ============ */
 .m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
@@ -472,13 +429,12 @@
 @media (max-width:560px){
   .cam-face-guide svg{width:78vw;height:58vh}
   .cam-face-status{bottom:calc(26% + 12px);font-size:12.5px;padding:9px 16px;gap:8px}
-  .cam-dock{left:12px;right:12px;padding:14px 20px;border-radius:28px}
+  .cam-dock{left:12px;right:12px;padding:14px 20px;border-radius:28px;bottom:calc(16px + env(safe-area-inset-bottom, 16px))}
   .cam-dock-btn{width:44px;height:44px}
   .cam-shutter{width:68px;height:68px}
   .cam-pill{padding:7px 14px}
   .pill-item{font-size:12px;gap:6px}
   .pill-item svg{width:13px;height:13px}
   .pill-divider{margin:0 10px;height:14px}
-  .cam-fs-watermark{bottom:110px}
 }
 </style>
