@@ -28,13 +28,13 @@ if (pegawai.link_foto_2 || pegawai.link_foto_1) {
 // DAFTAR HALAMAN
 // ============================================================
 const PAGES = {
-  dashboard:  { k: 'Portal Pegawai', t: 'Dashboard',                file: 'pages/dashboard.html',  init: null,                  roles: ['*'] },
-  presensi:   { k: 'E-Kehadiran',    t: 'Presensi',                 file: 'pages/presensi.html',   init: 'initPresensi',         roles: ['*'] },
-  verifikasi: { k: 'Verifikasi',     t: 'Verifikasi Presensi',      file: 'pages/verifikasi.html', init: 'initVerifikasi',       roles: ['admin','ppk','staf_pengamat'] },
-  monitoring: { k: 'Monitoring',     t: 'Monitoring PPA & Pekarya', file: 'pages/monitoring.html', init: 'initMonitoring',       roles: ['admin','ppk','staf_pengamat'] },
-  koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', init: 'initKoordinasi',       roles: ['admin','ppk','staf_pengamat'] },
-  laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    init: 'initLaporan',          roles: ['*'] },
-  biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    init: 'initBiodata',          roles: ['*'] }
+  dashboard:  { k: 'Portal Pegawai', t: 'Dashboard',                file: 'pages/dashboard.html',  roles: ['*'] },
+  presensi:   { k: 'E-Kehadiran',    t: 'Presensi',                 file: 'pages/presensi.html',   roles: ['*'] },
+  verifikasi: { k: 'Verifikasi',     t: 'Verifikasi Presensi',      file: 'pages/verifikasi.html', roles: ['admin','ppk','staf_pengamat'] },
+  monitoring: { k: 'Monitoring',     t: 'Monitoring PPA & Pekarya', file: 'pages/monitoring.html', roles: ['admin','ppk','staf_pengamat'] },
+  koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', roles: ['admin','ppk','staf_pengamat'] },
+  laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    roles: ['*'] },
+  biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    roles: ['*'] }
 };
 
 // ============================================================
@@ -49,7 +49,7 @@ Object.entries(PAGES).forEach(([key, page]) => {
 });
 
 // ============================================================
-// ROUTER — Load halaman via fetch
+// ROUTER
 // ============================================================
 let currentPage = null;
 
@@ -58,24 +58,24 @@ async function go(pageName) {
     console.warn('Halaman tidak dikenal:', pageName);
     return;
   }
-  
+
   currentPage = pageName;
   const page = PAGES[pageName];
-  
+
   // Update sidebar & bottom nav
   $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
   $$('.bnav-item').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
-  
+
   // Update judul
   $('#tbKicker').textContent = page.k;
   $('#tbTitle').textContent = page.t;
-  
-  // Update URL hash (agar bisa di-bookmark)
+
+  // Update URL hash
   location.hash = pageName;
-  
+
   // Scroll ke atas
   window.scrollTo(0, 0);
-  
+
   // Show loading
   const container = $('#pageContainer');
   container.innerHTML = `
@@ -83,22 +83,34 @@ async function go(pageName) {
       <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
       <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
     </div>`;
-  
+
   try {
-    // Fetch HTML halaman
+    // Fetch HTML
     const res = await fetch(page.file + '?v=' + Date.now());
     if (!res.ok) throw new Error('Gagal memuat halaman: ' + res.status);
     const html = await res.text();
-    
-    // Inject
+
+    // Inject HTML
     container.innerHTML = html;
-    refreshIcons();
-    
-    // Jalankan init() halaman jika ada
-    if (page.init && typeof window[page.init] === 'function') {
-      window[page.init]();
+
+    // ============================================================
+    // PENTING: JALANKAN <script> DI DALAM HTML
+    // ============================================================
+    const scripts = container.querySelectorAll('script');
+    for (const oldScript of scripts) {
+      const newScript = document.createElement('script');
+      // Copy atribut
+      [...oldScript.attributes].forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      // Copy isi
+      newScript.textContent = oldScript.textContent;
+      // Replace
+      oldScript.parentNode.replaceChild(newScript, oldScript);
     }
-    
+
+    refreshIcons();
+
   } catch (err) {
     console.error('Router error:', err);
     container.innerHTML = `
@@ -142,7 +154,7 @@ function tick() {
 tick(); setInterval(tick, 1000);
 
 // ============================================================
-// TOAST (global)
+// TOAST
 // ============================================================
 function toast(msg, type = 'success') {
   const ic = { success: 'circle-check', info: 'info', warn: 'triangle-alert', error: 'circle-alert' }[type];
@@ -154,7 +166,7 @@ function toast(msg, type = 'success') {
 }
 
 // ============================================================
-// MODAL FOTO (global)
+// MODAL FOTO
 // ============================================================
 function openFotoModal(url, nama) {
   const modal = document.getElementById('fotoModal');
@@ -187,7 +199,7 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ============================================================
-// INIT — Load halaman dari hash atau default
+// INIT
 // ============================================================
 const initialPage = location.hash.replace('#', '') || 'dashboard';
 go(PAGES[initialPage] ? initialPage : 'dashboard');
@@ -198,7 +210,9 @@ window.addEventListener('hashchange', () => {
   if (p && p !== currentPage && PAGES[p]) go(p);
 });
 
-// Polyfill global untuk refreshIcons
+// ============================================================
+// EXPOSE GLOBAL
+// ============================================================
 window.refreshIcons = refreshIcons;
 window.toast = toast;
 window.go = go;
