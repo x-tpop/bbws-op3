@@ -27,13 +27,12 @@
         <span class="kicker">Status Kehadiran</span>
       </div>
 
-      <!-- Segmented Control iOS -->
       <div class="segmented" id="segmentedStatus">
         <button type="button" class="seg-btn active" data-status="Hadir">Hadir</button>
         <button type="button" class="seg-btn" data-status="Izin">Izin</button>
         <button type="button" class="seg-btn" data-status="Sakit">Sakit</button>
         <button type="button" class="seg-btn" data-status="Dinas Luar">Dinas</button>
-        <button type="button" class="seg-btn" data-status="Kerja Gabungan">Gabungan</button>
+        <button type="button" class="seg-btn" data-status="Kerja Gabungan">Gab</button>
       </div>
 
       <div class="field-ios" id="ketWrap" style="display:none">
@@ -51,7 +50,6 @@
       </div>
       <div class="map-wrap-ios">
         <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <!-- Floating Location Card -->
         <div class="location-card">
           <div class="lc-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -73,38 +71,32 @@
         <span class="kicker">Kamera Presensi</span>
       </div>
 
-      <!-- LIVE CAMERA WIDGET -->
       <div class="camera-live" id="camWrap">
         <video id="video" autoplay playsinline muted></video>
         
-        <!-- Floating Badge LIVE -->
         <div class="cam-live-badge">
           <span class="live-dot"></span>
           <span>LIVE</span>
         </div>
 
-        <!-- Floating Location Pill -->
         <div class="cam-location-pill">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
-          <span id="camLoc">-8.443, 114.194</span>
+          <span id="camLoc">—</span>
         </div>
 
-        <!-- Floating Time Pill -->
         <div class="cam-time-pill">
-          <span id="camTime">23:06:30</span>
+          <span id="camTime">--:--:--</span>
         </div>
 
-        <!-- Shutter Overlay Button -->
         <button type="button" class="cam-shutter-overlay" id="btnCapture" disabled title="Ambil Foto">
           <span class="cs-ring"></span>
           <span class="cs-inner"></span>
         </button>
       </div>
 
-      <!-- Preview -->
       <div class="cam-preview-ios" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
         <button type="button" class="preview-retake" id="btnRetake">
@@ -112,7 +104,6 @@
         </button>
       </div>
 
-      <!-- Info After -->
       <div class="info-after-ios" id="infoAfter" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -125,11 +116,14 @@
       <button type="button" class="btn-ios-primary" id="btnSubmit" hidden>
         <i data-lucide="check"></i>Kirim Presensi
       </button>
+
+      <!-- Hidden fullscreen trigger -->
+      <button type="button" id="btnFullscreen" style="display:none"></button>
     </div>
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS HIG -->
+<!-- MODAL FULLSCREEN KAMERA -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
@@ -208,21 +202,25 @@
 
 <style>
 /* ============================================================
-   iOS DESIGN SYSTEM OVERRIDES
+   iOS DESIGN SYSTEM — FIXED
    ============================================================ */
 .grid-pres{
   background:#F2F2F7;
-  padding:12px;
+  padding:14px;
   border-radius:20px;
   display:grid;
   grid-template-columns:1fr;
-  gap:14px;
+  gap:12px;
 }
 @media (min-width:920px){
   .grid-pres{
     grid-template-columns:1fr 1fr;
     padding:16px;
-    gap:16px;
+    gap:14px;
+    align-items:start;
+  }
+  .card-camera{
+    grid-row: span 2;
   }
 }
 
@@ -231,14 +229,14 @@
   background:#FFFFFF;
   border:0;
   border-radius:20px;
-  padding:18px;
+  padding:16px;
   box-shadow:0 4px 20px rgba(0,0,0,.04);
 }
 .card-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:14px;
+  margin-bottom:12px;
 }
 .card-head .kicker{
   font:800 11px var(--font);
@@ -247,43 +245,44 @@
   color:#8E8E93;
 }
 
-/* BIG CLOCK iOS */
+/* BIG CLOCK */
 .today-date{
-  font:600 15px var(--font);
+  font:600 14px var(--font);
   color:#3C3C43;
-  margin:0 0 8px;
+  margin:0 0 6px;
 }
 .big-clock{
-  font:700 clamp(40px,5vw,56px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
+  font:700 clamp(36px,4.5vw,52px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
   letter-spacing:-.02em;
   color:#000;
   line-height:1;
-  margin-bottom:20px;
+  margin-bottom:16px;
 }
 .big-clock small{
-  font:600 14px -apple-system,'SF Pro Text',sans-serif;
+  font:600 13px -apple-system,'SF Pro Text',sans-serif;
   color:#8E8E93;
   margin-left:6px;
   letter-spacing:0;
 }
 
-/* TIMELINE iOS */
+/* TIMELINE */
 .ptl-ios{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
   background:#F2F2F7;
   border-radius:14px;
-  padding:14px 16px;
+  padding:12px 14px;
 }
 .ptl-ios .ptl-node{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
+  min-width:0;
 }
 .ptl-ios .ptl-ic{
-  width:38px;
-  height:38px;
+  width:36px;
+  height:36px;
   border-radius:50%;
   background:#E5E5EA;
   border:0;
@@ -291,20 +290,21 @@
   place-items:center;
   color:#8E8E93;
   transition:.2s;
+  flex:none;
 }
 .ptl-ios .ptl-node.done .ptl-ic{
   background:#34C759;
   color:#fff;
 }
 .ptl-ios .ptl-node span{
-  font:700 10.5px var(--font);
-  letter-spacing:.08em;
+  font:700 10px var(--font);
+  letter-spacing:.06em;
   text-transform:uppercase;
   color:#8E8E93;
   display:block;
 }
 .ptl-ios .ptl-node b{
-  font:700 16px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:700 14px -apple-system,'SF Mono','Space Grotesk',monospace;
   color:#000;
 }
 .ptl-ios .ptl-line{
@@ -312,33 +312,36 @@
   height:2px;
   border-radius:99px;
   background:#E5E5EA;
+  min-width:20px;
 }
 .ptl-ios.on .ptl-line{background:#34C759}
 
-/* SEGMENTED CONTROL iOS */
+/* SEGMENTED */
 .segmented{
   display:flex;
   background:#E5E5EA;
   border-radius:11px;
-  padding:2px;
+  padding:3px;
   gap:2px;
   margin-bottom:14px;
   overflow-x:auto;
   scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
 }
 .segmented::-webkit-scrollbar{display:none}
 .seg-btn{
   flex:1;
-  min-width:70px;
+  min-width:58px;
   border:0;
   background:transparent;
   color:#3C3C43;
-  font:600 13px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
-  padding:8px 12px;
-  border-radius:9px;
+  font:600 12.5px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
+  padding:7px 10px;
+  border-radius:8px;
   cursor:pointer;
   transition:.2s cubic-bezier(.4,0,.2,1);
   white-space:nowrap;
+  text-align:center;
 }
 .seg-btn.active{
   background:#FFFFFF;
@@ -346,7 +349,7 @@
   box-shadow:0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04);
 }
 
-/* FIELD iOS */
+/* FIELD */
 .field-ios{
   display:flex;
   flex-direction:column;
@@ -368,7 +371,6 @@
   color:#000;
   resize:vertical;
   width:100%;
-  transition:.15s;
 }
 .field-ios textarea:focus{
   outline:0;
@@ -376,23 +378,32 @@
   box-shadow:0 0 0 3px rgba(0,122,255,.15);
 }
 
-/* PRES NOTE iOS */
+/* PRES NOTE */
 .pres-note-ios{
   background:#E5E5EA;
   border-radius:12px;
-  padding:12px 14px;
-  font:500 13.5px -apple-system,'SF Pro Text',sans-serif;
+  padding:11px 14px;
+  font:500 13px -apple-system,'SF Pro Text',sans-serif;
   color:#3C3C43;
   margin:0;
   border:0;
 }
 
-/* MAP iOS */
-.card-map{padding:0;overflow:hidden}
-.card-map .card-head{padding:18px 18px 0;margin-bottom:12px}
+/* MAP */
+.card-map{
+  padding:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.card-map .card-head{
+  padding:16px 16px 0;
+  margin-bottom:10px;
+}
 .map-wrap-ios{
   position:relative;
-  height:220px;
+  flex:1;
+  min-height:180px;
   border-radius:0 0 20px 20px;
   overflow:hidden;
   background:#E5E5EA;
@@ -402,25 +413,26 @@
   height:100%;
   border:0;
   pointer-events:none;
+  display:block;
 }
 .location-card{
   position:absolute;
-  left:12px;
-  bottom:12px;
-  right:12px;
+  left:10px;
+  bottom:10px;
+  right:10px;
   background:rgba(255,255,255,.92);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border-radius:14px;
-  padding:10px 14px;
+  border-radius:12px;
+  padding:8px 12px;
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
   box-shadow:0 6px 24px rgba(0,0,0,.12);
 }
 .lc-icon{
-  width:36px;
-  height:36px;
+  width:32px;
+  height:32px;
   border-radius:50%;
   background:#007AFF;
   color:#fff;
@@ -428,36 +440,40 @@
   place-items:center;
   flex:none;
 }
-.lc-icon svg{width:18px;height:18px}
+.lc-icon svg{width:16px;height:16px}
 .lc-info{flex:1;min-width:0}
 .lc-title{
-  font:700 14px -apple-system,'SF Pro Text',sans-serif;
+  font:700 13px -apple-system,'SF Pro Text',sans-serif;
   color:#000;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .lc-sub{
-  font:500 11.5px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:500 10.5px -apple-system,'SF Mono','Space Grotesk',monospace;
   color:#8E8E93;
-  margin-top:2px;
+  margin-top:1px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
 /* ============================================================
-   CAMERA LIVE WIDGET iOS
+   CAMERA LIVE WIDGET
    ============================================================ */
-.card-camera{padding:18px}
+.card-camera{
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+}
 .camera-live{
   position:relative;
   width:100%;
   aspect-ratio:3/4;
   background:#000;
-  border-radius:20px;
+  border-radius:18px;
   overflow:hidden;
-  margin-bottom:14px;
+  margin-bottom:12px;
   box-shadow:0 8px 24px rgba(0,0,0,.12);
 }
 .camera-live video{
@@ -467,26 +483,26 @@
   display:block;
 }
 
-/* LIVE BADGE */
 .cam-live-badge{
   position:absolute;
-  top:12px;
-  left:12px;
-  background:rgba(0,0,0,.5);
+  top:10px;
+  left:10px;
+  background:rgba(0,0,0,.55);
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   border-radius:99px;
-  padding:5px 10px;
+  padding:4px 9px;
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:5px;
   color:#fff;
-  font:700 10.5px -apple-system,'SF Pro Text',sans-serif;
+  font:700 10px -apple-system,'SF Pro Text',sans-serif;
   letter-spacing:.06em;
+  z-index:2;
 }
 .live-dot{
-  width:6px;
-  height:6px;
+  width:5px;
+  height:5px;
   border-radius:50%;
   background:#FF3B30;
   animation:livePulse 1.4s ease-in-out infinite;
@@ -496,55 +512,54 @@
   50%{opacity:.5;transform:scale(1.2)}
 }
 
-/* LOCATION PILL */
 .cam-location-pill{
   position:absolute;
-  bottom:14px;
-  left:12px;
-  background:rgba(0,0,0,.45);
+  top:10px;
+  right:10px;
+  background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px) saturate(180%);
   -webkit-backdrop-filter:blur(15px) saturate(180%);
   border-radius:99px;
-  padding:6px 12px;
+  padding:4px 10px;
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:5px;
   color:#fff;
-  font:600 11px -apple-system,'SF Mono','Space Grotesk',monospace;
-  max-width:60%;
+  font:600 10px -apple-system,'SF Mono','Space Grotesk',monospace;
+  max-width:55%;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  z-index:2;
 }
 .cam-location-pill svg{
-  width:12px;
-  height:12px;
+  width:11px;
+  height:11px;
   flex:none;
   color:#FFCC00;
 }
 
-/* TIME PILL */
 .cam-time-pill{
   position:absolute;
-  bottom:14px;
-  right:12px;
-  background:rgba(0,0,0,.45);
+  bottom:82px;
+  left:10px;
+  background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px) saturate(180%);
   -webkit-backdrop-filter:blur(15px) saturate(180%);
   border-radius:99px;
-  padding:6px 12px;
+  padding:4px 10px;
   color:#fff;
-  font:600 11px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:600 10px -apple-system,'SF Mono','Space Grotesk',monospace;
+  z-index:2;
 }
 
-/* SHUTTER OVERLAY */
 .cam-shutter-overlay{
   position:absolute;
-  bottom:20px;
+  bottom:12px;
   left:50%;
   transform:translateX(-50%);
-  width:64px;
-  height:64px;
+  width:60px;
+  height:60px;
   border-radius:50%;
   border:0;
   background:transparent;
@@ -553,6 +568,7 @@
   display:grid;
   place-items:center;
   transition:.15s;
+  z-index:3;
 }
 .cam-shutter-overlay .cs-ring{
   position:absolute;
@@ -562,8 +578,8 @@
   box-shadow:0 0 0 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.4);
 }
 .cam-shutter-overlay .cs-inner{
-  width:48px;
-  height:48px;
+  width:46px;
+  height:46px;
   border-radius:50%;
   background:#fff;
   transition:.15s;
@@ -577,55 +593,55 @@
   cursor:not-allowed;
 }
 
-/* PREVIEW iOS */
+/* PREVIEW */
 .cam-preview-ios{
   position:relative;
-  border-radius:20px;
+  border-radius:18px;
   overflow:hidden;
-  margin-bottom:14px;
+  margin-bottom:12px;
   box-shadow:0 8px 24px rgba(0,0,0,.12);
 }
 .cam-preview-ios img{width:100%;display:block}
 .preview-retake{
   position:absolute;
-  bottom:12px;
-  right:12px;
+  bottom:10px;
+  right:10px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px);
   -webkit-backdrop-filter:blur(15px);
   border:0;
   border-radius:99px;
-  padding:8px 14px;
+  padding:7px 12px;
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:5px;
   color:#fff;
-  font:600 12.5px -apple-system,'SF Pro Text',sans-serif;
+  font:600 12px -apple-system,'SF Pro Text',sans-serif;
   cursor:pointer;
 }
-.preview-retake svg{width:14px;height:14px}
+.preview-retake svg{width:13px;height:13px}
 
-/* INFO AFTER iOS */
+/* INFO AFTER */
 .info-after-ios{
   display:flex;
-  gap:10px;
+  gap:8px;
   align-items:flex-start;
   background:#E8F4FE;
   border-radius:12px;
-  padding:12px 14px;
-  margin-bottom:14px;
-  font:500 13px/1.5 -apple-system,'SF Pro Text',sans-serif;
+  padding:10px 12px;
+  margin-bottom:12px;
+  font:500 12.5px/1.5 -apple-system,'SF Pro Text',sans-serif;
   color:#007AFF;
 }
 .info-after-ios svg{
-  width:18px;
-  height:18px;
+  width:16px;
+  height:16px;
   flex:none;
   margin-top:1px;
 }
 .info-after-ios b{color:#004999}
 
-/* BUTTON PRIMARY iOS */
+/* BUTTON PRIMARY */
 .btn-ios-primary{
   width:100%;
   display:flex;
@@ -636,17 +652,18 @@
   color:#fff;
   border:0;
   border-radius:14px;
-  padding:14px 20px;
-  font:600 16px -apple-system,'SF Pro Text',sans-serif;
+  padding:13px 18px;
+  font:600 15px -apple-system,'SF Pro Text',sans-serif;
   cursor:pointer;
   transition:.2s;
   box-shadow:0 2px 8px rgba(0,122,255,.25);
+  margin-top:auto;
 }
 .btn-ios-primary:active{
   transform:scale(.98);
   background:#0066CC;
 }
-.btn-ios-primary svg{width:20px;height:20px}
+.btn-ios-primary svg{width:18px;height:18px}
 
 /* ============================================================
    FULLSCREEN CAMERA (TIDAK BERUBAH)
@@ -803,7 +820,7 @@
   box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 
-/* ============ MODAL SUKSES ============ */
+/* MODAL SUKSES */
 .m-success{width:80px;height:80px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;margin:0 auto}
 .m-success svg{width:40px;height:40px}
 .m-center h4{font:800 22px var(--font);margin:18px 0 8px;color:var(--ink)}
@@ -813,16 +830,21 @@
 .sukses-detail .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
 .sukses-detail .row:last-child{border-bottom:0}
 
+/* ============ MOBILE FIX ============ */
 @media (max-width:560px){
-  .cam-viewport{padding-bottom:50px}
-  .cam-oval-guide{width:min(78vw, 260px);height:min(110vw, 360px)}
-  .cam-face-status{font-size:11.5px;padding:8px 14px;bottom:-70px;gap:7px}
-  .cam-dock{padding:10px 18px;gap:24px}
-  .cam-dock-btn{width:40px;height:40px}
-  .cam-shutter{width:62px;height:62px}
-  .shutter-inner{width:46px;height:46px}
-  .pill-item{font-size:11.5px;gap:5px}
-  .pill-item svg{width:13px;height:13px}
-  .cam-home-bar{width:120px;height:4px}
-}
-</style>
+  .grid-pres{
+    padding:10px;
+    gap:10px;
+    border-radius:16px;
+  }
+  .card-ios{
+    padding:14px;
+    border-radius:16px;
+  }
+  .big-clock{
+    font-size:36px;
+    margin-bottom:14px;
+  }
+  .today-date{font-size:13px}
+  
+  .ptl-ios{padding:10px
