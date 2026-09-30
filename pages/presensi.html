@@ -1,12 +1,14 @@
 <section class="page active" data-page="presensi">
   <div class="grid-pres">
-    <!-- Kartu Kiri -->
-    <div class="card">
-      <span class="kicker">E-Kehadiran</span>
+    <!-- Card 1: Waktu & Presensi -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">E-Kehadiran</span>
+      </div>
       <h2 class="today-date" id="presDate">—</h2>
       <div class="big-clock"><span id="presClock">--:--:--</span> <small>WIB</small></div>
       
-      <div class="ptl" id="ptl">
+      <div class="ptl ptl-ios" id="ptl">
         <div class="ptl-node" id="ptMasuk">
           <span class="ptl-ic"><i data-lucide="log-in"></i></span>
           <div><span>Check-in</span><b id="ptMasukTime">—</b></div>
@@ -17,85 +19,120 @@
           <div><span>Check-out</span><b id="ptKeluarTime">—</b></div>
         </div>
       </div>
-      
-      <div class="field" style="margin-top:12px">
-        <label>Status Kehadiran</label>
-        <select id="presStatus">
-          <option value="Hadir">Hadir</option>
-          <option value="Izin">Izin</option>
-          <option value="Sakit">Sakit</option>
-          <option value="Dinas Luar">Dinas Luar</option>
-          <option value="Kerja Gabungan">Kerja Gabungan</option>
-        </select>
+    </div>
+
+    <!-- Card 2: Status & Keterangan -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">Status Kehadiran</span>
       </div>
 
-      <div class="field" id="ketWrap" style="display:none">
+      <!-- Segmented Control iOS -->
+      <div class="segmented" id="segmentedStatus">
+        <button type="button" class="seg-btn active" data-status="Hadir">Hadir</button>
+        <button type="button" class="seg-btn" data-status="Izin">Izin</button>
+        <button type="button" class="seg-btn" data-status="Sakit">Sakit</button>
+        <button type="button" class="seg-btn" data-status="Dinas Luar">Dinas</button>
+        <button type="button" class="seg-btn" data-status="Kerja Gabungan">Gabungan</button>
+      </div>
+
+      <div class="field-ios" id="ketWrap" style="display:none">
         <label>Keterangan</label>
-        <textarea id="presKet" rows="2" placeholder="Contoh: izin keperluan keluarga / sakit demam / dinas ke kantor pusat..."></textarea>
+        <textarea id="presKet" rows="2" placeholder="Contoh: izin keperluan keluarga / sakit demam..."></textarea>
       </div>
 
-      <div class="pres-note" id="presNote">Memuat...</div>
+      <div class="pres-note pres-note-ios" id="presNote">Memuat...</div>
+    </div>
 
-      <div class="field" style="margin-top:8px">
-        <label>Lokasi Anda</label>
-        <div class="map-wrap">
-          <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="border:0;width:100%;height:200px;border-radius:14px"></iframe>
-          <div class="map-overlay" id="mapOverlay">
-            <i data-lucide="map-pin"></i>
-            <span id="geoStatus">Mendeteksi lokasi...</span>
+    <!-- Card 3: Peta -->
+    <div class="card card-ios card-map">
+      <div class="card-head">
+        <span class="kicker">Lokasi Anda</span>
+      </div>
+      <div class="map-wrap-ios">
+        <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <!-- Floating Location Card -->
+        <div class="location-card">
+          <div class="lc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="lc-info">
+            <div class="lc-title" id="geoStatus">Mendeteksi lokasi...</div>
+            <div class="lc-sub" id="geoSub">—</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Kartu Kanan -->
-    <div class="card">
-      <span class="kicker">Kamera Presensi</span>
-      <h3 style="margin:8px 0 16px">Ambil Foto</h3>
+    <!-- Card 4: Kamera Live Widget -->
+    <div class="card card-ios card-camera">
+      <div class="card-head">
+        <span class="kicker">Kamera Presensi</span>
+      </div>
 
-      <div class="cam-wrap" id="camWrap">
+      <!-- LIVE CAMERA WIDGET -->
+      <div class="camera-live" id="camWrap">
         <video id="video" autoplay playsinline muted></video>
-        <div class="cam-watermark">
-          <div class="loc" id="camLoc">📍 Mendeteksi lokasi...</div>
-          <div class="time" id="camTime">🕐 —</div>
+        
+        <!-- Floating Badge LIVE -->
+        <div class="cam-live-badge">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
         </div>
-        <button type="button" class="cam-fullscreen-btn" id="btnFullscreen" title="Mode layar penuh">
-          <i data-lucide="maximize"></i>
+
+        <!-- Floating Location Pill -->
+        <div class="cam-location-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span id="camLoc">-8.443, 114.194</span>
+        </div>
+
+        <!-- Floating Time Pill -->
+        <div class="cam-time-pill">
+          <span id="camTime">23:06:30</span>
+        </div>
+
+        <!-- Shutter Overlay Button -->
+        <button type="button" class="cam-shutter-overlay" id="btnCapture" disabled title="Ambil Foto">
+          <span class="cs-ring"></span>
+          <span class="cs-inner"></span>
         </button>
       </div>
 
-      <div class="cam-preview" id="camPreview" hidden>
+      <!-- Preview -->
+      <div class="cam-preview-ios" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button type="button" class="btn btn-blue" id="btnCapture" disabled>
-          <i data-lucide="camera"></i>Ambil Foto
-        </button>
-        <button type="button" class="btn btn-ghost" id="btnRetake" hidden>
-          <i data-lucide="rotate-ccw"></i>Ulangi
-        </button>
-        <button type="button" class="btn btn-green" id="btnSubmit" hidden>
-          <i data-lucide="check"></i>Kirim Presensi
+        <button type="button" class="preview-retake" id="btnRetake">
+          <i data-lucide="rotate-ccw"></i> Ulangi
         </button>
       </div>
 
-      <div class="info-after" id="infoAfter" hidden>
-        <i data-lucide="info"></i>
-        <div>
-          <b>Foto berhasil diambil</b><br>
-          Periksa foto di atas, lalu klik <b>Kirim Presensi</b> untuk menyimpan.
-        </div>
+      <!-- Info After -->
+      <div class="info-after-ios" id="infoAfter" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Foto berhasil diambil. Klik <b>Kirim Presensi</b> untuk menyimpan.</span>
       </div>
+
+      <button type="button" class="btn-ios-primary" id="btnSubmit" hidden>
+        <i data-lucide="check"></i>Kirim Presensi
+      </button>
     </div>
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — iOS HIG COMPLIANT v4 -->
+<!-- MODAL FULLSCREEN KAMERA — iOS HIG -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
-  <!-- TOP DYNAMIC ISLAND PILL -->
   <div class="cam-top">
     <div class="cam-pill">
       <div class="pill-item">
@@ -116,7 +153,6 @@
     </div>
   </div>
 
-  <!-- OVAL GUIDE & MASK -->
   <div class="cam-viewport">
     <div class="cam-oval-guide" id="faceGuide">
       <div class="cam-scan-line"></div>
@@ -127,7 +163,6 @@
     </div>
   </div>
 
-  <!-- BOTTOM FLOATING DOCK + HOME BAR -->
   <div class="cam-dock-wrap">
     <div class="cam-dock">
       <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
@@ -151,7 +186,6 @@
         </svg>
       </button>
     </div>
-    <!-- HOME INDICATOR iOS -->
     <div class="cam-home-bar"></div>
   </div>
 </div>
@@ -161,9 +195,7 @@
   <div class="modal-bg" onclick="closeSuksesModal()"></div>
   <div class="modal-card" style="max-width:420px">
     <div class="m-center">
-      <div class="m-success">
-        <i data-lucide="check"></i>
-      </div>
+      <div class="m-success"><i data-lucide="check"></i></div>
       <h4 id="suksesTitle">Presensi Berhasil!</h4>
       <p id="suksesMsg">Presensi Anda telah tercatat.</p>
       <div class="sukses-detail" id="suksesDetail"></div>
@@ -175,58 +207,460 @@
 </div>
 
 <style>
-/* ============ MAP ============ */
-.map-wrap{position:relative;border-radius:14px;overflow:hidden;background:#E2E8F0}
-.map-wrap iframe{pointer-events:none}
-.map-overlay{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(30,58,138,.9);color:#fff;padding:8px 12px;border-radius:10px;font:600 12px var(--mono);display:flex;align-items:center;gap:8px;pointer-events:none}
-.map-overlay svg{width:14px;height:14px;flex:none}
+/* ============================================================
+   iOS DESIGN SYSTEM OVERRIDES
+   ============================================================ */
+.grid-pres{
+  background:#F2F2F7;
+  padding:12px;
+  border-radius:20px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+}
+@media (min-width:920px){
+  .grid-pres{
+    grid-template-columns:1fr 1fr;
+    padding:16px;
+    gap:16px;
+  }
+}
 
-/* ============ INFO AFTER CAPTURE ============ */
-.info-after{margin-top:14px;background:var(--blue-soft);border-left:4px solid var(--blue);border-radius:12px;padding:12px 14px;font:500 13px/1.5 var(--font);color:var(--blue-dark);display:flex;gap:10px;align-items:flex-start}
-.info-after svg{width:18px;height:18px;flex:none;margin-top:2px}
+/* CARD iOS */
+.card-ios{
+  background:#FFFFFF;
+  border:0;
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 4px 20px rgba(0,0,0,.04);
+}
+.card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:14px;
+}
+.card-head .kicker{
+  font:800 11px var(--font);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#8E8E93;
+}
 
-/* ============ CAMERA WRAP ============ */
-.cam-wrap{position:relative;background:#000;border-radius:20px;overflow:hidden;aspect-ratio:4/3;margin-bottom:16px}
-.cam-wrap video{width:100%;height:100%;object-fit:cover;display:block}
-.cam-watermark{position:absolute;bottom:0;left:0;right:0;background:rgba(30,58,138,.85);color:#fff;padding:12px 16px;font:600 13px var(--mono);border-top:3px solid var(--yellow)}
-.cam-watermark .loc{font-size:12px;color:#DBEAFE;margin-bottom:4px}
-.cam-watermark .time{font-size:14px;font-weight:700}
-.cam-preview{position:relative;border-radius:20px;overflow:hidden;margin-bottom:16px}
-.cam-preview img{width:100%;display:block}
-.cam-fullscreen-btn{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(4px);transition:.2s;z-index:5}
-.cam-fullscreen-btn:hover{background:rgba(0,0,0,.8);transform:scale(1.1)}
-.cam-fullscreen-btn svg{width:20px;height:20px}
+/* BIG CLOCK iOS */
+.today-date{
+  font:600 15px var(--font);
+  color:#3C3C43;
+  margin:0 0 8px;
+}
+.big-clock{
+  font:700 clamp(40px,5vw,56px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
+  letter-spacing:-.02em;
+  color:#000;
+  line-height:1;
+  margin-bottom:20px;
+}
+.big-clock small{
+  font:600 14px -apple-system,'SF Pro Text',sans-serif;
+  color:#8E8E93;
+  margin-left:6px;
+  letter-spacing:0;
+}
+
+/* TIMELINE iOS */
+.ptl-ios{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:#F2F2F7;
+  border-radius:14px;
+  padding:14px 16px;
+}
+.ptl-ios .ptl-node{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.ptl-ios .ptl-ic{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#E5E5EA;
+  border:0;
+  display:grid;
+  place-items:center;
+  color:#8E8E93;
+  transition:.2s;
+}
+.ptl-ios .ptl-node.done .ptl-ic{
+  background:#34C759;
+  color:#fff;
+}
+.ptl-ios .ptl-node span{
+  font:700 10.5px var(--font);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#8E8E93;
+  display:block;
+}
+.ptl-ios .ptl-node b{
+  font:700 16px -apple-system,'SF Mono','Space Grotesk',monospace;
+  color:#000;
+}
+.ptl-ios .ptl-line{
+  flex:1;
+  height:2px;
+  border-radius:99px;
+  background:#E5E5EA;
+}
+.ptl-ios.on .ptl-line{background:#34C759}
+
+/* SEGMENTED CONTROL iOS */
+.segmented{
+  display:flex;
+  background:#E5E5EA;
+  border-radius:11px;
+  padding:2px;
+  gap:2px;
+  margin-bottom:14px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.segmented::-webkit-scrollbar{display:none}
+.seg-btn{
+  flex:1;
+  min-width:70px;
+  border:0;
+  background:transparent;
+  color:#3C3C43;
+  font:600 13px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
+  padding:8px 12px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:.2s cubic-bezier(.4,0,.2,1);
+  white-space:nowrap;
+}
+.seg-btn.active{
+  background:#FFFFFF;
+  color:#000;
+  box-shadow:0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04);
+}
+
+/* FIELD iOS */
+.field-ios{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:14px;
+}
+.field-ios label{
+  font:700 11px var(--font);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#8E8E93;
+}
+.field-ios textarea{
+  border:0;
+  background:#F2F2F7;
+  border-radius:12px;
+  padding:12px 14px;
+  font:400 14.5px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
+  color:#000;
+  resize:vertical;
+  width:100%;
+  transition:.15s;
+}
+.field-ios textarea:focus{
+  outline:0;
+  background:#E5E5EA;
+  box-shadow:0 0 0 3px rgba(0,122,255,.15);
+}
+
+/* PRES NOTE iOS */
+.pres-note-ios{
+  background:#E5E5EA;
+  border-radius:12px;
+  padding:12px 14px;
+  font:500 13.5px -apple-system,'SF Pro Text',sans-serif;
+  color:#3C3C43;
+  margin:0;
+  border:0;
+}
+
+/* MAP iOS */
+.card-map{padding:0;overflow:hidden}
+.card-map .card-head{padding:18px 18px 0;margin-bottom:12px}
+.map-wrap-ios{
+  position:relative;
+  height:220px;
+  border-radius:0 0 20px 20px;
+  overflow:hidden;
+  background:#E5E5EA;
+}
+.map-wrap-ios iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  pointer-events:none;
+}
+.location-card{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  right:12px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-radius:14px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 6px 24px rgba(0,0,0,.12);
+}
+.lc-icon{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#007AFF;
+  color:#fff;
+  display:grid;
+  place-items:center;
+  flex:none;
+}
+.lc-icon svg{width:18px;height:18px}
+.lc-info{flex:1;min-width:0}
+.lc-title{
+  font:700 14px -apple-system,'SF Pro Text',sans-serif;
+  color:#000;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.lc-sub{
+  font:500 11.5px -apple-system,'SF Mono','Space Grotesk',monospace;
+  color:#8E8E93;
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
 /* ============================================================
-   FULLSCREEN CAMERA — iOS HIG COMPLIANT v4
+   CAMERA LIVE WIDGET iOS
    ============================================================ */
-.cam-fullscreen{
-  position:fixed;
-  inset:0;
+.card-camera{padding:18px}
+.camera-live{
+  position:relative;
+  width:100%;
+  aspect-ratio:3/4;
   background:#000;
-  z-index:9999;
-  display:none;
-  flex-direction:column;
-  justify-content:space-between;
+  border-radius:20px;
   overflow:hidden;
+  margin-bottom:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
 }
-.cam-fullscreen.open{display:flex}
-.cam-fullscreen video{
-  position:absolute;
-  inset:0;
+.camera-live video{
   width:100%;
   height:100%;
   object-fit:cover;
-  z-index:1;
+  display:block;
 }
 
-/* TOP DYNAMIC ISLAND PILL — SAFE AREA */
-.cam-top{
+/* LIVE BADGE */
+.cam-live-badge{
+  position:absolute;
+  top:12px;
+  left:12px;
+  background:rgba(0,0,0,.5);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-radius:99px;
+  padding:5px 10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#fff;
+  font:700 10.5px -apple-system,'SF Pro Text',sans-serif;
+  letter-spacing:.06em;
+}
+.live-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#FF3B30;
+  animation:livePulse 1.4s ease-in-out infinite;
+}
+@keyframes livePulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.5;transform:scale(1.2)}
+}
+
+/* LOCATION PILL */
+.cam-location-pill{
+  position:absolute;
+  bottom:14px;
+  left:12px;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(15px) saturate(180%);
+  -webkit-backdrop-filter:blur(15px) saturate(180%);
+  border-radius:99px;
+  padding:6px 12px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#fff;
+  font:600 11px -apple-system,'SF Mono','Space Grotesk',monospace;
+  max-width:60%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.cam-location-pill svg{
+  width:12px;
+  height:12px;
+  flex:none;
+  color:#FFCC00;
+}
+
+/* TIME PILL */
+.cam-time-pill{
+  position:absolute;
+  bottom:14px;
+  right:12px;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(15px) saturate(180%);
+  -webkit-backdrop-filter:blur(15px) saturate(180%);
+  border-radius:99px;
+  padding:6px 12px;
+  color:#fff;
+  font:600 11px -apple-system,'SF Mono','Space Grotesk',monospace;
+}
+
+/* SHUTTER OVERLAY */
+.cam-shutter-overlay{
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition:.15s;
+}
+.cam-shutter-overlay .cs-ring{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:3.5px solid #fff;
+  box-shadow:0 0 0 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.4);
+}
+.cam-shutter-overlay .cs-inner{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:#fff;
+  transition:.15s;
+}
+.cam-shutter-overlay:active .cs-inner{
+  transform:scale(.88);
+  background:#E5E5EA;
+}
+.cam-shutter-overlay:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+/* PREVIEW iOS */
+.cam-preview-ios{
   position:relative;
-  z-index:10;
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.cam-preview-ios img{width:100%;display:block}
+.preview-retake{
+  position:absolute;
+  bottom:12px;
+  right:12px;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  border:0;
+  border-radius:99px;
+  padding:8px 14px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#fff;
+  font:600 12.5px -apple-system,'SF Pro Text',sans-serif;
+  cursor:pointer;
+}
+.preview-retake svg{width:14px;height:14px}
+
+/* INFO AFTER iOS */
+.info-after-ios{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  background:#E8F4FE;
+  border-radius:12px;
+  padding:12px 14px;
+  margin-bottom:14px;
+  font:500 13px/1.5 -apple-system,'SF Pro Text',sans-serif;
+  color:#007AFF;
+}
+.info-after-ios svg{
+  width:18px;
+  height:18px;
+  flex:none;
+  margin-top:1px;
+}
+.info-after-ios b{color:#004999}
+
+/* BUTTON PRIMARY iOS */
+.btn-ios-primary{
   width:100%;
   display:flex;
+  align-items:center;
   justify-content:center;
+  gap:8px;
+  background:#007AFF;
+  color:#fff;
+  border:0;
+  border-radius:14px;
+  padding:14px 20px;
+  font:600 16px -apple-system,'SF Pro Text',sans-serif;
+  cursor:pointer;
+  transition:.2s;
+  box-shadow:0 2px 8px rgba(0,122,255,.25);
+}
+.btn-ios-primary:active{
+  transform:scale(.98);
+  background:#0066CC;
+}
+.btn-ios-primary svg{width:20px;height:20px}
+
+/* ============================================================
+   FULLSCREEN CAMERA (TIDAK BERUBAH)
+   ============================================================ */
+.cam-fullscreen{
+  position:fixed;inset:0;background:#000;z-index:9999;
+  display:none;flex-direction:column;justify-content:space-between;overflow:hidden;
+}
+.cam-fullscreen.open{display:flex}
+.cam-fullscreen video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+
+.cam-top{
+  position:relative;z-index:10;width:100%;
+  display:flex;justify-content:center;
   padding-top:max(52px, env(safe-area-inset-top));
   padding-bottom:12px;
 }
@@ -235,35 +669,22 @@
   backdrop-filter:blur(25px) saturate(180%);
   -webkit-backdrop-filter:blur(25px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.18);
-  border-radius:99px;
-  padding:8px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
+  border-radius:99px;padding:8px 16px;
+  display:flex;align-items:center;gap:12px;
   box-shadow:0 8px 32px rgba(0,0,0,.3);
   max-width:calc(100vw - 32px);
 }
 .pill-item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  color:#fff;
+  display:flex;align-items:center;gap:6px;color:#fff;
   font:600 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .pill-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.85);flex:none}
 .pill-divider{width:1px;height:12px;background:rgba(255,255,255,.2);flex:none}
 
-/* VIEWPORT & OVAL MASK */
 .cam-viewport{
-  position:relative;
-  z-index:5;
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  position:relative;z-index:5;flex:1;
+  display:flex;align-items:center;justify-content:center;
   padding-bottom:60px;
 }
 .cam-oval-guide{
@@ -284,187 +705,101 @@
     0 0 40px rgba(52,199,89,.2);
 }
 
-/* SCAN LINE */
 .cam-scan-line{
-  position:absolute;
-  left:12%;
-  right:12%;
-  height:2px;
-  background:linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255,255,255,.3) 15%,
-    rgba(255,255,255,.9) 50%,
-    rgba(255,255,255,.3) 85%,
-    transparent 100%
-  );
-  border-radius:99px;
-  top:15%;
+  position:absolute;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.3) 15%,rgba(255,255,255,.9) 50%,rgba(255,255,255,.3) 85%,transparent 100%);
+  border-radius:99px;top:15%;
   animation:scanMove 2.8s ease-in-out infinite;
-  pointer-events:none;
-  z-index:3;
+  pointer-events:none;z-index:3;
   box-shadow:0 0 10px rgba(255,255,255,.7), 0 0 20px rgba(255,255,255,.3);
   transition:background .3s ease, box-shadow .3s ease;
 }
 .cam-oval-guide.detected .cam-scan-line{
-  background:linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(52,199,89,.3) 15%,
-    rgba(52,199,89,.95) 50%,
-    rgba(52,199,89,.3) 85%,
-    transparent 100%
-  );
+  background:linear-gradient(90deg,transparent 0%,rgba(52,199,89,.3) 15%,rgba(52,199,89,.95) 50%,rgba(52,199,89,.3) 85%,transparent 100%);
   box-shadow:0 0 12px rgba(52,199,89,.8), 0 0 24px rgba(52,199,89,.4);
 }
-
 @keyframes scanMove{
-  0%, 100% { top:12%; opacity:.7; }
-  50% { top:80%; opacity:1; }
+  0%,100%{top:12%;opacity:.7}
+  50%{top:80%;opacity:1}
 }
 
-/* FACE STATUS — JARAK TAMBAHAN 12px */
 .cam-face-status{
-  position:absolute;
-  bottom:-76px;
-  left:50%;
-  transform:translateX(-50%);
+  position:absolute;bottom:-76px;left:50%;transform:translateX(-50%);
   background:rgba(28,28,30,.85);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.15);
-  border-radius:99px;
-  padding:9px 18px;
-  display:flex;
-  align-items:center;
-  gap:9px;
-  color:#fff;
+  border-radius:99px;padding:9px 18px;
+  display:flex;align-items:center;gap:9px;color:#fff;
   font:500 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
   transition:all .3s cubic-bezier(.4,0,.2,1);
-  white-space:nowrap;
-  box-shadow:0 6px 20px rgba(0,0,0,.5);
-  z-index:4;
+  white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:4;
 }
 .cam-oval-guide.detected .cam-face-status{
   background:rgba(52,199,89,.92);
   border-color:rgba(255,255,255,.3);
 }
-
-/* FACE DOT */
 .face-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#FFCC00;
-  position:relative;
-  flex:none;
-  transition:background .3s ease;
+  width:8px;height:8px;border-radius:50%;background:#FFCC00;
+  position:relative;flex:none;transition:background .3s ease;
 }
 .face-dot::before{
-  content:'';
-  position:absolute;
-  inset:-4px;
-  border-radius:50%;
+  content:'';position:absolute;inset:-4px;border-radius:50%;
   border:1.5px solid rgba(255,204,0,.5);
   animation:facePulse 1.8s ease-in-out infinite;
   transition:border-color .3s ease;
 }
-.cam-oval-guide.detected .face-dot{
-  background:#34C759;
-}
-.cam-oval-guide.detected .face-dot::before{
-  border-color:rgba(52,199,89,.6);
-}
+.cam-oval-guide.detected .face-dot{background:#34C759}
+.cam-oval-guide.detected .face-dot::before{border-color:rgba(52,199,89,.6)}
 @keyframes facePulse{
   0%,100%{transform:scale(1);opacity:1}
   50%{transform:scale(1.6);opacity:0}
 }
 
-/* ============================================================
-   BOTTOM DOCK — iOS FROSTED GLASS + SAFE AREA
-   ============================================================ */
 .cam-dock-wrap{
-  position:relative;
-  z-index:10;
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  position:relative;z-index:10;width:100%;
+  display:flex;flex-direction:column;align-items:center;
   padding-bottom:max(34px, env(safe-area-inset-bottom));
-  padding-top:12px;
-  gap:10px;
+  padding-top:12px;gap:10px;
 }
 .cam-dock{
   background:rgba(255,255,255,.18);
   backdrop-filter:blur(30px) saturate(180%);
   -webkit-backdrop-filter:blur(30px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.28);
-  border-radius:44px;
-  padding:10px 24px;
-  display:flex;
-  align-items:center;
-  gap:32px;
+  border-radius:44px;padding:10px 24px;
+  display:flex;align-items:center;gap:32px;
   box-shadow:0 16px 36px rgba(0,0,0,.35);
 }
 .cam-dock-btn{
-  width:44px;
-  height:44px;
-  border-radius:50%;
+  width:44px;height:44px;border-radius:50%;
   background:rgba(255,255,255,.15);
   border:0.5px solid rgba(255,255,255,.25);
-  color:#fff;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-  transition:transform .15s ease, background .2s ease;
-  flex:none;
+  color:#fff;display:grid;place-items:center;cursor:pointer;
+  transition:transform .15s ease, background .2s ease;flex:none;
 }
-.cam-dock-btn:active{
-  transform:scale(.92);
-  background:rgba(255,255,255,.3);
-}
+.cam-dock-btn:active{transform:scale(.92);background:rgba(255,255,255,.3)}
 .cam-dock-btn svg{width:20px;height:20px}
 
-/* SHUTTER BUTTON */
 .cam-shutter{
-  position:relative;
-  width:68px;
-  height:68px;
-  background:transparent;
-  border:none;
-  cursor:pointer;
-  display:grid;
-  place-items:center;
-  padding:0;
-  flex:none;
+  position:relative;width:68px;height:68px;
+  background:transparent;border:none;cursor:pointer;
+  display:grid;place-items:center;padding:0;flex:none;
 }
 .shutter-ring{
-  position:absolute;
-  inset:0;
-  border-radius:50%;
-  border:4px solid #fff;
-  transition:transform .15s ease;
+  position:absolute;inset:0;border-radius:50%;
+  border:4px solid #fff;transition:transform .15s ease;
 }
 .shutter-inner{
-  width:52px;
-  height:52px;
-  border-radius:50%;
-  background:#fff;
-  transition:transform .15s ease, background-color .2s;
+  width:52px;height:52px;border-radius:50%;
+  background:#fff;transition:transform .15s ease, background-color .2s;
 }
-.cam-shutter:active .shutter-inner{
-  transform:scale(.88);
-  background:#E5E5EA;
-}
+.cam-shutter:active .shutter-inner{transform:scale(.88);background:#E5E5EA}
 .cam-shutter:active .shutter-ring{transform:scale(.96)}
 
-/* HOME INDICATOR iOS */
 .cam-home-bar{
-  width:134px;
-  height:5px;
-  background:rgba(255,255,255,.85);
-  border-radius:10px;
-  margin-top:2px;
+  width:134px;height:5px;background:rgba(255,255,255,.85);
+  border-radius:10px;margin-top:2px;
   box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 
@@ -478,26 +813,11 @@
 .sukses-detail .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
 .sukses-detail .row:last-child{border-bottom:0}
 
-/* ============ RESPONSIVE ============ */
-@media (max-width:920px){
-  .map-wrap iframe{height:160px}
-}
 @media (max-width:560px){
   .cam-viewport{padding-bottom:50px}
-  .cam-oval-guide{
-    width:min(78vw, 260px);
-    height:min(110vw, 360px);
-  }
-  .cam-face-status{
-    font-size:11.5px;
-    padding:8px 14px;
-    bottom:-70px;
-    gap:7px;
-  }
-  .cam-dock{
-    padding:10px 18px;
-    gap:24px;
-  }
+  .cam-oval-guide{width:min(78vw, 260px);height:min(110vw, 360px)}
+  .cam-face-status{font-size:11.5px;padding:8px 14px;bottom:-70px;gap:7px}
+  .cam-dock{padding:10px 18px;gap:24px}
   .cam-dock-btn{width:40px;height:40px}
   .cam-shutter{width:62px;height:62px}
   .shutter-inner{width:46px;height:46px}
