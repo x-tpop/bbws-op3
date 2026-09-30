@@ -385,37 +385,55 @@ function closeSuksesModal() {
 }
 
 // ============================================================
-// FACE DETECTION
+// FACE DETECTION — MediaPipe (Pengganti FaceDetector)
 // ============================================================
 let faceDetector = null;
 let faceDetectInterval = null;
+let faceDetectionLib = null;
 
 async function initFaceDetection(videoEl) {
-  if (!('FaceDetector' in window)) {
-    console.log('FaceDetector tidak didukung browser ini');
-    return false;
-  }
-
   try {
-    faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
-    console.log('FaceDetector aktif');
+    // Load MediaPipe Vision Library
+    const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
+    faceDetectionLib = vision;
+    
+    const filesetResolver = await vision.FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+    );
+    
+    faceDetector = await vision.FaceDetector.createFromOptions(filesetResolver, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO"
+    });
+    
+    console.log('MediaPipe FaceDetector aktif');
+    
+    // Loop deteksi
+    if (faceDetectInterval) clearInterval(faceDetectInterval);
+    faceDetectInterval = setInterval(async () => {
+      if (!videoEl || videoEl.readyState < 2 || !faceDetector) return;
+      
+      try {
+        const result = faceDetector.detectForVideo(videoEl, performance.now());
+        const detected = result.detections && result.detections.length > 0;
+        updateFaceUI(detected);
+      } catch (e) {
+        // Silent fail
+      }
+    }, 300);
+    
+    return true;
+    
   } catch (e) {
-    console.warn('Gagal init FaceDetector:', e);
+    console.warn('MediaPipe init gagal:', e);
     return false;
   }
-
-  if (faceDetectInterval) clearInterval(faceDetectInterval);
-  faceDetectInterval = setInterval(async () => {
-    if (!videoEl || videoEl.readyState < 2) return;
-    try {
-      const faces = await faceDetector.detect(videoEl);
-      updateFaceUI(faces.length > 0);
-    } catch (e) {}
-  }, 500);
-
-  return true;
 }
 
+// Update UI (sama seperti sebelumnya)
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
   const label = document.querySelector('#faceStatus .face-label');
@@ -434,7 +452,10 @@ function stopFaceDetection() {
     clearInterval(faceDetectInterval);
     faceDetectInterval = null;
   }
-  faceDetector = null;
+  if (faceDetector) {
+    faceDetector.close();
+    faceDetector = null;
+  }
   const guide = document.getElementById('faceGuide');
   guide?.classList.remove('detected');
 }
