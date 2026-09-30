@@ -1,0 +1,120 @@
+<section class="page active" data-page="koordinasi">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+      <div>
+        <span class="kicker">Koordinasi</span>
+        <h3 style="margin:6px 0 4px">Koordinasi Juru &amp; Krosda</h3>
+        <p style="color:var(--muted);font-size:13px">Catat hasil koordinasi dengan Juru, Krosda, atau atasan.</p>
+      </div>
+      <button class="btn btn-blue" id="korBtnTambah">
+        <i data-lucide="plus"></i>Tambah Koordinasi
+      </button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="field">
+        <label>Tanggal</label>
+        <input type="date" id="korTanggal">
+      </div>
+      <div class="field">
+        <label>Jenis</label>
+        <select id="korFilterJenis">
+          <option value="semua">Semua</option>
+          <option value="Juru">Juru</option>
+          <option value="Krosda">Krosda</option>
+          <option value="Atasan">Atasan</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-blue" id="korRefresh"><i data-lucide="refresh-cw"></i>Muat Ulang</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Pengamat</th>
+            <th>Jenis</th>
+            <th>Pihak</th>
+            <th>Topik / Hasil</th>
+            <th>Foto</th>
+            <th>Poin</th>
+          </tr>
+        </thead>
+        <tbody id="koordinasiTbody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL KOORDINASI -->
+<div class="modal-overlay" id="koordinasiModal">
+  <div class="modal-bg" onclick="closeFormKoordinasi()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Tambah Koordinasi</h3>
+      <button class="modal-close" id="korBtnClose"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="frow">
+        <div class="field">
+          <label>Jenis Koordinasi</label>
+          <select id="korJenis">
+            <option value="">Pilih jenis...</option>
+            <option value="Juru">Juru (Pengairan/Irigasi)</option>
+            <option value="Krosda">Krosda (Kabupaten)</option>
+            <option value="Atasan">Atasan (PPK OP III)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nama Pihak</label>
+          <input id="korNamaPihak" type="text" placeholder="Nama Juru / Krosda / Atasan">
+        </div>
+      </div>
+
+      <div class="frow">
+        <div class="field">
+          <label>Instansi / Asal</label>
+          <input id="korInstansi" type="text" placeholder="cth: Dinas PUPR Banyuwangi">
+        </div>
+        <div class="field">
+          <label>No. HP (opsional)</label>
+          <input id="korHp" type="tel" placeholder="08xx">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Topik Koordinasi</label>
+        <textarea id="korTopik" rows="2" placeholder="cth: Sinkronisasi jadwal buka pintu air..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Hasil / Kesepakatan</label>
+        <textarea id="korHasil" rows="3" placeholder="cth: Disepakati buka pintu pukul 06.00 dan 16.00..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Foto Kegiatan (opsional)</label>
+        <div class="cam-wrap" id="korCamWrap">
+          <video id="korVideo" autoplay playsinline muted></video>
+          <div class="cam-watermark">
+            <div class="loc" id="korCamLoc">📍 Mendeteksi lokasi...</div>
+            <div class="time" id="korCamTime">🕐 —</div>
+          </div>
+        </div>
+        <div class="cam-preview" id="korPreview" hidden>
+          <img id="korPreviewImg" alt="Preview">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-blue" id="korBtnCapture" type="button"><i data-lucide="camera"></i>Ambil Foto</button>
+          <button class="btn btn-ghost" id="korBtnRetake" type="button" hidden><i data-lucide="rotate-ccw"></i>Ulangi</button>
+          <button class="btn btn-green" id="korBtnSubmit" type="button" hidden><i data-lucide="check"></i>Simpan Koordinasi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

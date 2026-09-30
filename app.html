@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Pegawai — BBWS Brantas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="brand">
+    <svg viewBox="0 0 44 44" width="40" height="40">
+      <rect width="44" height="44" rx="13" fill="#1E3A8A"/>
+      <path d="M22 8.5c3.6 4.3 6 7.6 6 10.6a6 6 0 1 1-12 0c0-3 2.4-6.3 6-10.6z" fill="#FBB917"/>
+      <path d="M10 33.5c2.2-2.6 4.4-2.6 6.6 0s4.4 2.6 6.6 0 4.4-2.6 6.6 0 4.4 2.6 6.6 0" stroke="#FBB917" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-t"><b>BBWS Brantas</b><small>Kementerian PUPR</small></div>
+  </div>
+  <p class="nav-label">Menu Utama</p>
+  <nav id="sidebarNav">
+    <button class="nav-btn on" data-page="dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+    <button class="nav-btn" data-page="presensi"><i data-lucide="fingerprint"></i>Presensi</button>
+    <button class="nav-btn" data-page="verifikasi" id="navVerifikasi"><i data-lucide="clipboard-check"></i>Verifikasi</button>
+    <button class="nav-btn" data-page="monitoring" id="navMonitoring"><i data-lucide="eye"></i>Monitoring</button>
+    <button class="nav-btn" data-page="koordinasi" id="navKoordinasi"><i data-lucide="handshake"></i>Koordinasi</button>
+    <button class="nav-btn" data-page="laporan"><i data-lucide="file-text"></i>Laporan</button>
+    <button class="nav-btn" data-page="biodata"><i data-lucide="user-round"></i>Biodata</button>
+  </nav>
+  <div class="side-foot">
+    <button class="side-user" data-page="biodata">
+      <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
+      <div><b class="js-nama">Loading...</b><small class="js-role">—</small></div>
+    </button>
+    <button class="side-out" id="btnLogout"><i data-lucide="log-out"></i>Keluar</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="tb-in">
+      <div class="tb-brand-m">
+        <svg viewBox="0 0 44 44" width="34" height="34">
+          <rect width="44" height="44" rx="12" fill="#1E3A8A"/>
+          <path d="M22 8.5c3.6 4.3 6 7.6 6 10.6a6 6 0 1 1-12 0c0-3 2.4-6.3 6-10.6z" fill="#FBB917"/>
+        </svg>
+        <div><b>BBWS Brantas</b><small>Portal Pegawai</small></div>
+      </div>
+      <div class="tb-title">
+        <span class="kicker" id="tbKicker">Portal Pegawai</span>
+        <h2 id="tbTitle">Dashboard</h2>
+      </div>
+      <div class="tb-right">
+        <span class="tb-time" id="tbTime">—</span>
+        <button class="me-chip" data-page="biodata">
+          <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
+          <span class="js-nama">Loading...</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main id="pageContainer">
+      <!-- Halaman di-load di sini via fetch -->
+      <div style="text-align:center;padding:60px;color:var(--muted)">
+        <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
+        <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
+      </div>
+    </main>
+    <footer style="text-align:center;font:600 12.5px var(--font);color:var(--muted);padding:32px 0 48px">
+      Balai Besar Wilayah Sungai Brantas · Direktorat Jenderal Sumber Daya Air · Kementerian PUPR
+    </footer>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (Mobile) -->
+<nav id="bnav" aria-label="Navigasi utama">
+  <button class="bnav-item on" data-page="dashboard">
+    <span class="bnav-ic"><i data-lucide="layout-dashboard"></i></span>
+    <span>Dashboard</span>
+  </button>
+  <button class="bnav-item" data-page="presensi">
+    <span class="bnav-ic"><i data-lucide="fingerprint"></i></span>
+    <span>Presensi</span>
+  </button>
+  <button class="bnav-item" data-page="verifikasi" id="bnavVerifikasi">
+    <span class="bnav-ic"><i data-lucide="clipboard-check"></i></span>
+    <span>Verifikasi</span>
+  </button>
+  <button class="bnav-item" data-page="monitoring" id="bnavMonitoring">
+    <span class="bnav-ic"><i data-lucide="eye"></i></span>
+    <span>Monitoring</span>
+  </button>
+  <button class="bnav-item" data-page="biodata">
+    <span class="bnav-ic"><i data-lucide="user-round"></i></span>
+    <span>Profil</span>
+  </button>
+</nav>
+
+<div id="toasts"></div>
+
+<!-- MODAL FOTO GLOBAL -->
+<div id="fotoModal">
+  <div class="modal-bg" onclick="closeFotoModal()"></div>
+  <div class="foto-card">
+    <div class="foto-head">
+      <h4 id="fotoModalTitle">Foto</h4>
+      <button class="modal-close" onclick="closeFotoModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="foto-body">
+      <img id="fotoModalImg" src="" alt="">
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/camera.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

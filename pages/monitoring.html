@@ -1,0 +1,104 @@
+<section class="page active" data-page="monitoring">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+      <div>
+        <span class="kicker">Monitoring</span>
+        <h3 style="margin:6px 0 4px">Monitoring PPA &amp; Pekarya</h3>
+        <p style="color:var(--muted);font-size:13px">Catat hasil monitoring harian PPA dan Pekarya di wilayah Anda.</p>
+      </div>
+      <button class="btn btn-blue" id="monBtnTambah">
+        <i data-lucide="plus"></i>Tambah Monitoring
+      </button>
+    </div>
+
+    <div class="filter-bar">
+      <div class="field">
+        <label>Tanggal</label>
+        <input type="date" id="monTanggal">
+      </div>
+      <div class="field">
+        <label>Jenis</label>
+        <select id="monFilterJenis">
+          <option value="semua">Semua</option>
+          <option value="PPA">PPA</option>
+          <option value="Pekarya">Pekarya</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-blue" id="monRefresh"><i data-lucide="refresh-cw"></i>Muat Ulang</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Pengamat</th>
+            <th>Jenis</th>
+            <th>Target</th>
+            <th>Catatan</th>
+            <th>Foto</th>
+            <th>Poin</th>
+          </tr>
+        </thead>
+        <tbody id="monitoringTbody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL MONITORING -->
+<div class="modal-overlay" id="monitoringModal">
+  <div class="modal-bg" onclick="closeFormMonitoring()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Tambah Monitoring</h3>
+      <button class="modal-close" id="monBtnClose"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="frow">
+        <div class="field">
+          <label>Jenis Monitoring</label>
+          <select id="monJenis">
+            <option value="">Pilih jenis...</option>
+            <option value="PPA">PPA (Petugas Pintu Air)</option>
+            <option value="Pekarya">Pekarya Pengairan</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Target</label>
+          <select id="monTarget">
+            <option value="">Pilih target...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Catatan Monitoring</label>
+        <textarea id="monCatatan" rows="3" placeholder="Kondisi pintu air, pekerjaan pekarya, dll..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Foto Kegiatan</label>
+        <div class="cam-wrap" id="monCamWrap">
+          <video id="monVideo" autoplay playsinline muted></video>
+          <div class="cam-watermark">
+            <div class="loc" id="monCamLoc">📍 Mendeteksi lokasi...</div>
+            <div class="time" id="monCamTime">🕐 —</div>
+          </div>
+        </div>
+        <div class="cam-preview" id="monPreview" hidden>
+          <img id="monPreviewImg" alt="Preview">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-blue" id="monBtnCapture" type="button"><i data-lucide="camera"></i>Ambil Foto</button>
+          <button class="btn btn-ghost" id="monBtnRetake" type="button" hidden><i data-lucide="rotate-ccw"></i>Ulangi</button>
+          <button class="btn btn-green" id="monBtnSubmit" type="button" hidden><i data-lucide="check"></i>Simpan Monitoring</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

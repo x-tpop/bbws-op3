@@ -1,0 +1,144 @@
+<section class="page active" data-page="dashboard">
+  <div class="card id-card">
+    <div class="id-left">
+      <div class="avatar-tile">
+        <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
+      </div>
+      <div class="id-info">
+        <span class="kicker">Portal Pegawai · BBWS Brantas</span>
+        <h1 class="greet"><span id="greetWord">Selamat pagi</span>, <span class="blue" id="greetName">—</span></h1>
+        <div class="id-meta">
+          <span class="meta-chip"><i data-lucide="hard-hat"></i><span class="js-jabatan">—</span></span>
+          <span class="meta-chip"><i data-lucide="building-2"></i><span class="js-di">—</span></span>
+          <span class="meta-chip mono"><i data-lucide="fingerprint"></i><span class="js-nomor">—</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="id-stats">
+      <div class="stat"><span class="ic ic-ink"><i data-lucide="briefcase"></i></span><div><b id="stMasa">0</b><span>Masa Kerja</span></div></div>
+      <div class="stat"><span class="ic ic-blue"><i data-lucide="circle-check"></i></span><div><b id="stHadir">0</b><span>Kehadiran</span></div></div>
+      <div class="stat"><span class="ic ic-amber"><i data-lucide="timer"></i></span><div><b id="stJam">0</b><span>Jam Kerja</span></div></div>
+      <div class="stat"><span class="ic ic-green"><i data-lucide="file-check"></i></span><div><b id="stLapor">0</b><span>Laporan</span></div></div>
+    </div>
+  </div>
+
+  <div class="grid-dash">
+    <div class="card">
+      <span class="kicker">Presensi Hari Ini</span>
+      <div class="big-clock"><span id="dashClock">--.--.--</span> <small>WIB</small></div>
+      <span id="dashDate">—</span>
+      <div class="pres-note" id="dashPresState" style="margin-top:16px">—</div>
+      <div id="dashPresActions" style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-blue" onclick="go('presensi')"><i data-lucide="fingerprint"></i>Buka Presensi</button>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--yellow);border:1px solid rgba(146,101,6,.22)">
+      <span class="kicker" style="color:rgba(30,58,138,.7)">Aksi Cepat</span>
+      <h3 style="font-size:20px;margin:10px 0 8px">Mulai Presensi Sekarang</h3>
+      <p style="font:500 14px/1.6 var(--font);color:rgba(30,58,138,.8);margin-bottom:18px">Lakukan check-in harian dengan foto berwatermark GPS untuk bukti kinerja Anda.</p>
+      <button class="btn" onclick="go('presensi')"><i data-lucide="fingerprint"></i>Buka Presensi</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(async () => {
+  try {
+    const session = getSession();
+    if (!session) return;
+
+    const pegawai = session.pegawai || {};
+    const namaLengkap = pegawai.nama || session.nama_lengkap || 'Pegawai';
+
+    // Set data
+    const setAll = (cls, val) => {
+      document.querySelectorAll(cls).forEach(el => {
+        if (el.tagName === 'IMG') return;
+        el.textContent = val || '';
+      });
+    };
+
+    setAll('.js-nama', namaLengkap);
+    setAll('.js-jabatan', pegawai.jabatan || session.role);
+    setAll('.js-nomor', pegawai.nomor_identitas || session.username);
+
+    // Avatar
+    if (pegawai.link_foto_2 || pegawai.link_foto_1) {
+      const foto = pegawai.link_foto_2 || pegawai.link_foto_1;
+      document.querySelectorAll('.js-avatar').forEach(el => el.src = foto);
+    }
+
+    // DI
+    if (pegawai.id_di) {
+      const { data } = await supabaseClient
+        .from('di')
+        .select('nama_di')
+        .eq('id_di', pegawai.id_di)
+        .maybeSingle();
+      if (data) setAll('.js-di', data.nama_di);
+    }
+
+    // Greeting
+    const h = new Date().getHours();
+    const greetWord = document.getElementById('greetWord');
+    const greetName = document.getElementById('greetName');
+    if (greetWord) greetWord.textContent = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 19 ? 'Selamat sore' : 'Selamat malam';
+    if (greetName) greetName.textContent = namaLengkap.split(' ')[0];
+
+    // Masa kerja
+    if (pegawai.tanggal_mulai_sda || pegawai.tanggal_mulai_bbws) {
+      const mulai = new Date(pegawai.tanggal_mulai_sda || pegawai.tanggal_mulai_bbws);
+      const tahun = Math.floor((new Date() - mulai) / (1000 * 60 * 60 * 24 * 365));
+      document.getElementById('stMasa').textContent = tahun + ' thn';
+    }
+
+    // Jam & tanggal
+    function tickDash() {
+      const d = new Date();
+      const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const clock = document.getElementById('dashClock');
+      const dateEl = document.getElementById('dashDate');
+      if (clock) clock.textContent = hms;
+      if (dateEl) dateEl.textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    tickDash();
+    const dashInt = setInterval(tickDash, 1000);
+
+    // Cek presensi hari ini
+    const today = new Date().toISOString().slice(0, 10);
+    if (session.id_pegawai) {
+      const { data } = await supabaseClient
+        .from('presensi')
+        .select('*')
+        .eq('id_pegawai', session.id_pegawai)
+        .eq('tanggal', today)
+        .maybeSingle();
+
+      const stateEl = document.getElementById('dashPresState');
+      const actionsEl = document.getElementById('dashPresActions');
+
+      if (data?.jam_masuk) {
+        const jamMasuk = data.jam_masuk.slice(0, 5);
+        if (data.jam_keluar) {
+          if (stateEl) stateEl.textContent = `Presensi selesai. Masuk ${jamMasuk}, keluar ${data.jam_keluar.slice(0,5)}.`;
+          if (actionsEl) actionsEl.innerHTML = '<span class="badge b-ok"><span class="dot"></span>Selesai</span>';
+        } else {
+          if (stateEl) stateEl.textContent = `Sudah check-in pukul ${jamMasuk}. Jangan lupa check-out.`;
+          if (actionsEl) actionsEl.innerHTML = '<span class="badge b-ok"><span class="dot"></span>Hadir</span>';
+        }
+      } else {
+        if (stateEl) stateEl.textContent = 'Anda belum melakukan presensi hari ini.';
+      }
+    }
+
+    // Cleanup
+    window.addEventListener('hashchange', () => clearInterval(dashInt), { once: true });
+
+    if (window.refreshIcons) window.refreshIcons();
+
+  } catch (err) {
+    console.error('Dashboard error:', err);
+  }
+})();
+</script>

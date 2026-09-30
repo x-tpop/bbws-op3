@@ -1,0 +1,47 @@
+<section class="page active" data-page="verifikasi">
+  <div class="card">
+    <div style="margin-bottom:20px">
+      <span class="kicker">Verifikasi Presensi</span>
+      <h3 style="margin:6px 0 4px">Verifikasi Kehadiran PPA &amp; Pekarya</h3>
+      <p style="color:var(--muted);font-size:13px">Periksa foto + watermark GPS, lalu tentukan Layak atau Tidak Layak.</p>
+    </div>
+
+    <div class="filter-bar">
+      <div class="field">
+        <label>Tanggal</label>
+        <input type="date" id="verifTanggal">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="verifStatus">
+          <option value="belum">Belum Diverifikasi</option>
+          <option value="layak">Layak</option>
+          <option value="tidak_layak">Tidak Layak</option>
+          <option value="semua">Semua</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-blue" id="verifRefresh"><i data-lucide="refresh-cw"></i>Muat Ulang</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Pegawai</th>
+            <th>Jabatan / DI</th>
+            <th>Waktu</th>
+            <th>Foto</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="verifTbody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

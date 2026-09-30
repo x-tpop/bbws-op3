@@ -1,0 +1,45 @@
+<section class="page active" data-page="presensi">
+  <div class="grid-pres">
+    <div class="card">
+      <span class="kicker">E-Kehadiran</span>
+      <h2 class="today-date" id="presDate">—</h2>
+      <div class="big-clock"><span id="presClock">--.--.--</span> <small>WIB</small></div>
+      <div class="ptl" id="ptl">
+        <div class="ptl-node" id="ptMasuk">
+          <span class="ptl-ic"><i data-lucide="log-in"></i></span>
+          <div><span>Check-in</span><b id="ptMasukTime">—</b></div>
+        </div>
+        <div class="ptl-line"></div>
+        <div class="ptl-node" id="ptKeluar">
+          <span class="ptl-ic"><i data-lucide="log-out"></i></span>
+          <div><span>Check-out</span><b id="ptKeluarTime">—</b></div>
+        </div>
+      </div>
+      <div class="pres-note" id="presNote">—</div>
+      <p style="font:500 13px var(--font);color:var(--muted);display:flex;gap:8px;align-items:center">
+        <i data-lucide="map-pin" style="width:16px;height:16px"></i>
+        <span id="geoStatus">Mendeteksi lokasi...</span>
+      </p>
+    </div>
+
+    <div class="card">
+      <span class="kicker">Kamera Presensi</span>
+      <h3 style="margin:8px 0 16px">Ambil Foto</h3>
+      <div class="cam-wrap" id="camWrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="cam-watermark">
+          <div class="loc" id="camLoc">📍 Mendeteksi lokasi...</div>
+          <div class="time" id="camTime">🕐 —</div>
+        </div>
+      </div>
+      <div class="cam-preview" id="camPreview" hidden>
+        <img id="previewImg" alt="Preview">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-blue" id="btnCapture" disabled><i data-lucide="camera"></i>Ambil Foto</button>
+        <button class="btn btn-ghost" id="btnRetake" hidden><i data-lucide="rotate-ccw"></i>Ulangi</button>
+        <button class="btn btn-green" id="btnSubmit" hidden><i data-lucide="check"></i>Kirim Presensi</button>
+      </div>
+    </div>
+  </div>
+</section>

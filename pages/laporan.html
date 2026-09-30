@@ -1,0 +1,119 @@
+<section class="page active" data-page="laporan">
+  <div class="grid-lapor">
+    <!-- Form Laporan -->
+    <div class="card">
+      <span class="kicker">Formulir Pelaporan</span>
+      <h3 style="margin:8px 0 20px">Buat Laporan Baru</h3>
+
+      <div class="field">
+        <label>Judul Laporan</label>
+        <input id="lapJudul" type="text" maxlength="90" placeholder="cth: Inspeksi rutin pintu air...">
+      </div>
+
+      <div class="frow">
+        <div class="field">
+          <label>Jenis Laporan</label>
+          <select id="lapJenis">
+            <option value="">Pilih jenis...</option>
+            <option>Pemeliharaan</option>
+            <option>Inspeksi</option>
+            <option>Kerusakan</option>
+            <option>Operasional</option>
+            <option>Keamanan</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sifat</label>
+          <select id="lapSifat">
+            <option>Normal</option>
+            <option>Prioritas</option>
+            <option>Darurat</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tanggal Kejadian</label>
+        <input type="date" id="lapTanggal">
+      </div>
+
+      <div class="field">
+        <label>Uraian Laporan</label>
+        <textarea id="lapIsi" rows="5" maxlength="1000" placeholder="Jelaskan kondisi, temuan, atau tindakan yang dilakukan..."></textarea>
+        <div style="font-size:11.5px;color:var(--muted);text-align:right;margin-top:4px">
+          <span id="lapCount">0</span>/1000
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Foto Kegiatan (opsional)</label>
+        <div class="cam-wrap" id="lapCamWrap">
+          <video id="lapVideo" autoplay playsinline muted></video>
+          <div class="cam-watermark">
+            <div class="loc" id="lapCamLoc">📍 Mendeteksi lokasi...</div>
+            <div class="time" id="lapCamTime">🕐 —</div>
+          </div>
+        </div>
+        <div class="cam-preview" id="lapPreview" hidden>
+          <img id="lapPreviewImg" alt="Preview">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-blue" id="lapBtnCapture" type="button"><i data-lucide="camera"></i>Ambil Foto</button>
+          <button class="btn btn-ghost" id="lapBtnRetake" type="button" hidden><i data-lucide="rotate-ccw"></i>Ulangi</button>
+        </div>
+      </div>
+
+      <button class="btn btn-blue btn-block" id="lapBtnSubmit">
+        <i data-lucide="send"></i>Kirim Laporan
+      </button>
+    </div>
+
+    <!-- Daftar Laporan -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+        <div>
+          <span class="kicker">Arsip Pribadi</span>
+          <h3 style="margin:6px 0 0">Laporan Saya</h3>
+        </div>
+        <button class="btn btn-ghost sm" id="lapRefresh"><i data-lucide="refresh-cw"></i>Refresh</button>
+      </div>
+
+      <div class="filter-bar" style="margin-bottom:16px">
+        <div class="field">
+          <label>Tanggal</label>
+          <input type="date" id="lapFilterTanggal">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="lapFilterStatus">
+            <option value="semua">Semua</option>
+            <option value="Menunggu">Menunggu</option>
+            <option value="Disetujui">Disetujui</option>
+            <option value="Revisi">Revisi</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Judul</th>
+              <th>Jenis</th>
+              <th>Status</th>
+              <th>Foto</th>
+            </tr>
+          </thead>
+          <tbody id="laporanTbody">
+            <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.grid-lapor{display:grid;grid-template-columns:.9fr 1.1fr;gap:26px;align-items:start}
+@media (max-width:1100px){.grid-lapor{grid-template-columns:1fr}}
+</style>

@@ -1,0 +1,197 @@
+<section class="page active" data-page="biodata">
+  <div class="grid-bio">
+    <div class="card profile-card">
+      <span class="kicker">Profil Pegawai</span>
+      <div class="p-avatar">
+        <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="Foto pegawai">
+      </div>
+      <h3 class="js-nama">Loading...</h3>
+      <p class="p-role js-jabatan">—</p>
+      <div class="p-chips">
+        <span class="meta-chip mono js-nomor">—</span>
+        <span class="meta-chip js-role">—</span>
+      </div>
+      <ul class="p-meta">
+        <li><i data-lucide="building-2"></i><span class="js-di">—</span></li>
+        <li><i data-lucide="map-pin"></i><span class="js-krosda">—</span></li>
+        <li><i data-lucide="briefcase"></i><span class="js-status">Ex-TP-OP</span></li>
+      </ul>
+    </div>
+
+    <div class="card bio-form">
+      <div class="bio-head">
+        <div>
+          <span class="kicker">Data Pegawai</span>
+          <h3>Biodata &amp; Kontak</h3>
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4><i data-lucide="badge-check"></i>Data Kepegawaian</h4>
+        <div class="frow3">
+          <div class="field span2">
+            <label>Nama Lengkap</label>
+            <input class="js-nama" readonly>
+          </div>
+          <div class="field">
+            <label>Nomor Identitas</label>
+            <input class="js-nomor" readonly>
+          </div>
+          <div class="field">
+            <label>Jabatan</label>
+            <input class="js-jabatan" readonly>
+          </div>
+          <div class="field">
+            <label>Daerah Irigasi</label>
+            <input class="js-di" readonly>
+          </div>
+          <div class="field">
+            <label>Krosda / Wilayah</label>
+            <input class="js-krosda" readonly>
+          </div>
+          <div class="field">
+            <label>Status Pegawai</label>
+            <input class="js-status" readonly>
+          </div>
+          <div class="field">
+            <label>Role Akses</label>
+            <input class="js-role" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4><i data-lucide="mail"></i>Kontak &amp; Alamat</h4>
+        <div class="frow3">
+          <div class="field span2">
+            <label>Nomor HP</label>
+            <input class="js-hp" readonly placeholder="—">
+          </div>
+          <div class="field">
+            <label>Username</label>
+            <input class="js-username" readonly>
+          </div>
+          <div class="field span2">
+            <label>Alamat Domisili</label>
+            <input class="js-alamat" readonly placeholder="—">
+          </div>
+          <div class="field">
+            <label>Kota</label>
+            <input class="js-kota" readonly placeholder="—">
+          </div>
+        </div>
+      </div>
+
+      <div class="fset">
+        <h4><i data-lucide="file-text"></i>Dokumen</h4>
+        <div class="frow3">
+          <div class="field span2">
+            <label>Link SK Awal</label>
+            <input class="js-sk" readonly placeholder="—">
+          </div>
+        </div>
+        <div id="skContainer" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+/* Style khusus halaman biodata */
+.grid-bio{display:grid;grid-template-columns:.85fr 1.15fr;gap:26px;align-items:start}
+.profile-card{text-align:center}
+.p-avatar{width:140px;height:140px;border-radius:99px;background:var(--yellow);border:2px solid var(--ink);margin:16px auto 20px;display:grid;place-items:center;position:relative}
+.p-avatar img{width:124px;height:124px;border-radius:50%;object-fit:cover}
+.profile-card h3{font-size:19px;color:var(--ink)}
+.p-role{font:600 13.5px var(--font);color:var(--blue);margin:4px 0 14px}
+.p-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.p-meta{list-style:none;text-align:left;margin:18px 0}
+.p-meta li{display:flex;gap:12px;align-items:center;font:500 14px var(--font);color:var(--ink-2);padding:12px 4px;border-bottom:1px dashed var(--line)}
+.p-meta li:last-child{border-bottom:0}
+.p-meta svg{width:18px;height:18px;color:var(--blue);flex:none}
+.bio-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.fset h4{display:flex;gap:10px;align-items:center;font:800 12.5px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);border-bottom:1.5px dashed var(--line);padding-bottom:10px;margin:8px 0 18px}
+.fset h4 svg{width:16px;height:16px;color:var(--blue)}
+.fset+.fset{margin-top:28px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.span2{grid-column:span 2}
+.field input:read-only{background:var(--bg);color:var(--ink-2);cursor:default}
+
+@media (max-width:1100px){
+  .grid-bio{grid-template-columns:1fr}
+  .frow3{grid-template-columns:1fr 1fr}
+  .span2{grid-column:span 2}
+}
+@media (max-width:560px){
+  .frow3{grid-template-columns:1fr}
+  .span2{grid-column:span 1}
+}
+</style>
+
+<script>
+(async () => {
+  try {
+    const session = getSession();
+    if (!session) return;
+
+    const pegawai = session.pegawai || {};
+    const namaLengkap = pegawai.nama || session.nama_lengkap || '-';
+
+    // Helper: set semua elemen dengan class tertentu
+    const setAll = (cls, val) => {
+      document.querySelectorAll(cls).forEach(el => {
+        if (el.tagName === 'IMG') return;
+        if (el.tagName === 'INPUT') el.value = val || '';
+        else el.textContent = val || '';
+      });
+    };
+
+    // Set data dasar
+    setAll('.js-nama', namaLengkap);
+    setAll('.js-nomor', pegawai.nomor_identitas || session.username);
+    setAll('.js-jabatan', pegawai.jabatan || session.role);
+    setAll('.js-role', session.role);
+    setAll('.js-username', session.username);
+    setAll('.js-status', pegawai.status_pegawai || 'Ex-TP-OP');
+    setAll('.js-hp', pegawai.no_hp || '');
+    setAll('.js-alamat', pegawai.alamat || '');
+    setAll('.js-kota', pegawai.kota || '');
+    setAll('.js-krosda', pegawai.krosda || '—');
+    setAll('.js-sk', pegawai.link_sk || '');
+
+    // Set avatar
+    if (pegawai.link_foto_2 || pegawai.link_foto_1) {
+      const foto = pegawai.link_foto_2 || pegawai.link_foto_1;
+      document.querySelectorAll('.js-avatar').forEach(el => el.src = foto);
+    }
+
+    // Ambil nama DI
+    if (pegawai.id_di) {
+      const { data } = await supabaseClient
+        .from('di')
+        .select('nama_di')
+        .eq('id_di', pegawai.id_di)
+        .maybeSingle();
+      if (data) setAll('.js-di', data.nama_di);
+    }
+
+    // Tampilkan tombol buka SK jika ada
+    if (pegawai.link_sk) {
+      const skContainer = document.getElementById('skContainer');
+      if (skContainer) {
+        skContainer.innerHTML = `
+          <a href="${pegawai.link_sk}" target="_blank" rel="noopener" 
+             class="btn btn-blue sm" style="text-decoration:none">
+            <i data-lucide="external-link"></i>Buka SK Awal
+          </a>
+        `;
+      }
+    }
+
+    if (window.refreshIcons) window.refreshIcons();
+
+  } catch (err) {
+    console.error('Biodata error:', err);
+  }
+})();
+</script>
