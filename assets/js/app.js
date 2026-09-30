@@ -25,16 +25,16 @@ if (pegawai.link_foto_2 || pegawai.link_foto_1) {
 }
 
 // ============================================================
-// DAFTAR HALAMAN
+// DAFTAR HALAMAN + FUNGSI INIT
 // ============================================================
 const PAGES = {
-  dashboard:  { k: 'Portal Pegawai', t: 'Dashboard',                file: 'pages/dashboard.html',  roles: ['*'] },
-  presensi:   { k: 'E-Kehadiran',    t: 'Presensi',                 file: 'pages/presensi.html',   roles: ['*'] },
-  verifikasi: { k: 'Verifikasi',     t: 'Verifikasi Presensi',      file: 'pages/verifikasi.html', roles: ['admin','ppk','staf_pengamat'] },
-  monitoring: { k: 'Monitoring',     t: 'Monitoring PPA & Pekarya', file: 'pages/monitoring.html', roles: ['admin','ppk','staf_pengamat'] },
-  koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', roles: ['admin','ppk','staf_pengamat'] },
-  laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    roles: ['*'] },
-  biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    roles: ['*'] }
+  dashboard:  { k: 'Portal Pegawai', t: 'Dashboard',                file: 'pages/dashboard.html',  init: 'initDashboard',  roles: ['*'] },
+  presensi:   { k: 'E-Kehadiran',    t: 'Presensi',                 file: 'pages/presensi.html',   init: 'initPresensi',   roles: ['*'] },
+  verifikasi: { k: 'Verifikasi',     t: 'Verifikasi Presensi',      file: 'pages/verifikasi.html', init: 'initVerifikasi', roles: ['admin','ppk','staf_pengamat'] },
+  monitoring: { k: 'Monitoring',     t: 'Monitoring PPA & Pekarya', file: 'pages/monitoring.html', init: 'initMonitoring', roles: ['admin','ppk','staf_pengamat'] },
+  koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', init: 'initKoordinasi', roles: ['admin','ppk','staf_pengamat'] },
+  laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    init: 'initLaporan',    roles: ['*'] },
+  biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    init: null,             roles: ['*'] }
 };
 
 // ============================================================
@@ -85,28 +85,44 @@ async function go(pageName) {
     </div>`;
 
   try {
-    // Fetch HTML
+    // ============================================================
+    // 1. FETCH HTML
+    // ============================================================
     const res = await fetch(page.file + '?v=' + Date.now());
     if (!res.ok) throw new Error('Gagal memuat halaman: ' + res.status);
     const html = await res.text();
 
-    // Inject HTML
+    // ============================================================
+    // 2. INJECT HTML
+    // ============================================================
     container.innerHTML = html;
 
     // ============================================================
-    // PENTING: JALANKAN <script> DI DALAM HTML
+    // 3. JALANKAN <script> DI DALAM HTML (jika ada)
     // ============================================================
     const scripts = container.querySelectorAll('script');
     for (const oldScript of scripts) {
       const newScript = document.createElement('script');
-      // Copy atribut
       [...oldScript.attributes].forEach(attr => {
         newScript.setAttribute(attr.name, attr.value);
       });
-      // Copy isi
       newScript.textContent = oldScript.textContent;
-      // Replace
       oldScript.parentNode.replaceChild(newScript, oldScript);
+    }
+
+    // ============================================================
+    // 4. PANGGIL FUNGSI INIT HALAMAN
+    // ============================================================
+    const initFn = page.init;
+    console.log('Router: halaman', pageName, '| init function:', initFn);
+
+    if (initFn) {
+      if (typeof window[initFn] === 'function') {
+        console.log('→ Memanggil', initFn);
+        await window[initFn]();
+      } else {
+        console.warn('✗ Init function TIDAK ditemukan:', initFn);
+      }
     }
 
     refreshIcons();
