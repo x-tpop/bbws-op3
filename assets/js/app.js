@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Router + Logic Shell
+// APP.JS — Router + Logic Shell (FIXED)
 // ============================================================
 
 const $ = s => document.querySelector(s);
@@ -49,6 +49,24 @@ Object.entries(PAGES).forEach(([key, page]) => {
 });
 
 // ============================================================
+// CLEANUP: Bersihkan interval & stream saat pindah halaman
+// ============================================================
+function cleanupPage() {
+  // Clear semua interval yang kita daftarkan
+  if (window.__presInterval) { clearInterval(window.__presInterval); window.__presInterval = null; }
+  if (window.__dashInterval) { clearInterval(window.__dashInterval); window.__dashInterval = null; }
+
+  // Stop kamera
+  if (typeof window.stopCamera === 'function') {
+    try { window.stopCamera(); } catch (e) {}
+  }
+
+  // Reset flag init
+  window.__presensiInit = false;
+  window.__dashboardInit = false;
+}
+
+// ============================================================
 // ROUTER
 // ============================================================
 let currentPage = null;
@@ -61,6 +79,9 @@ async function go(pageName) {
 
   currentPage = pageName;
   const page = PAGES[pageName];
+
+  // Cleanup halaman sebelumnya
+  cleanupPage();
 
   // Update sidebar & bottom nav
   $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
@@ -76,8 +97,14 @@ async function go(pageName) {
   // Scroll ke atas
   window.scrollTo(0, 0);
 
+  // ============================================================
+  // CLONE CONTAINER — bersihkan listener & state halaman lama
+  // ============================================================
+  const oldContainer = document.getElementById('pageContainer');
+  const container = oldContainer.cloneNode(false); // clone tanpa child
+  oldContainer.parentNode.replaceChild(container, oldContainer);
+
   // Show loading
-  const container = $('#pageContainer');
   container.innerHTML = `
     <div style="text-align:center;padding:60px;color:var(--muted)">
       <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
@@ -85,21 +112,15 @@ async function go(pageName) {
     </div>`;
 
   try {
-    // ============================================================
-    // 1. FETCH HTML
-    // ============================================================
+    // 1. Fetch HTML
     const res = await fetch(page.file + '?v=' + Date.now());
     if (!res.ok) throw new Error('Gagal memuat halaman: ' + res.status);
     const html = await res.text();
 
-    // ============================================================
-    // 2. INJECT HTML
-    // ============================================================
+    // 2. Inject HTML
     container.innerHTML = html;
 
-    // ============================================================
-    // 3. JALANKAN <script> DI DALAM HTML (jika ada)
-    // ============================================================
+    // 3. Jalankan <script> di dalam HTML (jika ada)
     const scripts = container.querySelectorAll('script');
     for (const oldScript of scripts) {
       const newScript = document.createElement('script');
@@ -110,19 +131,15 @@ async function go(pageName) {
       oldScript.parentNode.replaceChild(newScript, oldScript);
     }
 
-    // ============================================================
-    // 4. PANGGIL FUNGSI INIT HALAMAN
-    // ============================================================
+    // 4. Panggil init function halaman
     const initFn = page.init;
-    console.log('Router: halaman', pageName, '| init function:', initFn);
+    console.log('Router:', pageName, '| init:', initFn);
 
-    if (initFn) {
-      if (typeof window[initFn] === 'function') {
-        console.log('→ Memanggil', initFn);
-        await window[initFn]();
-      } else {
-        console.warn('✗ Init function TIDAK ditemukan:', initFn);
-      }
+    if (initFn && typeof window[initFn] === 'function') {
+      console.log('→ Memanggil', initFn);
+      await window[initFn]();
+    } else if (initFn) {
+      console.warn('✗ Init function TIDAK ditemukan:', initFn);
     }
 
     refreshIcons();
@@ -165,9 +182,12 @@ $('#btnLogout').addEventListener('click', () => {
 function tick() {
   const d = new Date();
   const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  $('#tbTime').textContent = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + hm;
+  const el = $('#tbTime');
+  if (el) el.textContent = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + hm;
 }
-tick(); setInterval(tick, 1000);
+tick();
+if (window.__tbInterval) clearInterval(window.__tbInterval);
+window.__tbInterval = setInterval(tick, 1000);
 
 // ============================================================
 // TOAST
@@ -177,7 +197,9 @@ function toast(msg, type = 'success') {
   const el = document.createElement('div');
   el.className = 'toast t-' + type;
   el.innerHTML = `<i data-lucide="${ic}"></i><div>${msg}</div>`;
-  $('#toasts').append(el); refreshIcons();
+  const toastBox = $('#toasts');
+  if (toastBox) toastBox.append(el);
+  refreshIcons();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 3400);
 }
 
@@ -189,8 +211,8 @@ function openFotoModal(url, nama) {
   const img = document.getElementById('fotoModalImg');
   const title = document.getElementById('fotoModalTitle');
   if (!modal) return;
-  img.src = url;
-  title.textContent = 'Foto — ' + (nama || '');
+  if (img) img.src = url;
+  if (title) title.textContent = 'Foto — ' + (nama || '');
   modal.classList.add('open');
 }
 
@@ -238,3 +260,4 @@ window.getSession = getSession;
 window.logout = logout;
 window.supabaseClient = supabaseClient;
 window.CONFIG = CONFIG;
+window.cleanupPage = cleanupPage;
