@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v9 — iOS HIG compliant)
+// PRESENSI.JS — Logic halaman presensi (v10 — iOS Redesign)
 // ============================================================
 
 const presensiState = {
@@ -38,13 +38,8 @@ async function getNamaLokasi(lat, lng) {
 
     if (kota && provShort) return `${kota}, ${provShort}`;
     if (kota) return kota;
-    if (data.display_name) {
-      const parts = data.display_name.split(',').slice(0, 2);
-      return parts.join(',').trim();
-    }
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   } catch (e) {
-    console.warn('Reverse geocoding gagal:', e);
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   }
 }
@@ -70,19 +65,15 @@ async function initPresensi() {
     const el = id => document.getElementById(id);
 
     // ============================================================
-    // JAM & TANGGAL — FORMAT iOS (pakai titik dua)
+    // JAM & TANGGAL
     // ============================================================
     function tickPres() {
       const d = new Date();
-      
-      // Format HH:MM:SS dengan titik dua
       const hms = [
         String(d.getHours()).padStart(2, '0'),
         String(d.getMinutes()).padStart(2, '0'),
         String(d.getSeconds()).padStart(2, '0')
       ].join(':');
-
-      // Format HH:MM
       const hm = [
         String(d.getHours()).padStart(2, '0'),
         String(d.getMinutes()).padStart(2, '0')
@@ -90,7 +81,7 @@ async function initPresensi() {
 
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      if (el('camTime')) el('camTime').textContent = '🕐 ' + hms + ' WIB';
+      if (el('camTime')) el('camTime').textContent = hms;
       if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
     }
     tickPres();
@@ -118,31 +109,34 @@ async function initPresensi() {
     renderPresensi();
 
     // ============================================================
-    // STATUS CHANGE
+    // SEGMENTED CONTROL (iOS Style)
     // ============================================================
-    const statusSel = el('presStatus');
-    if (statusSel) {
-      const newStatus = statusSel.cloneNode(true);
-      newStatus.value = presensiState.status;
-      statusSel.parentNode.replaceChild(newStatus, statusSel);
-
-      const updateKet = () => {
+    const segButtons = document.querySelectorAll('.seg-btn');
+    segButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        segButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        presensiState.status = btn.dataset.status;
+        
+        // Tampilkan keterangan jika perlu
         const ketWrap = el('ketWrap');
         if (ketWrap) {
-          ketWrap.style.display = ['Izin', 'Sakit', 'Dinas Luar'].includes(newStatus.value) ? 'flex' : 'none';
+          ketWrap.style.display = ['Izin', 'Sakit', 'Dinas Luar'].includes(presensiState.status) ? 'flex' : 'none';
         }
-      };
-      updateKet();
+        
+        console.log('Status:', presensiState.status);
+      });
+    });
 
-      newStatus.addEventListener('change', () => {
-        presensiState.status = newStatus.value;
-        updateKet();
-        console.log('Status:', newStatus.value);
+    // Set active state saat init
+    if (presensiState.status) {
+      segButtons.forEach(b => {
+        b.classList.toggle('active', b.dataset.status === presensiState.status);
       });
     }
 
     // ============================================================
-    // INIT KAMERA
+    // INIT KAMERA (live widget)
     // ============================================================
     const video = el('video');
     if (video) {
@@ -151,16 +145,29 @@ async function initPresensi() {
       if (!ok) toast('Gagal akses kamera', 'error');
     }
 
+    // Klik area kamera → buka fullscreen
+    const camWrap = el('camWrap');
+    if (camWrap) {
+      camWrap.addEventListener('click', (e) => {
+        if (e.target.closest('#btnCapture')) return;
+        const btnFs = el('btnFullscreen');
+        if (btnFs) btnFs.click();
+        else openFullscreenDirect();
+      });
+    }
+
     // ============================================================
     // INIT LOKASI + MAPS
     // ============================================================
     try {
       const loc = await getLocation();
       presensiState.lokasi = loc;
-      const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)} (±${Math.round(loc.accuracy)}m)`;
+      const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
+      const locWithAcc = `${locText} (±${Math.round(loc.accuracy)}m)`;
 
-      if (el('camLoc')) el('camLoc').textContent = '📍 ' + locText;
-      if (el('geoStatus')) el('geoStatus').textContent = locText;
+      if (el('camLoc')) el('camLoc').textContent = locText;
+      if (el('geoStatus')) el('geoStatus').textContent = locWithAcc;
+      if (el('geoSub')) el('geoSub').textContent = locWithAcc;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
       const mapIframe = el('miniMap');
@@ -172,12 +179,13 @@ async function initPresensi() {
 
       getNamaLokasi(loc.lat, loc.lng).then(nama => {
         if (el('camFsLoc')) el('camFsLoc').textContent = nama;
-        if (el('geoStatus')) el('geoStatus').textContent = `${nama} · ${locText}`;
+        if (el('geoStatus')) el('geoStatus').textContent = nama;
+        if (el('geoSub')) el('geoSub').textContent = locWithAcc;
       });
 
       console.log('Location:', loc);
     } catch (err) {
-      if (el('camLoc')) el('camLoc').textContent = '📍 Gagal deteksi lokasi';
+      if (el('camLoc')) el('camLoc').textContent = 'Gagal deteksi';
       if (el('geoStatus')) el('geoStatus').textContent = err.message;
       console.error(err);
     }
@@ -224,7 +232,6 @@ function attachCaptureHandler(btn, videoEl) {
       if (el('previewImg')) el('previewImg').src = compressed;
       if (el('camPreview')) el('camPreview').hidden = false;
       if (el('camWrap')) el('camWrap').hidden = true;
-      if (newBtn) newBtn.hidden = true;
       if (el('btnRetake')) el('btnRetake').hidden = false;
       if (el('btnSubmit')) el('btnSubmit').hidden = false;
       if (el('infoAfter')) el('infoAfter').hidden = false;
@@ -252,8 +259,6 @@ function attachRetakeHandler(btn) {
     const el = id => document.getElementById(id);
     if (el('camPreview')) el('camPreview').hidden = true;
     if (el('camWrap')) el('camWrap').hidden = false;
-    if (el('btnCapture')) el('btnCapture').hidden = false;
-    if (newBtn) newBtn.hidden = true;
     if (el('btnSubmit')) el('btnSubmit').hidden = true;
     if (el('infoAfter')) el('infoAfter').hidden = true;
   });
@@ -335,7 +340,6 @@ function attachSubmitHandler(btn, session, pegawai, today) {
       const el = id => document.getElementById(id);
       if (el('camPreview')) el('camPreview').hidden = true;
       if (el('camWrap')) el('camWrap').hidden = false;
-      if (el('btnCapture')) el('btnCapture').hidden = false;
       if (el('btnRetake')) el('btnRetake').hidden = true;
       if (newBtn) newBtn.hidden = true;
       if (el('infoAfter')) el('infoAfter').hidden = true;
@@ -385,7 +389,7 @@ function closeSuksesModal() {
 }
 
 // ============================================================
-// FACE DETECTION — MediaPipe (Pengganti FaceDetector native)
+// FACE DETECTION — MediaPipe
 // ============================================================
 let faceDetector = null;
 let faceDetectInterval = null;
@@ -399,8 +403,6 @@ async function initFaceDetection(videoEl) {
 
   try {
     console.log('Loading MediaPipe...');
-
-    // Load library dari CDN
     const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
 
     const filesetResolver = await vision.FilesetResolver.forVisionTasks(
@@ -419,33 +421,26 @@ async function initFaceDetection(videoEl) {
     faceDetectionReady = true;
     console.log('MediaPipe FaceDetector aktif');
 
-    // Loop deteksi setiap 300ms
     if (faceDetectInterval) clearInterval(faceDetectInterval);
     faceDetectInterval = setInterval(() => {
       if (!videoEl || videoEl.readyState < 2 || !faceDetector) return;
-
       try {
         const result = faceDetector.detectForVideo(videoEl, performance.now());
         const detected = result.detections && result.detections.length > 0;
         updateFaceUI(detected);
-      } catch (e) {
-        // Silent fail
-      }
+      } catch (e) {}
     }, 300);
 
     return true;
-
   } catch (e) {
     console.warn('MediaPipe init gagal:', e);
     return false;
   }
 }
 
-// Update UI (sama seperti sebelumnya)
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
   const label = document.querySelector('#faceStatus .face-label');
-
   if (detected) {
     guide?.classList.add('detected');
     if (label) label.textContent = 'Wajah terdeteksi ✓';
@@ -456,18 +451,10 @@ function updateFaceUI(detected) {
 }
 
 function stopFaceDetection() {
-  if (faceDetectInterval) {
-    clearInterval(faceDetectInterval);
-    faceDetectInterval = null;
-  }
-  if (faceDetector) {
-    try { faceDetector.close(); } catch (e) {}
-    faceDetector = null;
-  }
+  if (faceDetectInterval) { clearInterval(faceDetectInterval); faceDetectInterval = null; }
+  if (faceDetector) { try { faceDetector.close(); } catch (e) {} faceDetector = null; }
   faceDetectionReady = false;
-
-  const guide = document.getElementById('faceGuide');
-  guide?.classList.remove('detected');
+  document.getElementById('faceGuide')?.classList.remove('detected');
 }
 
 // ============================================================
@@ -476,47 +463,10 @@ function stopFaceDetection() {
 function attachFullscreenHandlers() {
   const el = id => document.getElementById(id);
 
-  // BUKA fullscreen
-  const btnFs = el('btnFullscreen');
-  if (btnFs) {
-    const newBtn = btnFs.cloneNode(true);
-    btnFs.parentNode.replaceChild(newBtn, btnFs);
-
-    newBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const modal = el('camFullscreen');
-      const videoFs = el('videoFullscreen');
-      if (!modal || !videoFs) return;
-
-      if (window.cameraStream) {
-        videoFs.srcObject = window.cameraStream;
-        await videoFs.play();
-      } else {
-        const ok = await startCamera(videoFs, presensiState.facingMode);
-        if (!ok) { toast('Gagal buka kamera fullscreen', 'error'); return; }
-      }
-
-      modal.classList.add('open');
-
-      if (presensiState.lokasi) {
-        getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
-          if (el('camFsLoc')) el('camFsLoc').textContent = nama;
-        });
-      }
-
-      initFaceDetection(videoFs);
-      if (window.refreshIcons) window.refreshIcons();
-    });
-  }
-
-  // TUTUP fullscreen
   const btnClose = el('btnFsClose');
   if (btnClose) {
     const newBtn = btnClose.cloneNode(true);
     btnClose.parentNode.replaceChild(newBtn, btnClose);
-
     newBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -525,70 +475,75 @@ function attachFullscreenHandlers() {
     });
   }
 
-  // AMBIL FOTO
   const btnCapFs = el('btnFsCapture');
   if (btnCapFs) {
     const newBtn = btnCapFs.cloneNode(true);
     btnCapFs.parentNode.replaceChild(newBtn, btnCapFs);
-
     newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-
       const videoFs = el('videoFullscreen');
-      if (!videoFs) return;
-
-      if (!presensiState.lokasi) {
-        toast('Lokasi belum terdeteksi', 'warn');
-        return;
-      }
-
+      if (!videoFs || !presensiState.lokasi) return;
       try {
         const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
         const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
         presensiState.fotoBase64 = compressed;
-
         if (el('previewImg')) el('previewImg').src = compressed;
         if (el('camPreview')) el('camPreview').hidden = false;
         if (el('camWrap')) el('camWrap').hidden = true;
-        if (el('btnCapture')) el('btnCapture').hidden = true;
         if (el('btnRetake')) el('btnRetake').hidden = false;
         if (el('btnSubmit')) el('btnSubmit').hidden = false;
         if (el('infoAfter')) el('infoAfter').hidden = false;
-
         el('camFullscreen')?.classList.remove('open');
         stopFaceDetection();
-
         toast('Foto berhasil diambil', 'success');
       } catch (err) {
-        console.error(err);
-        toast('Gagal ambil foto: ' + err.message, 'error');
+        toast('Gagal ambil foto', 'error');
       }
     });
   }
 
-  // GANTI kamera
   const btnSwitch = el('btnFsSwitch');
   if (btnSwitch) {
     const newBtn = btnSwitch.cloneNode(true);
     btnSwitch.parentNode.replaceChild(newBtn, btnSwitch);
-
     newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-
       presensiState.facingMode = presensiState.facingMode === 'user' ? 'environment' : 'user';
       const videoFs = el('videoFullscreen');
-
       if (videoFs) {
         await startCamera(videoFs, presensiState.facingMode);
         stopFaceDetection();
         initFaceDetection(videoFs);
       }
-
       toast('Kamera: ' + (presensiState.facingMode === 'user' ? 'Depan' : 'Belakang'), 'info');
     });
   }
+}
+
+function openFullscreenDirect() {
+  const el = id => document.getElementById(id);
+  const modal = el('camFullscreen');
+  const videoFs = el('videoFullscreen');
+  if (!modal || !videoFs) return;
+
+  if (window.cameraStream) {
+    videoFs.srcObject = window.cameraStream;
+    videoFs.play();
+  } else {
+    startCamera(videoFs, presensiState.facingMode);
+  }
+
+  modal.classList.add('open');
+
+  if (presensiState.lokasi) {
+    getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
+      if (el('camFsLoc')) el('camFsLoc').textContent = nama;
+    });
+  }
+
+  initFaceDetection(videoFs);
 }
 
 // ============================================================
@@ -599,7 +554,6 @@ function renderPresensi() {
     String(d.getHours()).padStart(2, '0'),
     String(d.getMinutes()).padStart(2, '0')
   ].join(':') : '—';
-  
   const el = id => document.getElementById(id);
 
   if (el('ptMasukTime')) el('ptMasukTime').textContent = fmt(presensiState.masuk);
@@ -629,3 +583,4 @@ window.closeSuksesModal = closeSuksesModal;
 window.initFaceDetection = initFaceDetection;
 window.stopFaceDetection = stopFaceDetection;
 window.getNamaLokasi = getNamaLokasi;
+window.openFullscreenDirect = openFullscreenDirect;
