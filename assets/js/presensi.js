@@ -1,5 +1,5 @@
 // ============================================================
-// PRESENSI.JS — Logic halaman presensi (v4 — face detection)
+// PRESENSI.JS — Logic halaman presensi (v4)
 // ============================================================
 
 const presensiState = {
@@ -38,12 +38,11 @@ async function initPresensi() {
     function tickPres() {
       const d = new Date();
       const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (el('camTime')) el('camTime').textContent = '🕐 ' + hms + ' WIB';
-      if (el('camFsTime')) el('camFsTime').textContent = '🕐 ' + hms + ' WIB';
+      if (el('camFsTime')) el('camFsTime').textContent = hms + ' WIB';
       if (el('camFsTime2')) el('camFsTime2').textContent = '🕐 ' + hms + ' WIB';
     }
     tickPres();
@@ -361,9 +360,7 @@ async function initFaceDetection(videoEl) {
     try {
       const faces = await faceDetector.detect(videoEl);
       updateFaceUI(faces.length > 0);
-    } catch (e) {
-      // Silent fail
-    }
+    } catch (e) {}
   }, 500);
 
   return true;
@@ -391,7 +388,6 @@ function stopFaceDetection() {
     faceDetectInterval = null;
   }
   faceDetector = null;
-  // Reset UI
   const guide = document.getElementById('faceGuide');
   const status = document.getElementById('faceStatus');
   guide?.classList.remove('detected');
@@ -428,16 +424,13 @@ function attachFullscreenHandlers() {
 
       modal.classList.add('open');
 
-      // Update lokasi di top bar
       if (presensiState.lokasi) {
         const locShort = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
         if (el('camFsLoc')) el('camFsLoc').textContent = locShort;
         if (el('camFsLoc2')) el('camFsLoc2').textContent = '📍 ' + locShort;
       }
 
-      // Init face detection
       initFaceDetection(videoFs);
-
       if (window.refreshIcons) window.refreshIcons();
     });
   }
@@ -479,7 +472,6 @@ function attachFullscreenHandlers() {
         const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
         presensiState.fotoBase64 = compressed;
 
-        // Tampilkan preview di halaman utama
         if (el('previewImg')) el('previewImg').src = compressed;
         if (el('camPreview')) el('camPreview').hidden = false;
         if (el('camWrap')) el('camWrap').hidden = true;
@@ -488,7 +480,6 @@ function attachFullscreenHandlers() {
         if (el('btnSubmit')) el('btnSubmit').hidden = false;
         if (el('infoAfter')) el('infoAfter').hidden = false;
 
-        // Tutup fullscreen
         el('camFullscreen')?.classList.remove('open');
         stopFaceDetection();
 
@@ -515,7 +506,6 @@ function attachFullscreenHandlers() {
 
       if (videoFs) {
         await startCamera(videoFs, presensiState.facingMode);
-        // Re-init face detection untuk stream baru
         stopFaceDetection();
         initFaceDetection(videoFs);
       }
