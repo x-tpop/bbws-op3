@@ -1,5 +1,5 @@
 // ============================================================
-// DASHBOARD.JS
+// DASHBOARD.JS (PATCHED)
 // ============================================================
 
 async function initDashboard() {
@@ -32,7 +32,9 @@ async function initDashboard() {
 
     function tickDash() {
       const d = new Date();
-      const hms = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      // ★ PATCH: format manual — toLocaleTimeString('id-ID') menghasilkan
+      // pemisah titik "14.30.15" (inkonsisten dengan jam halaman presensi)
+      const hms = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
       const clock = document.getElementById('dashClock');
       const dateEl = document.getElementById('dashDate');
       if (clock) clock.textContent = hms;
@@ -42,7 +44,11 @@ async function initDashboard() {
     if (window.__dashInterval) clearInterval(window.__dashInterval);
     window.__dashInterval = setInterval(tickDash, 1000);
 
-    const today = new Date().toISOString().slice(0, 10);
+    // ★ PATCH: localDateStr() menggantikan toISOString().slice(0,10) —
+    // toISOString() = UTC, sehingga jam 00:00–06:59 WIB dashboard
+    // membaca presensi KEMARIN (status & stHadir salah sejak dini hari)
+    const today = localDateStr();
+
     if (session.id_pegawai) {
       const { data } = await supabaseClient.from('presensi').select('*')
         .eq('id_pegawai', session.id_pegawai).eq('tanggal', today).maybeSingle();
@@ -66,15 +72,27 @@ async function initDashboard() {
 
     if (pegawai.tanggal_mulai_sda || pegawai.tanggal_mulai_bbws) {
       const mulai = new Date(pegawai.tanggal_mulai_sda || pegawai.tanggal_mulai_bbws);
-      const tahun = Math.floor((new Date() - mulai) / (1000 * 60 * 60 * 24 * 365));
+      // ★ PATCH: hitung tahun kalender — rumus lama (bagi 365 hari)
+      // meleset ±1 hari per tahun kabisat
+      const now = new Date();
+      let tahun = now.getFullYear() - mulai.getFullYear();
+      const mdiff = now.getMonth() - mulai.getMonth();
+      if (mdiff < 0 || (mdiff === 0 && now.getDate() < mulai.getDate())) tahun--;
+      if (tahun < 0) tahun = 0;
       const el = document.getElementById('stMasa');
       if (el) el.textContent = tahun + ' thn';
     }
 
     if (session.id_pegawai) {
       const startBulan = today.slice(0, 7) + '-01';
+
+      // ★ PATCH: filter berdasarkan STATUS, bukan jam_masuk —
+      // record Izin/Sakit tetap terisi jam_masuk (waktu submit),
+      // jadi filter lama menghitung Izin/Sakit sebagai "hadir".
+      // Sesuaikan daftar status bila kebijakan berbeda.
       const { count } = await supabaseClient.from('presensi').select('*', { count: 'exact', head: true })
-        .eq('id_pegawai', session.id_pegawai).gte('tanggal', startBulan).not('jam_masuk', 'is', null);
+        .eq('id_pegawai', session.id_pegawai).gte('tanggal', startBulan)
+        .in('status', ['Hadir', 'Dinas Luar', 'Kerja Gabungan']);
       const el = document.getElementById('stHadir');
       if (el) el.textContent = (count || 0) + 'x';
 
