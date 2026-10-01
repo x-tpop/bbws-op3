@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Router + Logic Shell (v3 — with admin)
+// APP.JS — Router + Logic Shell (v4 PATCHED — with admin)
 // ============================================================
 
 const $ = s => document.querySelector(s);
@@ -15,8 +15,8 @@ if (!session) throw new Error('Not logged in');
 const pegawai = session.pegawai || {};
 const namaLengkap = pegawai.nama || session.nama_lengkap || 'Pegawai';
 
-$$('.js-nama').forEach(el => el.textContent = namaLengkap);
-$$('.js-role').forEach(el => el.textContent = session.role);
+ $$('.js-nama').forEach(el => el.textContent = namaLengkap);
+ $$('.js-role').forEach(el => el.textContent = session.role);
 
 if (pegawai.link_foto_2 || pegawai.link_foto_1) {
   $$('.js-avatar').forEach(el => el.src = pegawai.link_foto_2 || pegawai.link_foto_1);
@@ -66,6 +66,12 @@ function cleanupPage() {
   if (window.__presInterval) { clearInterval(window.__presInterval); window.__presInterval = null; }
   if (window.__dashInterval) { clearInterval(window.__dashInterval); window.__dashInterval = null; }
   if (window.__wmInterval) { clearInterval(window.__wmInterval); window.__wmInterval = null; }
+  // ★ PATCH: matikan face-detection MediaPipe saat pindah halaman —
+  // dulu interval 200ms-nya terus berjalan (memory leak antar halaman)
+  if (typeof window.stopFaceDetection === 'function') {
+    try { window.stopFaceDetection(); } catch (e) {}
+  }
+  // ★ PATCH: matikan stream kamera juga
   if (typeof window.stopCamera === 'function') {
     try { window.stopCamera(); } catch (e) {}
   }
@@ -168,7 +174,11 @@ async function go(pageName, isFromHash = false) {
 // EVENT: Klik menu
 // ============================================================
 document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-page]');
+  // ★ PATCH: batasi ke button/a/.clickable — sebelumnya SEMUA elemen
+  // ber-atribut data-page cocok, termasuk <section data-page="presensi">
+  // yang membungkus seluruh halaman (klik di mana saja = preventDefault).
+  // Jika ada card/div yang bisa diklik di halaman lain, beri class="clickable".
+  const btn = e.target.closest('button[data-page], a[data-page], .clickable[data-page]');
   if (!btn) return;
   e.preventDefault();
   e.stopPropagation();
@@ -181,7 +191,7 @@ document.addEventListener('click', e => {
 // ============================================================
 // EVENT: Logout
 // ============================================================
-$('#btnLogout')?.addEventListener('click', () => {
+ $('#btnLogout')?.addEventListener('click', () => {
   if (confirm('Keluar dari Portal Pegawai?')) logout();
 });
 
@@ -190,7 +200,9 @@ $('#btnLogout')?.addEventListener('click', () => {
 // ============================================================
 function tick() {
   const d = new Date();
-  const hm = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  // ★ PATCH: format manual (toLocaleTimeString 'id-ID' memakai pemisah
+  // titik "14.30" — inkonsisten dengan presClock "14:30:15")
+  const hm = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
   const el = $('#tbTime');
   if (el) el.textContent = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + hm;
 }
