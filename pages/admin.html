@@ -1,0 +1,245 @@
+<section class="page active" data-page="admin">
+  <div class="grid-pres">
+    <!-- Card: Pengaturan Jam Kerja -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">Pengaturan Jam Kerja</span>
+        <span class="server-badge" id="adminBadge">
+          <span class="sb-dot"></span>
+          <span id="adminBadgeText">Admin</span>
+        </span>
+      </div>
+
+      <div class="field-ios">
+        <label>Jam Masuk (WIB)</label>
+        <input type="time" id="setJamMasuk" value="07:30">
+      </div>
+
+      <div class="field-ios">
+        <label>Jam Pulang (WIB)</label>
+        <input type="time" id="setJamPulang" value="16:30">
+      </div>
+
+      <div class="frow">
+        <div class="field-ios">
+          <label>Toleransi Terlambat (menit)</label>
+          <input type="number" id="setToleransi" value="15" min="0" max="60">
+        </div>
+        <div class="field-ios">
+          <label>Batas Checkout Awal (menit sebelum pulang)</label>
+          <input type="number" id="setBatasCheckout" value="30" min="0" max="120">
+        </div>
+      </div>
+
+      <div class="field-ios">
+        <label>Hari Kerja</label>
+        <div class="days-grid" id="daysGrid">
+          <label class="day-chip"><input type="checkbox" value="1" checked><span>Sen</span></label>
+          <label class="day-chip"><input type="checkbox" value="2" checked><span>Sel</span></label>
+          <label class="day-chip"><input type="checkbox" value="3" checked><span>Rab</span></label>
+          <label class="day-chip"><input type="checkbox" value="4" checked><span>Kam</span></label>
+          <label class="day-chip"><input type="checkbox" value="5" checked><span>Jum</span></label>
+          <label class="day-chip"><input type="checkbox" value="6"><span>Sab</span></label>
+          <label class="day-chip"><input type="checkbox" value="7"><span>Min</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Pengaturan Geofence -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">Pengaturan Geofence</span>
+      </div>
+
+      <div class="field-ios">
+        <label>Radius Kantor (meter)</label>
+        <input type="number" id="setRadius" value="500" min="50" max="10000">
+      </div>
+
+      <div class="field-ios">
+        <label>Latitude Kantor Pusat</label>
+        <input type="text" id="setKantorLat" value="-8.443032" placeholder="-8.443032">
+      </div>
+
+      <div class="field-ios">
+        <label>Longitude Kantor Pusat</label>
+        <input type="text" id="setKantorLng" value="114.194004" placeholder="114.194004">
+      </div>
+
+      <div class="admin-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Presensi di luar radius akan memberi notifikasi, tapi tetap diizinkan untuk status Dinas Luar & QR.</span>
+      </div>
+    </div>
+
+    <!-- Card: Pengaturan Poin -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">Pengaturan Poin Kinerja</span>
+      </div>
+
+      <div class="frow">
+        <div class="field-ios">
+          <label>Poin Tepat Waktu</label>
+          <input type="number" id="setPoinTepat" value="1" min="0" max="10">
+        </div>
+        <div class="field-ios">
+          <label>Poin Terlambat</label>
+          <input type="number" id="setPoinTerlambat" value="0" min="0" max="10">
+        </div>
+      </div>
+
+      <div class="frow">
+        <div class="field-ios">
+          <label>Poin Pulang Cepat</label>
+          <input type="number" id="setPoinPulangCepat" value="0" min="-10" max="10">
+        </div>
+        <div class="field-ios">
+          <label>Poin Tidak Checkout</label>
+          <input type="number" id="setPoinTidakCheckout" value="0" min="-10" max="10">
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Action -->
+    <div class="card card-ios">
+      <div class="admin-actions">
+        <button type="button" class="btn-ios-primary" id="btnSaveSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Simpan Pengaturan
+        </button>
+        <button type="button" class="btn-ios-secondary" id="btnResetSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Reset ke Default
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+/* Admin Panel */
+.days-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.day-chip {
+  position: relative;
+  cursor: pointer;
+}
+
+.day-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.day-chip span {
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: #F2F2F7;
+  color: #3C3C43;
+  font: 600 12.5px -apple-system, sans-serif;
+  transition: .2s;
+  border: 0.5px solid transparent;
+}
+
+.day-chip input:checked + span {
+  background: #007AFF;
+  color: #fff;
+  border-color: #007AFF;
+  box-shadow: 0 2px 8px rgba(0,122,255,.3);
+}
+
+.admin-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #FEF3C7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  font: 500 12px/1.5 -apple-system, sans-serif;
+  color: #92400E;
+}
+
+.admin-note svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-ios-secondary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #007AFF;
+  border: 1.5px solid #007AFF;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font: 600 14.5px -apple-system, sans-serif;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-ios-secondary:active {
+  background: #E8F4FE;
+  transform: scale(.98);
+}
+
+.btn-ios-secondary svg {
+  width: 16px;
+  height: 16px;
+}
+
+.field-ios input[type="time"],
+.field-ios input[type="number"],
+.field-ios input[type="text"] {
+  border: 0;
+  background: #F2F2F7;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font: 500 15px -apple-system, sans-serif;
+  color: #000;
+  width: 100%;
+  transition: .15s;
+}
+
+.field-ios input:focus {
+  outline: 0;
+  background: #E5E5EA;
+  box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+}
+
+.field-ios input[type="time"] {
+  font-family: -apple-system, 'SF Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.frow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .frow { grid-template-columns: 1fr; }
+  .day-chip span { min-width: 38px; height: 34px; padding: 0 8px; font-size: 11.5px; }
+}
+</style>
