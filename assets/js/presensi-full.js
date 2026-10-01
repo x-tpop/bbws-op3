@@ -1,6 +1,7 @@
 // ============================================================
-// PRESENSI-FULL.JS — Logic halaman presensi (v15)
-// Fitur: Server time, Geofence, Jam Kerja, Poin, Watermark
+// PRESENSI-FULL.JS — Logic halaman presensi (v16 FINAL)
+// Fitur: Server time, Geofence, Jam Kerja, Poin, Watermark,
+//        Timeline Dinamis, Kunci Segmented
 // File: assets/js/presensi-full.js
 // ============================================================
 
@@ -19,7 +20,6 @@ const presensiState = {
   kantorLng: null,
   kantorRadius: 500,
   faceStableStart: null,
-  // Pengaturan jam kerja (default, akan di-override dari database)
   pengaturan: {
     jam_masuk: '07:30',
     jam_pulang: '16:30',
@@ -75,7 +75,44 @@ function getServerNow() {
 }
 
 // ============================================================
-// LOAD PENGATURAN JAM KERJA DARI DATABASE
+// UPDATE TIMELINE PROGRESS BAR DINAMIS
+// ============================================================
+function updateTimelineProgress() {
+  const fill = document.getElementById('timelineFill');
+  if (!fill) return;
+
+  const p = presensiState.pengaturan;
+  const now = getServerNow();
+  const menitSekarang = now.getHours() * 60 + now.getMinutes();
+
+  const [mh, mm] = p.jam_masuk.split(':').map(Number);
+  const [ph, pm] = p.jam_pulang.split(':').map(Number);
+  const menitMasuk = mh * 60 + mm;
+  const menitPulang = ph * 60 + pm;
+
+  let persen = 0;
+
+  if (presensiState.masuk) {
+    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
+    const totalDurasi = menitPulang - menitCheckin;
+    const elapsed = menitSekarang - menitCheckin;
+    persen = Math.min(100, Math.max(0, (elapsed / totalDurasi) * 100));
+  } else {
+    if (menitSekarang < menitMasuk) persen = 0;
+    else if (menitSekarang > menitPulang) persen = 100;
+    else persen = ((menitSekarang - menitMasuk) / (menitPulang - menitMasuk)) * 100;
+  }
+
+  if (presensiState.keluar) persen = 100;
+
+  fill.style.width = persen + '%';
+  fill.style.background = persen >= 100
+    ? 'linear-gradient(90deg, #007AFF 0%, #0051D5 100%)'
+    : 'linear-gradient(90deg, #34C759 0%, #30B750 100%)';
+}
+
+// ============================================================
+// LOAD PENGATURAN JAM KERJA
 // ============================================================
 async function loadAppSettings() {
   try {
@@ -88,7 +125,6 @@ async function loadAppSettings() {
     const s = {};
     (data || []).forEach(r => { s[r.kunci] = r.nilai; });
 
-    // Override default
     if (s.jam_masuk) presensiState.pengaturan.jam_masuk = s.jam_masuk;
     if (s.jam_pulang) presensiState.pengaturan.jam_pulang = s.jam_pulang;
     if (s.toleransi_terlambat) presensiState.pengaturan.toleransi_terlambat = parseInt(s.toleransi_terlambat);
@@ -99,7 +135,6 @@ async function loadAppSettings() {
     if (s.poin_pulang_cepat) presensiState.pengaturan.poin_pulang_cepat = parseInt(s.poin_pulang_cepat);
     if (s.poin_tidak_checkout) presensiState.pengaturan.poin_tidak_checkout = parseInt(s.poin_tidak_checkout);
 
-    // Koordinat kantor
     if (s.kantor_lat) presensiState.kantorLat = parseFloat(s.kantor_lat);
     if (s.kantor_lng) presensiState.kantorLng = parseFloat(s.kantor_lng);
     if (s.radius_kantor) presensiState.kantorRadius = parseInt(s.radius_kantor);
@@ -115,7 +150,7 @@ async function loadAppSettings() {
 }
 
 // ============================================================
-// CEK STATUS PRESENSI (tepat waktu / terlambat)
+// CEK STATUS PRESENSI
 // ============================================================
 function getPresensiStatus(jamStr, tipe = 'masuk') {
   const p = presensiState.pengaturan;
@@ -128,54 +163,29 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
     const batasToleransi = batasMasuk + p.toleransi_terlambat;
 
     if (menitSekarang <= batasMasuk) {
-      return {
-        status: 'tepat_waktu',
-        label: 'Tepat Waktu',
-        poin: p.poin_tepat_waktu,
-        warna: 'hijau'
-      };
+      return { status: 'tepat_waktu', label: 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
     } else if (menitSekarang <= batasToleransi) {
       const telat = menitSekarang - batasMasuk;
-      return {
-        status: 'toleransi',
-        label: `Toleransi +${telat}m`,
-        poin: p.poin_tepat_waktu,
-        warna: 'kuning'
-      };
+      return { status: 'toleransi', label: `Toleransi +${telat}m`, poin: p.poin_tepat_waktu, warna: 'kuning' };
     } else {
       const telat = menitSekarang - batasMasuk;
-      return {
-        status: 'terlambat',
-        label: `Terlambat ${telat}m`,
-        poin: p.poin_terlambat,
-        warna: 'merah'
-      };
+      return { status: 'terlambat', label: `Terlambat ${telat}m`, poin: p.poin_terlambat, warna: 'merah' };
     }
   } else {
     const [jh, jm] = p.jam_pulang.split(':').map(Number);
     const batasPulang = jh * 60 + jm;
 
     if (menitSekarang >= batasPulang) {
-      return {
-        status: 'tepat_waktu',
-        label: 'Tepat Waktu',
-        poin: p.poin_tepat_waktu,
-        warna: 'hijau'
-      };
+      return { status: 'tepat_waktu', label: 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
     } else {
       const cepat = batasPulang - menitSekarang;
-      return {
-        status: 'pulang_cepat',
-        label: `Pulang Cepat ${cepat}m`,
-        poin: p.poin_pulang_cepat,
-        warna: 'oranye'
-      };
+      return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`, poin: p.poin_pulang_cepat, warna: 'oranye' };
     }
   }
 }
 
 // ============================================================
-// CEK BOLEH CHECKOUT BELUM
+// CEK BOLEH CHECKOUT
 // ============================================================
 function isCheckoutAllowed() {
   const p = presensiState.pengaturan;
@@ -204,7 +214,7 @@ function isHariKerja() {
 }
 
 // ============================================================
-// TAHAP 1: GEOFENCE
+// GEOFENCE
 // ============================================================
 function hitungJarak(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -276,12 +286,11 @@ async function initPresensi() {
     const pegawai = session.pegawai || {};
     const el = id => document.getElementById(id);
 
-    // Load pengaturan + server time
     await loadAppSettings();
     await syncServerTime();
 
     // ============================================================
-    // JAM LIVE
+    // JAM LIVE + TIMELINE PROGRESS
     // ============================================================
     function tickPres() {
       const d = getServerNow();
@@ -292,6 +301,9 @@ async function initPresensi() {
       if (el('camTime')) el('camTime').textContent = hms;
       if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
       if (el('fsReviewTime')) el('fsReviewTime').textContent = hms + ' WIB';
+
+      // UPDATE TIMELINE PROGRESS
+      updateTimelineProgress();
     }
     tickPres();
     if (window.__presInterval) clearInterval(window.__presInterval);
@@ -319,6 +331,7 @@ async function initPresensi() {
     // TAHAP 2: SEGMENTED CONTROL
     // ============================================================
     const segButtons = document.querySelectorAll('.seg-btn');
+    const segmented = el('segmentedStatus');
     const ketWrap = el('ketWrap');
     const suratWrap = el('suratWrap');
     const camCard = document.querySelector('.card-camera');
@@ -349,6 +362,11 @@ async function initPresensi() {
 
     segButtons.forEach(btn => {
       btn.addEventListener('click', () => {
+        // KUNCI: jangan izinkan ubah kalau sudah check-in
+        if (segmented && segmented.classList.contains('locked')) {
+          toast('Status terkunci setelah check-in', 'warn');
+          return;
+        }
         segButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         presensiState.status = btn.dataset.status;
@@ -359,6 +377,13 @@ async function initPresensi() {
     if (presensiState.status) {
       segButtons.forEach(b => b.classList.toggle('active', b.dataset.status === presensiState.status));
       updateFormByStatus(presensiState.status);
+    }
+
+    // KUNCI SEGMENTED kalau sudah check-in & belum checkout
+    if (presensiState.masuk && !presensiState.keluar && segmented) {
+      segmented.classList.add('locked');
+      segButtons.forEach(b => { b.disabled = true; });
+      console.log('Segmented terkunci:', presensiState.status);
     }
 
     // ============================================================
@@ -460,7 +485,6 @@ async function initPresensi() {
     attachSubmitHandler(el('btnSubmit'), session, pegawai);
     attachFullscreenHandlers();
 
-    // Update watermark setiap detik
     updateWatermarkData();
     if (window.__wmInterval) clearInterval(window.__wmInterval);
     window.__wmInterval = setInterval(updateWatermarkData, 1000);
@@ -524,13 +548,11 @@ function attachCaptureHandler(btn) {
     e.stopPropagation();
     console.log('Tombol Buka Kamera diklik');
 
-    // CEK HARI KERJA
     if (!isHariKerja()) {
       toast('Hari ini bukan hari kerja', 'warn');
       return;
     }
 
-    // CEK CHECKOUT (kalau sudah check-in)
     if (presensiState.masuk && !presensiState.keluar) {
       const cek = isCheckoutAllowed();
       if (!cek.allowed) {
@@ -908,7 +930,6 @@ async function submitPresensi(btn, session, pegawai) {
   const ketEl = el('presKet');
   const ket = ketEl ? ketEl.value.trim() : '';
 
-  // VALIDASI
   if (['Izin', 'Sakit'].includes(status)) {
     if (!presensiState.suratBase64) { toast('Surat pendukung wajib diupload', 'warn'); return; }
     if (!ket) { toast('Keterangan wajib diisi', 'warn'); return; }
@@ -917,12 +938,10 @@ async function submitPresensi(btn, session, pegawai) {
     if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
   }
 
-  // GEOFENCE CHECK (hanya untuk Hadir)
   if (status === 'Hadir' && !presensiState.isInRadius) {
     if (!confirm('Anda berada di luar radius kantor. Tetap lanjutkan presensi Hadir?')) return;
   }
 
-  // Hitung status & poin
   const now = getServerNow();
   const jam = [String(now.getHours()).padStart(2,'0'), String(now.getMinutes()).padStart(2,'0'), String(now.getSeconds()).padStart(2,'0')].join(':');
   const tipe = !presensiState.masuk ? 'masuk' : 'keluar';
@@ -1001,6 +1020,7 @@ async function submitPresensi(btn, session, pegawai) {
 
     resetPresensiForm();
     renderPresensi();
+    updateTimelineProgress();
 
   } catch (err) {
     hideLoading();
@@ -1050,7 +1070,6 @@ function showSuksesModal(data) {
   if (el('succLocName')) el('succLocName').textContent = data.lokasiNama || '—';
   if (el('succLocCoords')) el('succLocCoords').textContent = data.lokasi || '—';
 
-  // Info status kehadiran (tepat waktu / terlambat)
   if (data.statusInfo) {
     const statusRow = el('succStatusRow');
     if (statusRow) {
@@ -1127,6 +1146,9 @@ function renderPresensi() {
   }
 
   if (el('presNote')) el('presNote').textContent = note;
+
+  // Update timeline juga
+  updateTimelineProgress();
 }
 
 // ============================================================
@@ -1146,3 +1168,4 @@ window.getPresensiStatus = getPresensiStatus;
 window.isCheckoutAllowed = isCheckoutAllowed;
 window.isHariKerja = isHariKerja;
 window.updateWatermarkData = updateWatermarkData;
+window.updateTimelineProgress = updateTimelineProgress;
