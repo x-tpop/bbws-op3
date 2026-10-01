@@ -122,10 +122,17 @@
         </span>
       </div>
       <div class="map-wrap-ios">
-        <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <div class="map-overlay-click" id="mapOverlayClick">
-          <span>Ketuk untuk buka peta</span>
-        </div>
+  <div id="miniMap" class="leaflet-map"></div>
+  <div class="location-card">
+    <div class="lc-icon" id="lcIcon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </div>
+    <div class="lc-info">
+      <div class="lc-title" id="geoStatus">Mendeteksi lokasi...</div>
+      <div class="lc-sub" id="geoSub">—</div>
+    </div>
+  </div>
+</div>
         <div class="location-card">
           <div class="lc-icon" id="lcIcon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -662,19 +669,39 @@
   position:relative;flex:1;min-height:180px;
   border-radius:0 0 16px 16px;overflow:hidden;background:#E5E5EA;
 }
-.map-wrap-ios iframe{width:100%;height:100%;border:0;pointer-events:none;display:block}
+/* Leaflet map */
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  border-radius: 0 0 16px 16px;
+  z-index: 1;
+}
 
-/* Hilangkan tombol zoom OSM */
-.map-wrap-ios::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 60px;
-  height: 100px;
-  background: #F2F2F7;
-  z-index: 2;
-  pointer-events: none;
+/* Leaflet overrides */
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  background: rgba(255,255,255,.7) !important;
+}
+
+.leaflet-control-zoom {
+  display: none !important; /* Sembunyikan tombol zoom, biar bersih */
+}
+
+/* Marker user (titik biru) */
+.user-marker-icon {
+  background: #007AFF;
+  border: 3px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3), 0 0 20px rgba(0, 122, 255, 0.6);
+  width: 16px !important;
+  height: 16px !important;
+  animation: userPulse 2s ease-in-out infinite;
+}
+
+@keyframes userPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3), 0 0 20px rgba(0, 122, 255, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 122, 255, 0.15), 0 0 30px rgba(0, 122, 255, 0.8); }
 }
 
 .map-overlay-click {
