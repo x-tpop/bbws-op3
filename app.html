@@ -29,7 +29,7 @@
     <button class="nav-btn" data-page="koordinasi" id="navKoordinasi"><i data-lucide="handshake"></i>Koordinasi</button>
     <button class="nav-btn" data-page="laporan"><i data-lucide="file-text"></i>Laporan</button>
     <button class="nav-btn" data-page="biodata"><i data-lucide="user-round"></i>Biodata</button>
-    <button class="nav-btn" data-page="admin" id="navAdmin"><i data-lucide="settings"></i>Admin</button>
+    <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none"><i data-lucide="settings"></i>Admin</button>
   </nav>
   <div class="side-foot">
     <button class="side-user" data-page="biodata">
@@ -67,7 +67,6 @@
 
   <div class="wrap">
     <main id="pageContainer">
-      <!-- Halaman di-load di sini via fetch -->
       <div style="text-align:center;padding:60px;color:var(--muted)">
         <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
         <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
@@ -120,7 +119,6 @@
 </div>
 
 <!-- SCRIPTS -->
-<!-- SCRIPTS -->
 <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/config.js"></script>
@@ -133,6 +131,7 @@
 <script src="assets/js/monitoring.js"></script>
 <script src="assets/js/koordinasi.js"></script>
 <script src="assets/js/laporan.js"></script>
+<script src="assets/js/admin.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
