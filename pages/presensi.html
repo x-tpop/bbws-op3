@@ -106,7 +106,6 @@
         <span class="kicker">Kamera Presensi</span>
       </div>
 
-      <!-- STATE A: Tombol "Buka Kamera" besar -->
       <div class="camera-cta" id="camWrap">
         <div class="camera-cta-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -119,7 +118,6 @@
         <button type="button" id="btnCapture" class="camera-cta-btn"></button>
       </div>
 
-      <!-- STATE B: Preview foto -->
       <div class="cam-preview-ios" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
         <button type="button" class="preview-retake" id="btnRetake">
@@ -149,21 +147,66 @@
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
-  <div class="cam-top">
-    <div class="cam-pill">
-      <div class="pill-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- WATERMARK FLOATING CARD iOS — LIVE PREVIEW -->
+  <div class="ios-wm-card" id="iosWmCard">
+    <div class="ios-wm-brand">
+      <div class="pupr-logo-circle">
+        <svg viewBox="0 0 100 100" class="pupr-svg">
+          <circle cx="50" cy="50" r="48" fill="#FDB813"/>
+          <path d="M50 15 L80 35 L80 65 L50 85 L20 65 L20 35 Z" fill="#003366"/>
+          <circle cx="50" cy="50" r="18" fill="#FDB813"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">BBWS BRANTAS</span>
+        <span class="brand-sub">Kementerian PUPR</span>
+      </div>
+    </div>
+
+    <div class="ios-wm-divider"></div>
+
+    <div class="ios-wm-info">
+      <div class="info-row identity">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <div class="identity-group">
+          <b id="wmName">—</b>
+          <small id="wmJabatan">—</small>
+        </div>
+      </div>
+
+      <div class="info-row location">
+        <span class="status-badge" id="wmStatus">
+          <span class="sb-dot"></span>
+          <span class="sb-text">Hadir</span>
+        </span>
+        <div class="loc-group">
+          <b id="wmLocName">Mendeteksi...</b>
+          <small id="wmCoords">—</small>
+        </div>
+      </div>
+
+      <div class="info-row time">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
+        <span id="wmTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cam-top">
+    <div class="cam-pill">
+      <div class="pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="camFsTime">22:36 WIB</span>
       </div>
       <div class="pill-divider"></div>
       <div class="pill-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="camFsLoc">Mendeteksi...</span>
       </div>
     </div>
@@ -183,17 +226,11 @@
     <img id="fsReviewImg" alt="Review">
     <div class="cam-review-info">
       <div class="cri-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="fsReviewLoc">-8.443, 114.194</span>
       </div>
       <div class="cri-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="fsReviewTime">06:29:00 WIB</span>
       </div>
     </div>
@@ -202,24 +239,14 @@
   <div class="cam-dock-wrap" id="fsDockLive">
     <div class="cam-dock">
       <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-      
       <button type="button" class="cam-shutter" id="btnFsCapture" title="Ambil Foto">
         <span class="shutter-ring"></span>
         <span class="shutter-inner"></span>
       </button>
-      
       <button type="button" class="cam-dock-btn" id="btnFsSwitch" title="Ganti Kamera">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/>
-          <polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/>
-          <path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/>
-          <polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/><polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/><path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/><polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/></svg>
       </button>
     </div>
     <div class="cam-home-bar"></div>
@@ -228,17 +255,11 @@
   <div class="cam-dock-wrap" id="fsDockReview" hidden>
     <div class="cam-dock cam-dock-review">
       <button type="button" class="cam-review-btn secondary" id="btnReviewRetake">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="1 4 1 10 7 10"/>
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         <span>Foto Ulang</span>
       </button>
-      
       <button type="button" class="cam-review-btn primary" id="btnReviewUse">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
         <span>Gunakan Foto</span>
       </button>
     </div>
@@ -265,7 +286,6 @@
 <!-- MODAL SUCCESS -->
 <div id="suksesModal" class="ios-modal-backdrop">
   <div class="ios-modal-card">
-    
     <div class="ios-success-badge">
       <div class="ios-success-circle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -273,28 +293,23 @@
         </svg>
       </div>
     </div>
-
     <div class="ios-modal-header">
       <h3 class="ios-modal-title" id="suksesTitle">Check-in Berhasil!</h3>
       <p class="ios-modal-sub" id="suksesMsg">Presensi masuk Anda telah tercatat pada sistem e-kehadiran.</p>
     </div>
-
     <div class="ios-inset-group">
       <div class="ios-inset-row">
         <span class="row-label">Tanggal</span>
         <span class="row-value" id="succDate">—</span>
       </div>
-      
       <div class="ios-inset-row">
         <span class="row-label" id="succTimeLabel">Jam Masuk</span>
         <span class="row-value highlight" id="succTime">—</span>
       </div>
-      
       <div class="ios-inset-row">
         <span class="row-label">Status</span>
         <span class="row-badge green" id="succStatus">—</span>
       </div>
-      
       <div class="ios-inset-row">
         <span class="row-label">Lokasi</span>
         <div class="row-value-group">
@@ -302,17 +317,14 @@
           <small class="row-value-sub" id="succLocCoords">—</small>
         </div>
       </div>
-
       <div class="ios-inset-row" id="succKetRow" style="display:none">
         <span class="row-label">Keterangan</span>
         <span class="row-value" id="succKet">—</span>
       </div>
     </div>
-
     <div class="ios-modal-actions">
       <button type="button" class="ios-btn-done" onclick="closeSuksesModal()">Selesai</button>
     </div>
-
   </div>
 </div>
 
@@ -329,15 +341,8 @@
   gap:8px;
 }
 @media (min-width:920px){
-  .grid-pres{
-    grid-template-columns:1fr 1fr;
-    padding:10px;
-    gap:10px;
-    align-items:start;
-  }
-  .card-camera{
-    grid-row: span 2;
-  }
+  .grid-pres{grid-template-columns:1fr 1fr;padding:10px;gap:10px;align-items:start}
+  .card-camera{grid-row: span 2}
 }
 
 .card-ios{
@@ -348,461 +353,284 @@
   box-shadow:0 2px 12px rgba(0,0,0,.04);
 }
 .card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;
   margin-bottom:8px;
 }
 .card-head .kicker{
-  font:800 10px var(--font);
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:#8E8E93;
+  font:800 10px var(--font);letter-spacing:.14em;
+  text-transform:uppercase;color:#8E8E93;
 }
 
-/* SERVER BADGE */
 .server-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  background:rgba(52,199,89,.12);
-  color:#248A3D;
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(52,199,89,.12);color:#248A3D;
   font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
-  padding:3px 7px;
-  border-radius:99px;
-  letter-spacing:.02em;
+  padding:3px 7px;border-radius:99px;
 }
-.sb-dot{
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:#34C759;
-  animation:sbPulse 2s ease-in-out infinite;
-}
+.sb-dot{width:4px;height:4px;border-radius:50%;background:#34C759;animation:sbPulse 2s infinite}
 @keyframes sbPulse{0%,100%{opacity:1}50%{opacity:.4}}
 .server-badge.error{background:rgba(255,59,48,.12);color:#C41E18}
 .server-badge.error .sb-dot{background:#FF3B30}
 
-.today-date{
-  font:600 13px var(--font);
-  color:#3C3C43;
-  margin:0 0 4px;
-}
+.today-date{font:600 13px var(--font);color:#3C3C43;margin:0 0 4px}
 .big-clock{
   font:700 clamp(32px,4vw,44px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
-  letter-spacing:-.02em;
-  color:#000;
-  line-height:1;
-  margin-bottom:12px;
+  letter-spacing:-.02em;color:#000;line-height:1;margin-bottom:12px;
 }
-.big-clock small{
-  font:600 12px -apple-system,'SF Pro Text',sans-serif;
-  color:#8E8E93;
-  margin-left:4px;
-}
+.big-clock small{font:600 12px -apple-system,'SF Pro Text',sans-serif;color:#8E8E93;margin-left:4px}
 
 .ptl-ios{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:#F2F2F7;
-  border-radius:12px;
-  padding:10px 12px;
+  display:flex;align-items:center;gap:8px;
+  background:#F2F2F7;border-radius:12px;padding:10px 12px;
 }
-.ptl-ios .ptl-node{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  min-width:0;
-}
+.ptl-ios .ptl-node{display:flex;align-items:center;gap:6px;min-width:0}
 .ptl-ios .ptl-ic{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:#E5E5EA;
-  border:0;
-  display:grid;
-  place-items:center;
-  color:#8E8E93;
-  transition:.2s;
-  flex:none;
+  width:32px;height:32px;border-radius:50%;
+  background:#E5E5EA;border:0;display:grid;place-items:center;
+  color:#8E8E93;transition:.2s;flex:none;
 }
-.ptl-ios .ptl-node.done .ptl-ic{
-  background:#34C759;
-  color:#fff;
-}
+.ptl-ios .ptl-node.done .ptl-ic{background:#34C759;color:#fff}
 .ptl-ios .ptl-node span{
-  font:700 9.5px var(--font);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  color:#8E8E93;
-  display:block;
+  font:700 9.5px var(--font);letter-spacing:.06em;
+  text-transform:uppercase;color:#8E8E93;display:block;
 }
-.ptl-ios .ptl-node b{
-  font:700 13px -apple-system,'SF Mono','Space Grotesk',monospace;
-  color:#000;
-}
-.ptl-ios .ptl-line{
-  flex:1;
-  height:2px;
-  border-radius:99px;
-  background:#E5E5EA;
-  min-width:16px;
-}
+.ptl-ios .ptl-node b{font:700 13px -apple-system,'SF Mono','Space Grotesk',monospace;color:#000}
+.ptl-ios .ptl-line{flex:1;height:2px;border-radius:99px;background:#E5E5EA;min-width:16px}
 .ptl-ios.on .ptl-line{background:#34C759}
 
 .segmented{
-  display:flex;
-  background:#E5E5EA;
-  border-radius:10px;
-  padding:2.5px;
-  gap:2px;
-  margin-bottom:10px;
-  overflow-x:auto;
-  scrollbar-width:none;
+  display:flex;background:#E5E5EA;border-radius:10px;
+  padding:2.5px;gap:2px;margin-bottom:10px;
+  overflow-x:auto;scrollbar-width:none;
 }
 .segmented::-webkit-scrollbar{display:none}
 .seg-btn{
-  flex:1;
-  min-width:48px;
-  border:0;
-  background:transparent;
-  color:#3C3C43;
-  font:600 11.5px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
-  padding:6px 6px;
-  border-radius:7px;
-  cursor:pointer;
-  transition:.2s cubic-bezier(.4,0,.2,1);
-  white-space:nowrap;
-  text-align:center;
+  flex:1;min-width:48px;border:0;background:transparent;
+  color:#3C3C43;font:600 11.5px -apple-system,'SF Pro Text',sans-serif;
+  padding:6px 6px;border-radius:7px;cursor:pointer;
+  white-space:nowrap;text-align:center;transition:.2s;
 }
-.seg-btn.active{
-  background:#FFFFFF;
-  color:#000;
-  box-shadow:0 2px 6px rgba(0,0,0,.12);
-}
+.seg-btn.active{background:#FFFFFF;color:#000;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 
-.field-ios{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  margin-bottom:10px;
-}
+.field-ios{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .field-ios label{
-  font:700 10px var(--font);
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:#8E8E93;
+  font:700 10px var(--font);letter-spacing:.08em;
+  text-transform:uppercase;color:#8E8E93;
 }
 .field-ios textarea{
-  border:0;
-  background:#F2F2F7;
-  border-radius:10px;
-  padding:10px 12px;
-  font:400 14px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
-  color:#000;
-  resize:vertical;
-  width:100%;
+  border:0;background:#F2F2F7;border-radius:10px;
+  padding:10px 12px;font:400 14px -apple-system,sans-serif;
+  color:#000;resize:vertical;width:100%;
 }
 .field-ios textarea:focus{
-  outline:0;
-  background:#E5E5EA;
+  outline:0;background:#E5E5EA;
   box-shadow:0 0 0 3px rgba(0,122,255,.15);
 }
 
-/* FILE UPLOAD */
 .file-upload{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:#F2F2F7;
-  border-radius:10px;
-  padding:12px;
-  cursor:pointer;
-  transition:.2s;
+  display:flex;align-items:center;gap:10px;
+  background:#F2F2F7;border-radius:10px;
+  padding:12px;cursor:pointer;transition:.2s;
 }
 .file-upload:active{background:#E5E5EA}
 .fu-icon{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  background:#007AFF;
-  color:#fff;
-  display:grid;
-  place-items:center;
-  flex:none;
+  width:36px;height:36px;border-radius:50%;
+  background:#007AFF;color:#fff;display:grid;place-items:center;flex:none;
 }
 .fu-icon svg{width:18px;height:18px}
 .fu-text{flex:1;min-width:0}
-.fu-text b{
-  display:block;
-  font:600 13px -apple-system,'SF Pro Text',sans-serif;
-  color:#000;
-  margin-bottom:2px;
-}
-.fu-text small{
-  font:500 10.5px -apple-system,'SF Pro Text',sans-serif;
-  color:#8E8E93;
-}
-.fu-preview{
-  position:relative;
-  margin-top:8px;
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
+.fu-text b{display:block;font:600 13px -apple-system,sans-serif;color:#000;margin-bottom:2px}
+.fu-text small{font:500 10.5px -apple-system,sans-serif;color:#8E8E93}
+.fu-preview{position:relative;margin-top:8px;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)}
 .fu-preview img{width:100%;display:block}
 .fu-remove{
-  position:absolute;
-  top:6px;
-  right:6px;
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  background:rgba(0,0,0,.6);
-  backdrop-filter:blur(10px);
-  border:0;
-  color:#fff;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
+  position:absolute;top:6px;right:6px;width:28px;height:28px;
+  border-radius:50%;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);
+  border:0;color:#fff;display:grid;place-items:center;cursor:pointer;
 }
 .fu-remove svg{width:14px;height:14px}
 
 .pres-note-ios{
-  background:#E5E5EA;
-  border-radius:10px;
-  padding:9px 12px;
-  font:500 12.5px -apple-system,'SF Pro Text',sans-serif;
-  color:#3C3C43;
-  margin:0;
-  border:0;
+  background:#E5E5EA;border-radius:10px;padding:9px 12px;
+  font:500 12.5px -apple-system,sans-serif;color:#3C3C43;margin:0;
 }
 
-/* MAP + GEOFENCE */
-.card-map{
-  padding:0;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
-.card-map .card-head{
-  padding:12px 12px 0;
-  margin-bottom:8px;
-}
+.card-map{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.card-map .card-head{padding:12px 12px 0;margin-bottom:8px}
 .geofence-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  background:#E5E5EA;
-  color:#8E8E93;
-  font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
-  padding:3px 7px;
-  border-radius:99px;
+  display:inline-flex;align-items:center;gap:4px;
+  background:#E5E5EA;color:#8E8E93;
+  font:700 9.5px -apple-system,sans-serif;
+  padding:3px 7px;border-radius:99px;
 }
-.gb-dot{
-  width:4px;
-  height:4px;
-  border-radius:50%;
-  background:#8E8E93;
-}
+.gb-dot{width:4px;height:4px;border-radius:50%;background:#8E8E93}
 .geofence-badge.ok{background:rgba(52,199,89,.15);color:#248A3D}
 .geofence-badge.ok .gb-dot{background:#34C759}
 .geofence-badge.warn{background:rgba(255,149,0,.15);color:#B36200}
 .geofence-badge.warn .gb-dot{background:#FF9500}
 
 .map-wrap-ios{
-  position:relative;
-  flex:1;
-  min-height:150px;
-  border-radius:0 0 16px 16px;
-  overflow:hidden;
-  background:#E5E5EA;
+  position:relative;flex:1;min-height:150px;
+  border-radius:0 0 16px 16px;overflow:hidden;background:#E5E5EA;
 }
-.map-wrap-ios iframe{
-  width:100%;
-  height:100%;
-  border:0;
-  pointer-events:none;
-  display:block;
-}
+.map-wrap-ios iframe{width:100%;height:100%;border:0;pointer-events:none;display:block}
 .location-card{
-  position:absolute;
-  left:8px;
-  bottom:8px;
-  right:8px;
+  position:absolute;left:8px;bottom:8px;right:8px;
   background:rgba(255,255,255,.92);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border-radius:10px;
-  padding:7px 10px;
-  display:flex;
-  align-items:center;
-  gap:8px;
+  border-radius:10px;padding:7px 10px;
+  display:flex;align-items:center;gap:8px;
   box-shadow:0 4px 20px rgba(0,0,0,.1);
 }
 .lc-icon{
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  background:#007AFF;
-  color:#fff;
-  display:grid;
-  place-items:center;
-  flex:none;
-  transition:.3s;
+  width:28px;height:28px;border-radius:50%;
+  background:#007AFF;color:#fff;display:grid;place-items:center;flex:none;transition:.3s;
 }
 .lc-icon.warn{background:#FF9500}
 .lc-icon svg{width:14px;height:14px}
 .lc-info{flex:1;min-width:0}
-.lc-title{
-  font:700 12.5px -apple-system,'SF Pro Text',sans-serif;
-  color:#000;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.lc-sub{
-  font:500 10px -apple-system,'SF Mono','Space Grotesk',monospace;
-  color:#8E8E93;
-  margin-top:1px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.lc-title{font:700 12.5px -apple-system,sans-serif;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-sub{font:500 10px -apple-system,'SF Mono',monospace;color:#8E8E93;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ============================================================
-   CAMERA CTA — TOMBOL BESAR "BUKA KAMERA"
-   ============================================================ */
-.card-camera{
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-}
+.card-camera{padding:12px;display:flex;flex-direction:column}
 .camera-cta{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/4;
+  position:relative;width:100%;aspect-ratio:3/4;
   background:linear-gradient(145deg,#1C1C1E 0%,#000 100%);
-  border-radius:14px;
-  overflow:hidden;
-  margin-bottom:10px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:12px;
-  padding:20px;
-  cursor:pointer;
-  transition:.2s;
+  border-radius:14px;overflow:hidden;margin-bottom:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:20px;cursor:pointer;transition:.2s;
   box-shadow:0 6px 20px rgba(0,0,0,.12);
 }
 .camera-cta:active{transform:scale(.98)}
 .camera-cta-icon{
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  background:rgba(0,122,255,.95);
-  color:#fff;
-  display:grid;
-  place-items:center;
-  box-shadow:0 8px 20px rgba(0,122,255,.4);
-  transition:.2s;
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(0,122,255,.95);color:#fff;
+  display:grid;place-items:center;
+  box-shadow:0 8px 20px rgba(0,122,255,.4);transition:.2s;
 }
 .camera-cta:hover .camera-cta-icon{transform:scale(1.06)}
 .camera-cta-icon svg{width:28px;height:28px}
-.camera-cta-text{
-  font:700 14px -apple-system,'SF Pro Text',sans-serif;
-  color:#fff;
-  text-align:center;
-}
+.camera-cta-text{font:700 14px -apple-system,sans-serif;color:#fff;text-align:center}
 .camera-cta-sub{
-  font:500 11.5px -apple-system,'SF Pro Text',sans-serif;
-  color:rgba(255,255,255,.6);
-  text-align:center;
-  line-height:1.5;
-  max-width:240px;
+  font:500 11.5px -apple-system,sans-serif;
+  color:rgba(255,255,255,.6);text-align:center;line-height:1.5;max-width:240px;
 }
-.camera-cta-btn{
-  position:absolute;
-  inset:0;
-  border:0;
-  background:transparent;
-  cursor:pointer;
-}
+.camera-cta-btn{position:absolute;inset:0;border:0;background:transparent;cursor:pointer}
 
-/* PREVIEW */
 .cam-preview-ios{
-  position:relative;
-  border-radius:14px;
-  overflow:hidden;
-  margin-bottom:10px;
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:10px;
   box-shadow:0 6px 20px rgba(0,0,0,.12);
 }
 .cam-preview-ios img{width:100%;display:block}
 .preview-retake{
-  position:absolute;
-  bottom:8px;
-  right:8px;
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(15px);
-  border:0;
-  border-radius:99px;
-  padding:6px 10px;
-  display:flex;
-  align-items:center;
-  gap:4px;
-  color:#fff;
-  font:600 11.5px -apple-system,'SF Pro Text',sans-serif;
-  cursor:pointer;
+  position:absolute;bottom:8px;right:8px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(15px);
+  border:0;border-radius:99px;padding:6px 10px;
+  display:flex;align-items:center;gap:4px;color:#fff;
+  font:600 11.5px -apple-system,sans-serif;cursor:pointer;
 }
 .preview-retake svg{width:12px;height:12px}
 
 .info-after-ios{
-  display:flex;
-  gap:6px;
-  align-items:flex-start;
-  background:#E8F4FE;
-  border-radius:10px;
-  padding:9px 10px;
-  margin-bottom:10px;
-  font:500 12px/1.5 -apple-system,'SF Pro Text',sans-serif;
-  color:#007AFF;
+  display:flex;gap:6px;align-items:flex-start;
+  background:#E8F4FE;border-radius:10px;padding:9px 10px;margin-bottom:10px;
+  font:500 12px/1.5 -apple-system,sans-serif;color:#007AFF;
 }
-.info-after-ios svg{
-  width:14px;
-  height:14px;
-  flex:none;
-  margin-top:1px;
-}
+.info-after-ios svg{width:14px;height:14px;flex:none;margin-top:1px}
 .info-after-ios b{color:#004999}
 
 .btn-ios-primary{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  background:#007AFF;
-  color:#fff;
-  border:0;
-  border-radius:12px;
-  padding:11px 16px;
-  font:600 14.5px -apple-system,'SF Pro Text',sans-serif;
-  cursor:pointer;
-  transition:.2s;
-  box-shadow:0 2px 8px rgba(0,122,255,.25);
-  margin-top:auto;
+  width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:#007AFF;color:#fff;border:0;border-radius:12px;
+  padding:11px 16px;font:600 14.5px -apple-system,sans-serif;
+  cursor:pointer;transition:.2s;box-shadow:0 2px 8px rgba(0,122,255,.25);margin-top:auto;
 }
-.btn-ios-primary:active{
-  transform:scale(.98);
-  background:#0066CC;
-}
+.btn-ios-primary:active{transform:scale(.98);background:#0066CC}
 .btn-ios-primary svg{width:16px;height:16px}
 
 /* ============================================================
-   FULLSCREEN CAMERA
+   iOS WATERMARK FLOATING CARD
    ============================================================ */
+.ios-wm-card {
+  position: absolute;
+  bottom: 140px;
+  left: 12px;
+  right: 12px;
+  z-index: 20;
+  background: rgba(20, 20, 24, 0.62);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 18px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #FFFFFF;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  pointer-events: none;
+}
+.ios-wm-brand{display:flex;align-items:center;gap:8px;flex:none}
+.pupr-logo-circle{
+  width:36px;height:36px;border-radius:50%;
+  background:#FFFFFF;padding:2px;display:grid;place-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.pupr-svg{width:100%;height:100%}
+.brand-text{display:flex;flex-direction:column}
+.brand-title{font-size:11px;font-weight:800;letter-spacing:.4px;color:#FDB813}
+.brand-sub{font-size:9px;font-weight:500;color:rgba(255,255,255,.75)}
+.ios-wm-divider{width:1px;height:56px;background:rgba(255,255,255,.2);flex:none}
+.ios-wm-info{display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;min-width:0}
+.info-row{display:flex;align-items:center;gap:6px;min-width:0}
+.info-row svg{width:12px;height:12px;flex:none}
+.info-row.identity svg{stroke:#FDB813}
+.info-row.location svg{stroke:#34C759}
+.info-row.time svg{stroke:#007AFF}
+.identity-group{display:flex;align-items:baseline;gap:6px;min-width:0;overflow:hidden}
+.identity-group b{
+  font-size:12px;font-weight:700;color:#FFFFFF;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;
+}
+.identity-group small{
+  font-size:9.5px;font-weight:500;color:rgba(255,255,255,.6);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.loc-group{display:flex;align-items:baseline;gap:6px;overflow:hidden;min-width:0}
+.loc-group b{
+  font-size:11.5px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:110px;
+}
+.loc-group small{
+  font-size:9.5px;color:rgba(255,255,255,.55);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.status-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:99px;
+  background:rgba(52,199,89,.25);
+  border:0.5px solid rgba(52,199,89,.4);
+  font-size:9.5px;font-weight:700;color:#4ADE80;
+  white-space:nowrap;flex:none;
+}
+.status-badge .sb-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:#4ADE80;
+  box-shadow:0 0 0 2px rgba(52,199,89,.25);
+}
+.status-badge.izin{background:rgba(255,149,0,.25);border-color:rgba(255,149,0,.4);color:#FFB340}
+.status-badge.izin .sb-dot{background:#FFB340;box-shadow:0 0 0 2px rgba(255,149,0,.25)}
+.status-badge.sakit{background:rgba(255,59,48,.25);border-color:rgba(255,59,48,.4);color:#FF6961}
+.status-badge.sakit .sb-dot{background:#FF6961;box-shadow:0 0 0 2px rgba(255,59,48,.25)}
+.status-badge.dinas{background:rgba(0,122,255,.25);border-color:rgba(0,122,255,.4);color:#64B5FF}
+.status-badge.dinas .sb-dot{background:#64B5FF;box-shadow:0 0 0 2px rgba(0,122,255,.25)}
+.status-badge.qr{background:rgba(175,82,222,.25);border-color:rgba(175,82,222,.4);color:#C77DFF}
+.status-badge.qr .sb-dot{background:#C77DFF;box-shadow:0 0 0 2px rgba(175,82,222,.25)}
+.info-row.time{font-size:10.5px;font-weight:500;color:rgba(255,255,255,.85)}
+
+/* FULLSCREEN CAMERA */
 .cam-fullscreen{
   position:fixed;inset:0;background:#000;z-index:9999;
   display:none;flex-direction:column;justify-content:space-between;overflow:hidden;
@@ -828,7 +656,7 @@
 }
 .pill-item{
   display:flex;align-items:center;gap:6px;color:#fff;
-  font:600 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+  font:600 12.5px -apple-system,sans-serif;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .pill-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.85);flex:none}
@@ -840,11 +668,8 @@
   padding-bottom:60px;
 }
 .cam-oval-guide{
-  position:relative;
-  width:min(72vw, 280px);
-  height:min(100vw, 390px);
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,.85);
+  position:relative;width:min(72vw, 280px);height:min(100vw, 390px);
+  border-radius:50%;border:2px solid rgba(255,255,255,.85);
   box-shadow:0 0 0 9999px rgba(0,0,0,.55);
   transition:border-color .4s ease, box-shadow .4s ease;
   overflow:visible;
@@ -864,27 +689,21 @@
   animation:scanMove 2.8s ease-in-out infinite;
   pointer-events:none;z-index:3;
   box-shadow:0 0 10px rgba(255,255,255,.7), 0 0 20px rgba(255,255,255,.3);
-  transition:background .3s ease, box-shadow .3s ease;
 }
 .cam-oval-guide.detected .cam-scan-line{
   background:linear-gradient(90deg,transparent 0%,rgba(52,199,89,.3) 15%,rgba(52,199,89,.95) 50%,rgba(52,199,89,.3) 85%,transparent 100%);
   box-shadow:0 0 12px rgba(52,199,89,.8), 0 0 24px rgba(52,199,89,.4);
 }
-@keyframes scanMove{
-  0%,100%{top:12%;opacity:.7}
-  50%{top:80%;opacity:1}
-}
+@keyframes scanMove{0%,100%{top:12%;opacity:.7}50%{top:80%;opacity:1}}
 
 .cam-face-status{
   position:absolute;bottom:-76px;left:50%;transform:translateX(-50%);
   background:rgba(28,28,30,.85);
   backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.15);
   border-radius:99px;padding:9px 18px;
   display:flex;align-items:center;gap:9px;color:#fff;
-  font:500 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
-  transition:all .3s cubic-bezier(.4,0,.2,1);
+  font:500 12.5px -apple-system,sans-serif;
   white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:4;
 }
 .cam-oval-guide.detected .cam-face-status{
@@ -899,58 +718,32 @@
   content:'';position:absolute;inset:-4px;border-radius:50%;
   border:1.5px solid rgba(255,204,0,.5);
   animation:facePulse 1.8s ease-in-out infinite;
-  transition:border-color .3s ease;
 }
 .cam-oval-guide.detected .face-dot{background:#34C759}
 .cam-oval-guide.detected .face-dot::before{border-color:rgba(52,199,89,.6)}
-@keyframes facePulse{
-  0%,100%{transform:scale(1);opacity:1}
-  50%{transform:scale(1.6);opacity:0}
-}
+@keyframes facePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:0}}
 
 .cam-review{
-  position:relative;
-  z-index:5;
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:0 20px 20px;
-  flex-direction:column;
-  gap:14px;
+  position:relative;z-index:5;flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 20px 20px;flex-direction:column;gap:14px;
 }
 .cam-review img{
-  max-width:100%;
-  max-height:65vh;
-  border-radius:20px;
-  box-shadow:0 20px 60px rgba(0,0,0,.6);
-  display:block;
+  max-width:100%;max-height:65vh;border-radius:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);display:block;
 }
 .cam-review-info{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+  display:flex;flex-direction:column;gap:8px;
   background:rgba(28,28,30,.75);
   backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.15);
-  border-radius:16px;
-  padding:12px 16px;
-  max-width:100%;
+  border-radius:16px;padding:12px 16px;max-width:100%;
 }
 .cri-item{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:#fff;
-  font:600 12px -apple-system,'SF Mono','Space Grotesk',monospace;
+  display:flex;align-items:center;gap:8px;color:#fff;
+  font:600 12px -apple-system,'SF Mono',monospace;
 }
-.cri-item svg{
-  width:14px;
-  height:14px;
-  flex:none;
-  color:#FFCC00;
-}
+.cri-item svg{width:14px;height:14px;flex:none;color:#FFCC00}
 
 .cam-dock-wrap{
   position:relative;z-index:10;width:100%;
@@ -967,12 +760,7 @@
   display:flex;align-items:center;gap:32px;
   box-shadow:0 16px 36px rgba(0,0,0,.35);
 }
-.cam-dock-review{
-  gap:14px;
-  padding:12px 16px;
-  width:calc(100% - 32px);
-  max-width:400px;
-}
+.cam-dock-review{gap:14px;padding:12px 16px;width:calc(100% - 32px);max-width:400px}
 .cam-dock-btn{
   width:44px;height:44px;border-radius:50%;
   background:rgba(255,255,255,.15);
@@ -997,217 +785,121 @@
   background:#fff;transition:transform .15s ease, background-color .2s;
 }
 .cam-shutter:active .shutter-inner{transform:scale(.88);background:#E5E5EA}
-.cam-shutter:active .shutter-ring{transform:scale(.96)}
 
 .cam-review-btn{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  padding:12px 16px;
-  border-radius:14px;
-  border:0;
-  font:600 13.5px -apple-system,'SF Pro Text',sans-serif;
-  cursor:pointer;
-  transition:.15s;
-  white-space:nowrap;
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 16px;border-radius:14px;border:0;
+  font:600 13.5px -apple-system,sans-serif;cursor:pointer;transition:.15s;
 }
 .cam-review-btn svg{width:16px;height:16px}
 .cam-review-btn.secondary{
-  background:rgba(255,255,255,.15);
-  color:#fff;
+  background:rgba(255,255,255,.15);color:#fff;
   border:0.5px solid rgba(255,255,255,.25);
 }
 .cam-review-btn.primary{
-  background:#007AFF;
-  color:#fff;
-  box-shadow:0 4px 12px rgba(0,122,255,.4);
+  background:#007AFF;color:#fff;box-shadow:0 4px 12px rgba(0,122,255,.4);
 }
 .cam-review-btn:active{transform:scale(.97)}
 
 .cam-home-bar{
   width:134px;height:5px;background:rgba(255,255,255,.85);
-  border-radius:10px;margin-top:2px;
-  box-shadow:0 1px 3px rgba(0,0,0,.3);
+  border-radius:10px;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 
 .auto-capture-ring{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:120px;
-  height:120px;
-  z-index:8;
-  display:grid;
-  place-items:center;
-  pointer-events:none;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:120px;height:120px;z-index:8;display:grid;place-items:center;pointer-events:none;
 }
 .auto-capture-ring svg{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  transform:rotate(-90deg);
+  position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);
 }
-.acr-track{
-  fill:none;
-  stroke:rgba(52,199,89,.2);
-  stroke-width:4;
-}
+.acr-track{fill:none;stroke:rgba(52,199,89,.2);stroke-width:4}
 .acr-progress{
-  fill:none;
-  stroke:#34C759;
-  stroke-width:4;
-  stroke-linecap:round;
-  stroke-dasharray:276.46;
-  stroke-dashoffset:276.46;
-  transition:stroke-dashoffset 0.05s linear;
+  fill:none;stroke:#34C759;stroke-width:4;stroke-linecap:round;
+  stroke-dasharray:276.46;stroke-dashoffset:276.46;
 }
 .acr-text{
   font:700 32px -apple-system,'SF Pro Display',sans-serif;
-  color:#fff;
-  text-shadow:0 2px 8px rgba(0,0,0,.5);
-  position:relative;
-  z-index:2;
+  color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);z-index:2;
 }
 
 .loading-overlay{
-  position:fixed;
-  inset:0;
-  z-index:11000;
-  background:rgba(0,0,0,.5);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  opacity:0;
-  visibility:hidden;
-  transition:.25s;
+  position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.5);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:.25s;
 }
 .loading-overlay.open{opacity:1;visibility:visible}
 .loading-card{
-  background:rgba(255,255,255,.95);
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
-  border-radius:20px;
-  padding:24px 32px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:14px;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(30px);
+  border-radius:20px;padding:24px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
   box-shadow:0 20px 50px rgba(0,0,0,.25);
 }
 .loading-spinner{
-  width:36px;
-  height:36px;
-  border:3px solid #E5E5EA;
-  border-top-color:#007AFF;
-  border-radius:50%;
-  animation:spin 0.8s linear infinite;
+  width:36px;height:36px;border:3px solid #E5E5EA;
+  border-top-color:#007AFF;border-radius:50%;animation:spin .8s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{
-  font:600 14px -apple-system,'SF Pro Text',sans-serif;
-  color:#1C1C1E;
-}
+.loading-text{font:600 14px -apple-system,sans-serif;color:#1C1C1E}
 
-/* iOS MODAL */
 .ios-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
+  position: fixed;inset: 0;z-index: 10000;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  backdrop-filter: blur(16px);-webkit-backdrop-filter: blur(16px);
+  display: flex;align-items: center;justify-content: center;padding: 20px;
+  opacity: 0;visibility: hidden;transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .ios-modal-backdrop.open {opacity: 1;visibility: visible}
-
 .ios-modal-card {
-  width: 100%;
-  max-width: 340px;
+  width: 100%;max-width: 340px;
   background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-radius: 28px;
-  padding: 24px 20px 20px 20px;
+  backdrop-filter: blur(30px);-webkit-backdrop-filter: blur(30px);
+  border-radius: 28px;padding: 24px 20px 20px 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
-  transform: scale(0.88);
-  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", sans-serif;
+  transform: scale(0.88);transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  text-align: center;font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
 }
 .ios-modal-backdrop.open .ios-modal-card {transform: scale(1)}
-
 .ios-success-badge {display: flex;justify-content: center;margin-bottom: 14px}
 .ios-success-circle {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: #34C759;
-  color: #FFFFFF;
-  display: grid;
-  place-items: center;
+  width: 58px;height: 58px;border-radius: 50%;
+  background: #34C759;color: #FFFFFF;
+  display: grid;place-items: center;
   box-shadow: 0 8px 20px rgba(52, 199, 89, 0.35);
   animation: iosPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .ios-success-circle svg {width: 30px;height: 30px}
 @keyframes iosPop {0%{transform:scale(0.3);opacity:0}100%{transform:scale(1);opacity:1}}
-
 .ios-modal-title {font-size: 20px;font-weight: 700;color: #1C1C1E;margin: 0 0 6px 0;letter-spacing: -0.4px}
 .ios-modal-sub {font-size: 13px;color: #8E8E93;margin: 0 0 18px 0;line-height: 1.4}
-
 .ios-inset-group {background: #F2F2F7;border-radius: 16px;padding: 4px 14px;margin-bottom: 20px;text-align: left}
 .ios-inset-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 11px 0;
-  border-bottom: 0.5px solid #E5E5EA;
-  font-size: 13.5px;
+  display: flex;justify-content: space-between;align-items: center;
+  padding: 11px 0;border-bottom: 0.5px solid #E5E5EA;font-size: 13.5px;
 }
 .ios-inset-row:last-child {border-bottom: none}
 .row-label {color: #8E8E93;font-weight: 500}
 .row-value {color: #1C1C1E;font-weight: 600}
 .row-value.highlight {color: #007AFF;font-weight: 700}
 .row-badge.green {
-  background: rgba(52, 199, 89, 0.15);
-  color: #248A3D;
-  font-weight: 700;
-  font-size: 12px;
-  padding: 3px 10px;
-  border-radius: 99px;
+  background: rgba(52, 199, 89, 0.15);color: #248A3D;
+  font-weight: 700;font-size: 12px;padding: 3px 10px;border-radius: 99px;
 }
 .row-value-group {display: flex;flex-direction: column;align-items: flex-end}
 .row-value-main {color: #1C1C1E;font-weight: 600;font-size: 13.5px}
 .row-value-sub {color: #8E8E93;font-size: 10.5px;font-weight: 500}
-
 .ios-modal-actions {width: 100%}
 .ios-btn-done {
-  width: 100%;
-  height: 48px;
-  background: #007AFF;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  width: 100%;height: 48px;
+  background: #007AFF;color: #FFFFFF;border: none;border-radius: 14px;
+  font-size: 16px;font-weight: 600;cursor: pointer;
   box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 .ios-btn-done:active {transform: scale(0.97);background: #0062CC}
 
-/* ============ MOBILE — PADDING MINIMAL ============ */
+/* MOBILE */
 @media (max-width:560px){
   .grid-pres{padding:6px;gap:6px;border-radius:12px}
   .card-ios{padding:10px;border-radius:14px}
@@ -1216,11 +908,8 @@
   .ptl-ios{padding:8px 10px;gap:6px}
   .ptl-ios .ptl-ic{width:28px;height:28px}
   .ptl-ios .ptl-node b{font-size:12px}
-  .ptl-ios .ptl-node span{font-size:9px}
   .seg-btn{min-width:44px;font-size:11px;padding:5px 5px}
   .map-wrap-ios{min-height:140px}
-  .lc-title{font-size:12px}
-  .lc-sub{font-size:9.5px}
   .btn-ios-primary{padding:10px 14px;font-size:14px}
   .camera-cta-icon{width:56px;height:56px}
   .camera-cta-icon svg{width:24px;height:24px}
@@ -1228,25 +917,26 @@
   .camera-cta-sub{font-size:11px}
   .cam-viewport{padding-bottom:50px}
   .cam-oval-guide{width:min(78vw, 260px);height:min(110vw, 360px)}
-  .cam-face-status{font-size:11.5px;padding:8px 14px;bottom:-70px;gap:7px}
   .cam-dock{padding:10px 18px;gap:24px}
   .cam-dock-btn{width:40px;height:40px}
   .cam-shutter{width:62px;height:62px}
   .shutter-inner{width:46px;height:46px}
-  .pill-item{font-size:11.5px;gap:5px}
-  .pill-item svg{width:13px;height:13px}
   .cam-home-bar{width:120px;height:4px}
   .ios-modal-card{max-width:320px;padding:22px 18px 18px}
-  .ios-modal-title{font-size:18px}
-  .ios-modal-sub{font-size:12.5px}
-  .ios-inset-row{font-size:13px;padding:10px 0}
-  .row-value-main{font-size:13px}
-  .row-value-sub{font-size:10px}
-  .auto-capture-ring{width:100px;height:100px}
-  .acr-text{font-size:26px}
-  .cam-review img{max-height:55vh}
-  .cam-review-info{padding:10px 12px}
-  .cri-item{font-size:11px}
+
+  /* Watermark mobile */
+  .ios-wm-card{bottom:130px;left:8px;right:8px;padding:8px 10px;gap:8px;border-radius:14px}
+  .pupr-logo-circle{width:30px;height:30px}
+  .brand-title{font-size:10px}
+  .brand-sub{font-size:8px}
+  .ios-wm-divider{height:48px;margin:0 2px}
+  .identity-group b{font-size:11px;max-width:100px}
+  .identity-group small{font-size:9px}
+  .loc-group b{font-size:10.5px;max-width:85px}
+  .loc-group small{font-size:9px}
+  .status-badge{font-size:9px;padding:2px 6px}
+  .info-row.time{font-size:9.5px}
+  .info-row svg{width:11px;height:11px}
 }
 
 @media (max-width:920px){
