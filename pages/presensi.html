@@ -106,32 +106,20 @@
         <span class="kicker">Kamera Presensi</span>
       </div>
 
-      <div class="camera-live" id="camWrap">
-        <video id="video" autoplay playsinline muted></video>
-        
-        <div class="cam-live-badge">
-          <span class="live-dot"></span>
-          <span>LIVE</span>
-        </div>
-
-        <div class="cam-location-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
+      <!-- STATE A: Tombol "Buka Kamera" besar -->
+      <div class="camera-cta" id="camWrap">
+        <div class="camera-cta-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          <span id="camLoc">—</span>
         </div>
-
-        <div class="cam-time-pill">
-          <span id="camTime">--:--:--</span>
-        </div>
-
-        <button type="button" class="cam-shutter-overlay" id="btnCapture" disabled title="Ambil Foto">
-          <span class="cs-ring"></span>
-          <span class="cs-inner"></span>
-        </button>
+        <div class="camera-cta-text">Buka Kamera Presensi</div>
+        <div class="camera-cta-sub">Pastikan wajah terlihat jelas &amp; pencahayaan cukup</div>
+        <button type="button" id="btnCapture" class="camera-cta-btn"></button>
       </div>
 
+      <!-- STATE B: Preview foto -->
       <div class="cam-preview-ios" id="camPreview" hidden>
         <img id="previewImg" alt="Preview">
         <button type="button" class="preview-retake" id="btnRetake">
@@ -334,16 +322,16 @@
    ============================================================ */
 .grid-pres{
   background:#F2F2F7;
-  padding:8px;               /* ← Padding minimal (dari 14px) */
+  padding:8px;
   border-radius:16px;
   display:grid;
   grid-template-columns:1fr;
-  gap:8px;                   /* ← Gap minimal (dari 12px) */
+  gap:8px;
 }
 @media (min-width:920px){
   .grid-pres{
     grid-template-columns:1fr 1fr;
-    padding:10px;            /* ← Padding minimal desktop */
+    padding:10px;
     gap:10px;
     align-items:start;
   }
@@ -355,15 +343,15 @@
 .card-ios{
   background:#FFFFFF;
   border:0;
-  border-radius:16px;         /* ← Radius lebih kecil */
-  padding:12px;               /* ← Padding minimal (dari 16px) */
+  border-radius:16px;
+  padding:12px;
   box-shadow:0 2px 12px rgba(0,0,0,.04);
 }
 .card-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:8px;          /* ← Margin minimal */
+  margin-bottom:8px;
 }
 .card-head .kicker{
   font:800 10px var(--font);
@@ -683,139 +671,67 @@
   text-overflow:ellipsis;
 }
 
-/* CAMERA LIVE */
+/* ============================================================
+   CAMERA CTA — TOMBOL BESAR "BUKA KAMERA"
+   ============================================================ */
 .card-camera{
   padding:12px;
   display:flex;
   flex-direction:column;
 }
-.camera-live{
+.camera-cta{
   position:relative;
   width:100%;
   aspect-ratio:3/4;
-  background:#000;
+  background:linear-gradient(145deg,#1C1C1E 0%,#000 100%);
   border-radius:14px;
   overflow:hidden;
   margin-bottom:10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:20px;
+  cursor:pointer;
+  transition:.2s;
   box-shadow:0 6px 20px rgba(0,0,0,.12);
 }
-.camera-live video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-.cam-live-badge{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  border-radius:99px;
-  padding:3px 8px;
-  display:flex;
-  align-items:center;
-  gap:4px;
-  color:#fff;
-  font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
-  letter-spacing:.06em;
-  z-index:2;
-}
-.live-dot{
-  width:4px;
-  height:4px;
+.camera-cta:active{transform:scale(.98)}
+.camera-cta-icon{
+  width:64px;
+  height:64px;
   border-radius:50%;
-  background:#FF3B30;
-  animation:livePulse 1.4s ease-in-out infinite;
-}
-@keyframes livePulse{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:.5;transform:scale(1.2)}
-}
-
-.cam-location-pill{
-  position:absolute;
-  top:8px;
-  right:8px;
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(15px) saturate(180%);
-  -webkit-backdrop-filter:blur(15px) saturate(180%);
-  border-radius:99px;
-  padding:3px 8px;
-  display:flex;
-  align-items:center;
-  gap:4px;
+  background:rgba(0,122,255,.95);
   color:#fff;
-  font:600 9.5px -apple-system,'SF Mono','Space Grotesk',monospace;
-  max-width:55%;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  z-index:2;
-}
-.cam-location-pill svg{
-  width:10px;
-  height:10px;
-  flex:none;
-  color:#FFCC00;
-}
-
-.cam-time-pill{
-  position:absolute;
-  bottom:74px;
-  left:8px;
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(15px) saturate(180%);
-  -webkit-backdrop-filter:blur(15px) saturate(180%);
-  border-radius:99px;
-  padding:3px 8px;
-  color:#fff;
-  font:600 9.5px -apple-system,'SF Mono','Space Grotesk',monospace;
-  z-index:2;
-}
-
-.cam-shutter-overlay{
-  position:absolute;
-  bottom:10px;
-  left:50%;
-  transform:translateX(-50%);
-  width:56px;
-  height:56px;
-  border-radius:50%;
-  border:0;
-  background:transparent;
-  padding:0;
-  cursor:pointer;
   display:grid;
   place-items:center;
-  transition:.15s;
-  z-index:3;
+  box-shadow:0 8px 20px rgba(0,122,255,.4);
+  transition:.2s;
 }
-.cam-shutter-overlay .cs-ring{
+.camera-cta:hover .camera-cta-icon{transform:scale(1.06)}
+.camera-cta-icon svg{width:28px;height:28px}
+.camera-cta-text{
+  font:700 14px -apple-system,'SF Pro Text',sans-serif;
+  color:#fff;
+  text-align:center;
+}
+.camera-cta-sub{
+  font:500 11.5px -apple-system,'SF Pro Text',sans-serif;
+  color:rgba(255,255,255,.6);
+  text-align:center;
+  line-height:1.5;
+  max-width:240px;
+}
+.camera-cta-btn{
   position:absolute;
   inset:0;
-  border-radius:50%;
-  border:3.5px solid #fff;
-  box-shadow:0 0 0 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.4);
-}
-.cam-shutter-overlay .cs-inner{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:#fff;
-  transition:.15s;
-}
-.cam-shutter-overlay:active .cs-inner{
-  transform:scale(.88);
-  background:#E5E5EA;
-}
-.cam-shutter-overlay:disabled{
-  opacity:.4;
-  cursor:not-allowed;
+  border:0;
+  background:transparent;
+  cursor:pointer;
 }
 
+/* PREVIEW */
 .cam-preview-ios{
   position:relative;
   border-radius:14px;
@@ -830,7 +746,6 @@
   right:8px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px);
-  -webkit-backdrop-filter:blur(15px);
   border:0;
   border-radius:99px;
   padding:6px 10px;
@@ -885,7 +800,9 @@
 }
 .btn-ios-primary svg{width:16px;height:16px}
 
-/* FULLSCREEN CAMERA */
+/* ============================================================
+   FULLSCREEN CAMERA
+   ============================================================ */
 .cam-fullscreen{
   position:fixed;inset:0;background:#000;z-index:9999;
   display:none;flex-direction:column;justify-content:space-between;overflow:hidden;
@@ -1292,15 +1209,8 @@
 
 /* ============ MOBILE — PADDING MINIMAL ============ */
 @media (max-width:560px){
-  .grid-pres{
-    padding:6px;              /* ← Lebih minimal lagi */
-    gap:6px;
-    border-radius:12px;
-  }
-  .card-ios{
-    padding:10px;             /* ← Card padding minimal */
-    border-radius:14px;
-  }
+  .grid-pres{padding:6px;gap:6px;border-radius:12px}
+  .card-ios{padding:10px;border-radius:14px}
   .big-clock{font-size:32px;margin-bottom:10px}
   .today-date{font-size:12.5px}
   .ptl-ios{padding:8px 10px;gap:6px}
@@ -1308,16 +1218,14 @@
   .ptl-ios .ptl-node b{font-size:12px}
   .ptl-ios .ptl-node span{font-size:9px}
   .seg-btn{min-width:44px;font-size:11px;padding:5px 5px}
-  .camera-live{aspect-ratio:4/5;border-radius:12px}
-  .cam-shutter-overlay{width:52px;height:52px;bottom:8px}
-  .cam-shutter-overlay .cs-inner{width:38px;height:38px}
-  .cam-time-pill{bottom:68px;font-size:9px;padding:3px 7px}
-  .cam-location-pill{font-size:9px;padding:3px 7px}
-  .cam-live-badge{font-size:9px;padding:3px 7px}
   .map-wrap-ios{min-height:140px}
   .lc-title{font-size:12px}
   .lc-sub{font-size:9.5px}
   .btn-ios-primary{padding:10px 14px;font-size:14px}
+  .camera-cta-icon{width:56px;height:56px}
+  .camera-cta-icon svg{width:24px;height:24px}
+  .camera-cta-text{font-size:13px}
+  .camera-cta-sub{font-size:11px}
   .cam-viewport{padding-bottom:50px}
   .cam-oval-guide{width:min(78vw, 260px);height:min(110vw, 360px)}
   .cam-face-status{font-size:11.5px;padding:8px 14px;bottom:-70px;gap:7px}
