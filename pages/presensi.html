@@ -11,16 +11,39 @@
       </div>
       <h2 class="today-date" id="presDate">—</h2>
       <div class="big-clock"><span id="presClock">--:--:--</span> <small>WIB</small></div>
-      
-      <div class="ptl ptl-ios" id="ptl">
-        <div class="ptl-node" id="ptMasuk">
-          <span class="ptl-ic"><i data-lucide="log-in"></i></span>
-          <div><span>Check-in</span><b id="ptMasukTime">—</b></div>
+
+      <!-- TIMELINE DENGAN PROGRESS BAR DINAMIS -->
+      <div class="timeline-wrap" id="ptl">
+        <div class="timeline-track">
+          <div class="timeline-fill" id="timelineFill"></div>
         </div>
-        <div class="ptl-line"></div>
-        <div class="ptl-node" id="ptKeluar">
-          <span class="ptl-ic"><i data-lucide="log-out"></i></span>
-          <div><span>Check-out</span><b id="ptKeluarTime">—</b></div>
+
+        <div class="tl-node tl-node-in" id="ptMasuk">
+          <div class="tl-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+          </div>
+          <div class="tl-label">
+            <span>Check-in</span>
+            <b id="ptMasukTime">—</b>
+          </div>
+        </div>
+
+        <div class="tl-node tl-node-out" id="ptKeluar">
+          <div class="tl-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <div class="tl-label">
+            <span>Check-out</span>
+            <b id="ptKeluarTime">—</b>
+          </div>
         </div>
       </div>
     </div>
@@ -32,11 +55,26 @@
       </div>
 
       <div class="segmented" id="segmentedStatus">
-        <button type="button" class="seg-btn active" data-status="Hadir">Hadir</button>
-        <button type="button" class="seg-btn" data-status="Dinas Luar">Dinas</button>
-        <button type="button" class="seg-btn" data-status="Kerja Gabungan">QR</button>
-        <button type="button" class="seg-btn" data-status="Izin">Izin</button>
-        <button type="button" class="seg-btn" data-status="Sakit">Sakit</button>
+        <button type="button" class="seg-btn active" data-status="Hadir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Hadir</span>
+        </button>
+        <button type="button" class="seg-btn" data-status="Dinas Luar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          <span>Dinas</span>
+        </button>
+        <button type="button" class="seg-btn" data-status="Kerja Gabungan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>QR</span>
+        </button>
+        <button type="button" class="seg-btn" data-status="Izin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Izin</span>
+        </button>
+        <button type="button" class="seg-btn" data-status="Sakit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Sakit</span>
+        </button>
       </div>
 
       <div class="field-ios" id="ketWrap" style="display:none">
@@ -85,12 +123,12 @@
       </div>
       <div class="map-wrap-ios">
         <iframe id="miniMap" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="map-overlay-click" id="mapOverlayClick">
+          <span>Ketuk untuk buka peta</span>
+        </div>
         <div class="location-card">
           <div class="lc-icon" id="lcIcon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           </div>
           <div class="lc-info">
             <div class="lc-title" id="geoStatus">Mendeteksi lokasi...</div>
@@ -147,7 +185,7 @@
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
-  <!-- WATERMARK FLOATING CARD iOS — LIVE PREVIEW -->
+  <!-- WATERMARK FLOATING CARD -->
   <div class="ios-wm-card" id="iosWmCard">
     <div class="ios-wm-brand">
       <div class="pupr-logo-circle">
@@ -310,6 +348,10 @@
         <span class="row-label">Status</span>
         <span class="row-badge green" id="succStatus">—</span>
       </div>
+      <div class="ios-inset-row" id="succStatusRow" style="display:none">
+        <span class="row-label">Keterangan Waktu</span>
+        <span class="row-value" id="succStatusKehadiran">—</span>
+      </div>
       <div class="ios-inset-row">
         <span class="row-label">Lokasi</span>
         <div class="row-value-group">
@@ -379,38 +421,185 @@
 }
 .big-clock small{font:600 12px -apple-system,'SF Pro Text',sans-serif;color:#8E8E93;margin-left:4px}
 
-.ptl-ios{
-  display:flex;align-items:center;gap:8px;
-  background:#F2F2F7;border-radius:12px;padding:10px 12px;
+/* ============================================================
+   TIMELINE DENGAN PROGRESS BAR DINAMIS
+   ============================================================ */
+.timeline-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F2F2F7;
+  border-radius: 14px;
+  padding: 14px 12px;
+  margin-top: 12px;
+  gap: 8px;
 }
-.ptl-ios .ptl-node{display:flex;align-items:center;gap:6px;min-width:0}
-.ptl-ios .ptl-ic{
-  width:32px;height:32px;border-radius:50%;
-  background:#E5E5EA;border:0;display:grid;place-items:center;
-  color:#8E8E93;transition:.2s;flex:none;
-}
-.ptl-ios .ptl-node.done .ptl-ic{background:#34C759;color:#fff}
-.ptl-ios .ptl-node span{
-  font:700 9.5px var(--font);letter-spacing:.06em;
-  text-transform:uppercase;color:#8E8E93;display:block;
-}
-.ptl-ios .ptl-node b{font:700 13px -apple-system,'SF Mono','Space Grotesk',monospace;color:#000}
-.ptl-ios .ptl-line{flex:1;height:2px;border-radius:99px;background:#E5E5EA;min-width:16px}
-.ptl-ios.on .ptl-line{background:#34C759}
 
-.segmented{
-  display:flex;background:#E5E5EA;border-radius:10px;
-  padding:2.5px;gap:2px;margin-bottom:10px;
-  overflow-x:auto;scrollbar-width:none;
+.timeline-track {
+  position: absolute;
+  left: 50px;
+  right: 50px;
+  top: 34px;
+  height: 3px;
+  background: #E5E5EA;
+  border-radius: 99px;
+  overflow: hidden;
+  z-index: 1;
 }
-.segmented::-webkit-scrollbar{display:none}
-.seg-btn{
-  flex:1;min-width:48px;border:0;background:transparent;
-  color:#3C3C43;font:600 11.5px -apple-system,'SF Pro Text',sans-serif;
-  padding:6px 6px;border-radius:7px;cursor:pointer;
-  white-space:nowrap;text-align:center;transition:.2s;
+
+.timeline-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #34C759 0%, #30B750 100%);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.4);
 }
-.seg-btn.active{background:#FFFFFF;color:#000;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
+.tl-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.tl-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2.5px solid #E5E5EA;
+  display: grid;
+  place-items: center;
+  color: #8E8E93;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  padding: 0;
+  line-height: 0;
+}
+
+.tl-circle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke-width: 2.5;
+  margin: 0;
+}
+
+.tl-node.done .tl-circle {
+  background: #34C759;
+  border-color: #34C759;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.35);
+}
+
+.tl-node.done.tl-node-out .tl-circle {
+  background: #007AFF;
+  border-color: #007AFF;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+}
+
+.tl-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tl-label span {
+  font: 700 9px var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8E8E93;
+}
+
+.tl-label b {
+  font: 700 13px -apple-system, 'SF Mono', 'Space Grotesk', monospace;
+  color: #000;
+}
+
+/* ============================================================
+   SEGMENTED CONTROL dengan IKON & WARNA
+   ============================================================ */
+.segmented {
+  display: flex;
+  background: #E5E5EA;
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.segmented::-webkit-scrollbar { display: none }
+
+.seg-btn {
+  flex: 1;
+  min-width: 56px;
+  border: 0;
+  background: transparent;
+  color: #3C3C43;
+  font: 600 11px -apple-system, sans-serif;
+  padding: 8px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.seg-btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: .2s;
+}
+
+.seg-btn span {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.seg-btn.active {
+  background: #FFFFFF;
+  color: #000;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+
+.seg-btn.active svg { color: #007AFF }
+.seg-btn[data-status="Hadir"].active svg { color: #34C759 }
+.seg-btn[data-status="Dinas Luar"].active svg { color: #007AFF }
+.seg-btn[data-status="Kerja Gabungan"].active svg { color: #AF52DE }
+.seg-btn[data-status="Izin"].active svg { color: #FF9500 }
+.seg-btn[data-status="Sakit"].active svg { color: #FF3B30 }
+
+.segmented.locked {
+  opacity: 0.65;
+  pointer-events: none;
+  position: relative;
+}
+.segmented.locked::after {
+  content: '🔒 Status terkunci';
+  position: absolute;
+  top: -22px;
+  right: 4px;
+  font: 700 9.5px -apple-system, sans-serif;
+  color: #FF9500;
+  background: rgba(255, 149, 0, 0.12);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  pointer-events: none;
+}
 
 .field-ios{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .field-ios label{
@@ -470,18 +659,60 @@
 .geofence-badge.warn .gb-dot{background:#FF9500}
 
 .map-wrap-ios{
-  position:relative;flex:1;min-height:150px;
+  position:relative;flex:1;min-height:180px;
   border-radius:0 0 16px 16px;overflow:hidden;background:#E5E5EA;
 }
 .map-wrap-ios iframe{width:100%;height:100%;border:0;pointer-events:none;display:block}
+
+/* Hilangkan tombol zoom OSM */
+.map-wrap-ios::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100px;
+  background: #F2F2F7;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.map-overlay-click {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.map-overlay-click span {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 99px;
+  font: 600 12px -apple-system, sans-serif;
+  opacity: 0;
+  transition: .2s;
+  pointer-events: none;
+}
+
+.map-overlay-click:hover span,
+.map-overlay-click:active span {
+  opacity: 1;
+}
+
 .location-card{
   position:absolute;left:8px;bottom:8px;right:8px;
   background:rgba(255,255,255,.92);
   backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
   border-radius:10px;padding:7px 10px;
   display:flex;align-items:center;gap:8px;
   box-shadow:0 4px 20px rgba(0,0,0,.1);
+  z-index: 4;
 }
 .lc-icon{
   width:28px;height:28px;border-radius:50%;
@@ -647,7 +878,6 @@
 .cam-pill{
   background:rgba(20,20,22,.65);
   backdrop-filter:blur(25px) saturate(180%);
-  -webkit-backdrop-filter:blur(25px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.18);
   border-radius:99px;padding:8px 16px;
   display:flex;align-items:center;gap:12px;
@@ -681,7 +911,6 @@
     0 0 20px rgba(52,199,89,.4),
     0 0 40px rgba(52,199,89,.2);
 }
-
 .cam-scan-line{
   position:absolute;left:12%;right:12%;height:2px;
   background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.3) 15%,rgba(255,255,255,.9) 50%,rgba(255,255,255,.3) 85%,transparent 100%);
@@ -754,7 +983,6 @@
 .cam-dock{
   background:rgba(255,255,255,.18);
   backdrop-filter:blur(30px) saturate(180%);
-  -webkit-backdrop-filter:blur(30px) saturate(180%);
   border:0.5px solid rgba(255,255,255,.28);
   border-radius:44px;padding:10px 24px;
   display:flex;align-items:center;gap:32px;
@@ -854,11 +1082,11 @@
 .ios-modal-card {
   width: 100%;max-width: 340px;
   background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(30px);-webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
   border-radius: 28px;padding: 24px 20px 20px 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
   transform: scale(0.88);transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-  text-align: center;font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  text-align: center;
 }
 .ios-modal-backdrop.open .ios-modal-card {transform: scale(1)}
 .ios-success-badge {display: flex;justify-content: center;margin-bottom: 14px}
@@ -905,11 +1133,10 @@
   .card-ios{padding:10px;border-radius:14px}
   .big-clock{font-size:32px;margin-bottom:10px}
   .today-date{font-size:12.5px}
-  .ptl-ios{padding:8px 10px;gap:6px}
-  .ptl-ios .ptl-ic{width:28px;height:28px}
-  .ptl-ios .ptl-node b{font-size:12px}
-  .seg-btn{min-width:44px;font-size:11px;padding:5px 5px}
-  .map-wrap-ios{min-height:140px}
+  .seg-btn{min-width:48px;font-size:10.5px;padding:6px 4px}
+  .seg-btn svg{width:14px;height:14px}
+  .seg-btn span{font-size:9.5px}
+  .map-wrap-ios{min-height:150px}
   .btn-ios-primary{padding:10px 14px;font-size:14px}
   .camera-cta-icon{width:56px;height:56px}
   .camera-cta-icon svg{width:24px;height:24px}
@@ -937,6 +1164,14 @@
   .status-badge{font-size:9px;padding:2px 6px}
   .info-row.time{font-size:9.5px}
   .info-row svg{width:11px;height:11px}
+
+  /* Timeline mobile */
+  .timeline-wrap{padding:12px 10px;gap:6px}
+  .timeline-track{left:46px;right:46px;top:30px}
+  .tl-circle{width:36px;height:36px}
+  .tl-circle svg{width:16px;height:16px}
+  .tl-label span{font-size:8.5px}
+  .tl-label b{font-size:12px}
 }
 
 @media (max-width:920px){
