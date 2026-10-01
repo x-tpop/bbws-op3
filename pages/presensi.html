@@ -39,13 +39,11 @@
         <button type="button" class="seg-btn" data-status="Sakit">Sakit</button>
       </div>
 
-      <!-- Keterangan (untuk Izin/Sakit/Dinas) -->
       <div class="field-ios" id="ketWrap" style="display:none">
         <label>Keterangan</label>
         <textarea id="presKet" rows="2" placeholder="Contoh: izin keperluan keluarga / sakit demam..."></textarea>
       </div>
 
-      <!-- Upload Surat (khusus Izin/Sakit) -->
       <div class="field-ios" id="suratWrap" style="display:none">
         <label>Surat Pendukung <span style="color:#FF3B30">*</span></label>
         <div class="file-upload" id="fileUpload">
@@ -159,7 +157,7 @@
   </div>
 </section>
 
-<!-- MODAL FULLSCREEN KAMERA — TAHAP 3-5 -->
+<!-- MODAL FULLSCREEN KAMERA -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
@@ -183,7 +181,6 @@
     </div>
   </div>
 
-  <!-- MODE LIVE -->
   <div class="cam-viewport" id="fsLiveMode">
     <div class="cam-oval-guide" id="faceGuide">
       <div class="cam-scan-line"></div>
@@ -194,7 +191,6 @@
     </div>
   </div>
 
-  <!-- MODE REVIEW (TAHAP 5) -->
   <div class="cam-review" id="fsReviewMode" hidden>
     <img id="fsReviewImg" alt="Review">
     <div class="cam-review-info">
@@ -215,7 +211,6 @@
     </div>
   </div>
 
-  <!-- DOCK LIVE -->
   <div class="cam-dock-wrap" id="fsDockLive">
     <div class="cam-dock">
       <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
@@ -242,7 +237,6 @@
     <div class="cam-home-bar"></div>
   </div>
 
-  <!-- DOCK REVIEW (TAHAP 5) -->
   <div class="cam-dock-wrap" id="fsDockReview" hidden>
     <div class="cam-dock cam-dock-review">
       <button type="button" class="cam-review-btn secondary" id="btnReviewRetake">
@@ -263,7 +257,6 @@
     <div class="cam-home-bar"></div>
   </div>
 
-  <!-- AUTO-CAPTURE COUNTDOWN (TAHAP 4) -->
   <div class="auto-capture-ring" id="autoCaptureRing" hidden>
     <svg viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="44" class="acr-track"/>
@@ -273,7 +266,7 @@
   </div>
 </div>
 
-<!-- LOADING OVERLAY (TAHAP 6) -->
+<!-- LOADING OVERLAY -->
 <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-card">
     <div class="loading-spinner"></div>
@@ -281,7 +274,7 @@
   </div>
 </div>
 
-<!-- MODAL SUCCESS — TAHAP 6 -->
+<!-- MODAL SUCCESS -->
 <div id="suksesModal" class="ios-modal-backdrop">
   <div class="ios-modal-card">
     
@@ -337,21 +330,21 @@
 
 <style>
 /* ============================================================
-   iOS DESIGN SYSTEM
+   iOS DESIGN SYSTEM — PADDING MINIMAL
    ============================================================ */
 .grid-pres{
   background:#F2F2F7;
-  padding:14px;
-  border-radius:20px;
+  padding:8px;               /* ← Padding minimal (dari 14px) */
+  border-radius:16px;
   display:grid;
   grid-template-columns:1fr;
-  gap:12px;
+  gap:8px;                   /* ← Gap minimal (dari 12px) */
 }
 @media (min-width:920px){
   .grid-pres{
     grid-template-columns:1fr 1fr;
-    padding:16px;
-    gap:14px;
+    padding:10px;            /* ← Padding minimal desktop */
+    gap:10px;
     align-items:start;
   }
   .card-camera{
@@ -362,18 +355,18 @@
 .card-ios{
   background:#FFFFFF;
   border:0;
-  border-radius:20px;
-  padding:16px;
-  box-shadow:0 4px 20px rgba(0,0,0,.04);
+  border-radius:16px;         /* ← Radius lebih kecil */
+  padding:12px;               /* ← Padding minimal (dari 16px) */
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
 }
 .card-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:12px;
+  margin-bottom:8px;          /* ← Margin minimal */
 }
 .card-head .kicker{
-  font:800 11px var(--font);
+  font:800 10px var(--font);
   letter-spacing:.14em;
   text-transform:uppercase;
   color:#8E8E93;
@@ -383,66 +376,60 @@
 .server-badge{
   display:inline-flex;
   align-items:center;
-  gap:5px;
+  gap:4px;
   background:rgba(52,199,89,.12);
   color:#248A3D;
-  font:700 10px -apple-system,'SF Pro Text',sans-serif;
-  padding:4px 8px;
+  font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
+  padding:3px 7px;
   border-radius:99px;
   letter-spacing:.02em;
 }
 .sb-dot{
-  width:5px;
-  height:5px;
+  width:4px;
+  height:4px;
   border-radius:50%;
   background:#34C759;
   animation:sbPulse 2s ease-in-out infinite;
 }
-@keyframes sbPulse{
-  0%,100%{opacity:1}
-  50%{opacity:.4}
-}
-.server-badge.error{
-  background:rgba(255,59,48,.12);
-  color:#C41E18;
-}
+@keyframes sbPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.server-badge.error{background:rgba(255,59,48,.12);color:#C41E18}
 .server-badge.error .sb-dot{background:#FF3B30}
 
 .today-date{
-  font:600 14px var(--font);
+  font:600 13px var(--font);
   color:#3C3C43;
-  margin:0 0 6px;
+  margin:0 0 4px;
 }
 .big-clock{
-  font:700 clamp(36px,4.5vw,52px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
+  font:700 clamp(32px,4vw,44px) -apple-system,'SF Pro Display','Plus Jakarta Sans',sans-serif;
   letter-spacing:-.02em;
   color:#000;
   line-height:1;
-  margin-bottom:16px;
+  margin-bottom:12px;
 }
 .big-clock small{
-  font:600 13px -apple-system,'SF Pro Text',sans-serif;
+  font:600 12px -apple-system,'SF Pro Text',sans-serif;
   color:#8E8E93;
-  margin-left:6px;
+  margin-left:4px;
 }
 
 .ptl-ios{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   background:#F2F2F7;
-  border-radius:14px;
-  padding:12px 14px;
+  border-radius:12px;
+  padding:10px 12px;
 }
 .ptl-ios .ptl-node{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:6px;
   min-width:0;
 }
 .ptl-ios .ptl-ic{
-  width:36px;
-  height:36px;
+  width:32px;
+  height:32px;
   border-radius:50%;
   background:#E5E5EA;
   border:0;
@@ -457,14 +444,14 @@
   color:#fff;
 }
 .ptl-ios .ptl-node span{
-  font:700 10px var(--font);
+  font:700 9.5px var(--font);
   letter-spacing:.06em;
   text-transform:uppercase;
   color:#8E8E93;
   display:block;
 }
 .ptl-ios .ptl-node b{
-  font:700 14px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:700 13px -apple-system,'SF Mono','Space Grotesk',monospace;
   color:#000;
 }
 .ptl-ios .ptl-line{
@@ -472,30 +459,30 @@
   height:2px;
   border-radius:99px;
   background:#E5E5EA;
-  min-width:20px;
+  min-width:16px;
 }
 .ptl-ios.on .ptl-line{background:#34C759}
 
 .segmented{
   display:flex;
   background:#E5E5EA;
-  border-radius:11px;
-  padding:3px;
+  border-radius:10px;
+  padding:2.5px;
   gap:2px;
-  margin-bottom:14px;
+  margin-bottom:10px;
   overflow-x:auto;
   scrollbar-width:none;
 }
 .segmented::-webkit-scrollbar{display:none}
 .seg-btn{
   flex:1;
-  min-width:52px;
+  min-width:48px;
   border:0;
   background:transparent;
   color:#3C3C43;
-  font:600 12px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
-  padding:7px 8px;
-  border-radius:8px;
+  font:600 11.5px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
+  padding:6px 6px;
+  border-radius:7px;
   cursor:pointer;
   transition:.2s cubic-bezier(.4,0,.2,1);
   white-space:nowrap;
@@ -504,17 +491,17 @@
 .seg-btn.active{
   background:#FFFFFF;
   color:#000;
-  box-shadow:0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04);
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
 }
 
 .field-ios{
   display:flex;
   flex-direction:column;
-  gap:6px;
-  margin-bottom:14px;
+  gap:5px;
+  margin-bottom:10px;
 }
 .field-ios label{
-  font:700 11px var(--font);
+  font:700 10px var(--font);
   letter-spacing:.08em;
   text-transform:uppercase;
   color:#8E8E93;
@@ -522,9 +509,9 @@
 .field-ios textarea{
   border:0;
   background:#F2F2F7;
-  border-radius:12px;
-  padding:12px 14px;
-  font:400 14.5px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
+  border-radius:10px;
+  padding:10px 12px;
+  font:400 14px -apple-system,'SF Pro Text','Plus Jakarta Sans',sans-serif;
   color:#000;
   resize:vertical;
   width:100%;
@@ -539,17 +526,17 @@
 .file-upload{
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
   background:#F2F2F7;
-  border-radius:12px;
-  padding:14px;
+  border-radius:10px;
+  padding:12px;
   cursor:pointer;
   transition:.2s;
 }
 .file-upload:active{background:#E5E5EA}
 .fu-icon{
-  width:40px;
-  height:40px;
+  width:36px;
+  height:36px;
   border-radius:50%;
   background:#007AFF;
   color:#fff;
@@ -557,32 +544,32 @@
   place-items:center;
   flex:none;
 }
-.fu-icon svg{width:20px;height:20px}
+.fu-icon svg{width:18px;height:18px}
 .fu-text{flex:1;min-width:0}
 .fu-text b{
   display:block;
-  font:600 13.5px -apple-system,'SF Pro Text',sans-serif;
+  font:600 13px -apple-system,'SF Pro Text',sans-serif;
   color:#000;
   margin-bottom:2px;
 }
 .fu-text small{
-  font:500 11px -apple-system,'SF Pro Text',sans-serif;
+  font:500 10.5px -apple-system,'SF Pro Text',sans-serif;
   color:#8E8E93;
 }
 .fu-preview{
   position:relative;
-  margin-top:10px;
-  border-radius:12px;
+  margin-top:8px;
+  border-radius:10px;
   overflow:hidden;
   box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 .fu-preview img{width:100%;display:block}
 .fu-remove{
   position:absolute;
-  top:8px;
-  right:8px;
-  width:32px;
-  height:32px;
+  top:6px;
+  right:6px;
+  width:28px;
+  height:28px;
   border-radius:50%;
   background:rgba(0,0,0,.6);
   backdrop-filter:blur(10px);
@@ -592,13 +579,13 @@
   place-items:center;
   cursor:pointer;
 }
-.fu-remove svg{width:16px;height:16px}
+.fu-remove svg{width:14px;height:14px}
 
 .pres-note-ios{
   background:#E5E5EA;
-  border-radius:12px;
-  padding:11px 14px;
-  font:500 13px -apple-system,'SF Pro Text',sans-serif;
+  border-radius:10px;
+  padding:9px 12px;
+  font:500 12.5px -apple-system,'SF Pro Text',sans-serif;
   color:#3C3C43;
   margin:0;
   border:0;
@@ -612,23 +599,22 @@
   flex-direction:column;
 }
 .card-map .card-head{
-  padding:16px 16px 0;
-  margin-bottom:10px;
+  padding:12px 12px 0;
+  margin-bottom:8px;
 }
 .geofence-badge{
   display:inline-flex;
   align-items:center;
-  gap:5px;
+  gap:4px;
   background:#E5E5EA;
   color:#8E8E93;
-  font:700 10px -apple-system,'SF Pro Text',sans-serif;
-  padding:4px 8px;
+  font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
+  padding:3px 7px;
   border-radius:99px;
-  letter-spacing:.02em;
 }
 .gb-dot{
-  width:5px;
-  height:5px;
+  width:4px;
+  height:4px;
   border-radius:50%;
   background:#8E8E93;
 }
@@ -640,8 +626,8 @@
 .map-wrap-ios{
   position:relative;
   flex:1;
-  min-height:180px;
-  border-radius:0 0 20px 20px;
+  min-height:150px;
+  border-radius:0 0 16px 16px;
   overflow:hidden;
   background:#E5E5EA;
 }
@@ -654,22 +640,22 @@
 }
 .location-card{
   position:absolute;
-  left:10px;
-  bottom:10px;
-  right:10px;
+  left:8px;
+  bottom:8px;
+  right:8px;
   background:rgba(255,255,255,.92);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border-radius:12px;
-  padding:8px 12px;
+  border-radius:10px;
+  padding:7px 10px;
   display:flex;
   align-items:center;
-  gap:10px;
-  box-shadow:0 6px 24px rgba(0,0,0,.12);
+  gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.1);
 }
 .lc-icon{
-  width:32px;
-  height:32px;
+  width:28px;
+  height:28px;
   border-radius:50%;
   background:#007AFF;
   color:#fff;
@@ -679,17 +665,17 @@
   transition:.3s;
 }
 .lc-icon.warn{background:#FF9500}
-.lc-icon svg{width:16px;height:16px}
+.lc-icon svg{width:14px;height:14px}
 .lc-info{flex:1;min-width:0}
 .lc-title{
-  font:700 13px -apple-system,'SF Pro Text',sans-serif;
+  font:700 12.5px -apple-system,'SF Pro Text',sans-serif;
   color:#000;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .lc-sub{
-  font:500 10.5px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:500 10px -apple-system,'SF Mono','Space Grotesk',monospace;
   color:#8E8E93;
   margin-top:1px;
   white-space:nowrap;
@@ -699,7 +685,7 @@
 
 /* CAMERA LIVE */
 .card-camera{
-  padding:16px;
+  padding:12px;
   display:flex;
   flex-direction:column;
 }
@@ -708,10 +694,10 @@
   width:100%;
   aspect-ratio:3/4;
   background:#000;
-  border-radius:18px;
+  border-radius:14px;
   overflow:hidden;
-  margin-bottom:12px;
-  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  margin-bottom:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,.12);
 }
 .camera-live video{
   width:100%;
@@ -722,24 +708,24 @@
 
 .cam-live-badge{
   position:absolute;
-  top:10px;
-  left:10px;
+  top:8px;
+  left:8px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
   border-radius:99px;
-  padding:4px 9px;
+  padding:3px 8px;
   display:flex;
   align-items:center;
-  gap:5px;
+  gap:4px;
   color:#fff;
-  font:700 10px -apple-system,'SF Pro Text',sans-serif;
+  font:700 9.5px -apple-system,'SF Pro Text',sans-serif;
   letter-spacing:.06em;
   z-index:2;
 }
 .live-dot{
-  width:5px;
-  height:5px;
+  width:4px;
+  height:4px;
   border-radius:50%;
   background:#FF3B30;
   animation:livePulse 1.4s ease-in-out infinite;
@@ -751,18 +737,18 @@
 
 .cam-location-pill{
   position:absolute;
-  top:10px;
-  right:10px;
+  top:8px;
+  right:8px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px) saturate(180%);
   -webkit-backdrop-filter:blur(15px) saturate(180%);
   border-radius:99px;
-  padding:4px 10px;
+  padding:3px 8px;
   display:flex;
   align-items:center;
-  gap:5px;
+  gap:4px;
   color:#fff;
-  font:600 10px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:600 9.5px -apple-system,'SF Mono','Space Grotesk',monospace;
   max-width:55%;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -770,33 +756,33 @@
   z-index:2;
 }
 .cam-location-pill svg{
-  width:11px;
-  height:11px;
+  width:10px;
+  height:10px;
   flex:none;
   color:#FFCC00;
 }
 
 .cam-time-pill{
   position:absolute;
-  bottom:82px;
-  left:10px;
+  bottom:74px;
+  left:8px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px) saturate(180%);
   -webkit-backdrop-filter:blur(15px) saturate(180%);
   border-radius:99px;
-  padding:4px 10px;
+  padding:3px 8px;
   color:#fff;
-  font:600 10px -apple-system,'SF Mono','Space Grotesk',monospace;
+  font:600 9.5px -apple-system,'SF Mono','Space Grotesk',monospace;
   z-index:2;
 }
 
 .cam-shutter-overlay{
   position:absolute;
-  bottom:12px;
+  bottom:10px;
   left:50%;
   transform:translateX(-50%);
-  width:60px;
-  height:60px;
+  width:56px;
+  height:56px;
   border-radius:50%;
   border:0;
   background:transparent;
@@ -815,8 +801,8 @@
   box-shadow:0 0 0 2px rgba(0,0,0,.25), 0 4px 16px rgba(0,0,0,.4);
 }
 .cam-shutter-overlay .cs-inner{
-  width:46px;
-  height:46px;
+  width:42px;
+  height:42px;
   border-radius:50%;
   background:#fff;
   transition:.15s;
@@ -832,45 +818,45 @@
 
 .cam-preview-ios{
   position:relative;
-  border-radius:18px;
+  border-radius:14px;
   overflow:hidden;
-  margin-bottom:12px;
-  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  margin-bottom:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,.12);
 }
 .cam-preview-ios img{width:100%;display:block}
 .preview-retake{
   position:absolute;
-  bottom:10px;
-  right:10px;
+  bottom:8px;
+  right:8px;
   background:rgba(0,0,0,.55);
   backdrop-filter:blur(15px);
   -webkit-backdrop-filter:blur(15px);
   border:0;
   border-radius:99px;
-  padding:7px 12px;
+  padding:6px 10px;
   display:flex;
   align-items:center;
-  gap:5px;
+  gap:4px;
   color:#fff;
-  font:600 12px -apple-system,'SF Pro Text',sans-serif;
+  font:600 11.5px -apple-system,'SF Pro Text',sans-serif;
   cursor:pointer;
 }
-.preview-retake svg{width:13px;height:13px}
+.preview-retake svg{width:12px;height:12px}
 
 .info-after-ios{
   display:flex;
-  gap:8px;
+  gap:6px;
   align-items:flex-start;
   background:#E8F4FE;
-  border-radius:12px;
-  padding:10px 12px;
-  margin-bottom:12px;
-  font:500 12.5px/1.5 -apple-system,'SF Pro Text',sans-serif;
+  border-radius:10px;
+  padding:9px 10px;
+  margin-bottom:10px;
+  font:500 12px/1.5 -apple-system,'SF Pro Text',sans-serif;
   color:#007AFF;
 }
 .info-after-ios svg{
-  width:16px;
-  height:16px;
+  width:14px;
+  height:14px;
   flex:none;
   margin-top:1px;
 }
@@ -881,13 +867,13 @@
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:6px;
   background:#007AFF;
   color:#fff;
   border:0;
-  border-radius:14px;
-  padding:13px 18px;
-  font:600 15px -apple-system,'SF Pro Text',sans-serif;
+  border-radius:12px;
+  padding:11px 16px;
+  font:600 14.5px -apple-system,'SF Pro Text',sans-serif;
   cursor:pointer;
   transition:.2s;
   box-shadow:0 2px 8px rgba(0,122,255,.25);
@@ -897,11 +883,9 @@
   transform:scale(.98);
   background:#0066CC;
 }
-.btn-ios-primary svg{width:18px;height:18px}
+.btn-ios-primary svg{width:16px;height:16px}
 
-/* ============================================================
-   FULLSCREEN CAMERA
-   ============================================================ */
+/* FULLSCREEN CAMERA */
 .cam-fullscreen{
   position:fixed;inset:0;background:#000;z-index:9999;
   display:none;flex-direction:column;justify-content:space-between;overflow:hidden;
@@ -1007,7 +991,6 @@
   50%{transform:scale(1.6);opacity:0}
 }
 
-/* REVIEW MODE */
 .cam-review{
   position:relative;
   z-index:5;
@@ -1132,7 +1115,6 @@
   box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 
-/* AUTO-CAPTURE RING */
 .auto-capture-ring{
   position:absolute;
   top:50%;
@@ -1174,7 +1156,6 @@
   z-index:2;
 }
 
-/* LOADING OVERLAY */
 .loading-overlay{
   position:fixed;
   inset:0;
@@ -1189,10 +1170,7 @@
   visibility:hidden;
   transition:.25s;
 }
-.loading-overlay.open{
-  opacity:1;
-  visibility:visible;
-}
+.loading-overlay.open{opacity:1;visibility:visible}
 .loading-card{
   background:rgba(255,255,255,.95);
   backdrop-filter:blur(30px);
@@ -1235,10 +1213,7 @@
   visibility: hidden;
   transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
-.ios-modal-backdrop.open {
-  opacity: 1;
-  visibility: visible;
-}
+.ios-modal-backdrop.open {opacity: 1;visibility: visible}
 
 .ios-modal-card {
   width: 100%;
@@ -1254,15 +1229,9 @@
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", sans-serif;
 }
-.ios-modal-backdrop.open .ios-modal-card {
-  transform: scale(1);
-}
+.ios-modal-backdrop.open .ios-modal-card {transform: scale(1)}
 
-.ios-success-badge {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 14px;
-}
+.ios-success-badge {display: flex;justify-content: center;margin-bottom: 14px}
 .ios-success-circle {
   width: 58px;
   height: 58px;
@@ -1274,36 +1243,13 @@
   box-shadow: 0 8px 20px rgba(52, 199, 89, 0.35);
   animation: iosPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.ios-success-circle svg {
-  width: 30px;
-  height: 30px;
-}
-@keyframes iosPop {
-  0% { transform: scale(0.3); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
+.ios-success-circle svg {width: 30px;height: 30px}
+@keyframes iosPop {0%{transform:scale(0.3);opacity:0}100%{transform:scale(1);opacity:1}}
 
-.ios-modal-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1C1C1E;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.4px;
-}
-.ios-modal-sub {
-  font-size: 13px;
-  color: #8E8E93;
-  margin: 0 0 18px 0;
-  line-height: 1.4;
-}
+.ios-modal-title {font-size: 20px;font-weight: 700;color: #1C1C1E;margin: 0 0 6px 0;letter-spacing: -0.4px}
+.ios-modal-sub {font-size: 13px;color: #8E8E93;margin: 0 0 18px 0;line-height: 1.4}
 
-.ios-inset-group {
-  background: #F2F2F7;
-  border-radius: 16px;
-  padding: 4px 14px;
-  margin-bottom: 20px;
-  text-align: left;
-}
+.ios-inset-group {background: #F2F2F7;border-radius: 16px;padding: 4px 14px;margin-bottom: 20px;text-align: left}
 .ios-inset-row {
   display: flex;
   justify-content: space-between;
@@ -1312,21 +1258,10 @@
   border-bottom: 0.5px solid #E5E5EA;
   font-size: 13.5px;
 }
-.ios-inset-row:last-child {
-  border-bottom: none;
-}
-.row-label {
-  color: #8E8E93;
-  font-weight: 500;
-}
-.row-value {
-  color: #1C1C1E;
-  font-weight: 600;
-}
-.row-value.highlight {
-  color: #007AFF;
-  font-weight: 700;
-}
+.ios-inset-row:last-child {border-bottom: none}
+.row-label {color: #8E8E93;font-weight: 500}
+.row-value {color: #1C1C1E;font-weight: 600}
+.row-value.highlight {color: #007AFF;font-weight: 700}
 .row-badge.green {
   background: rgba(52, 199, 89, 0.15);
   color: #248A3D;
@@ -1335,25 +1270,11 @@
   padding: 3px 10px;
   border-radius: 99px;
 }
-.row-value-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-.row-value-main {
-  color: #1C1C1E;
-  font-weight: 600;
-  font-size: 13.5px;
-}
-.row-value-sub {
-  color: #8E8E93;
-  font-size: 10.5px;
-  font-weight: 500;
-}
+.row-value-group {display: flex;flex-direction: column;align-items: flex-end}
+.row-value-main {color: #1C1C1E;font-weight: 600;font-size: 13.5px}
+.row-value-sub {color: #8E8E93;font-size: 10.5px;font-weight: 500}
 
-.ios-modal-actions {
-  width: 100%;
-}
+.ios-modal-actions {width: 100%}
 .ios-btn-done {
   width: 100%;
   height: 48px;
@@ -1367,32 +1288,36 @@
   box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
-.ios-btn-done:active {
-  transform: scale(0.97);
-  background: #0062CC;
-}
+.ios-btn-done:active {transform: scale(0.97);background: #0062CC}
 
-/* ============ MOBILE ============ */
+/* ============ MOBILE — PADDING MINIMAL ============ */
 @media (max-width:560px){
-  .grid-pres{padding:10px;gap:10px;border-radius:16px}
-  .card-ios{padding:14px;border-radius:16px}
-  .big-clock{font-size:36px;margin-bottom:14px}
-  .today-date{font-size:13px}
-  .ptl-ios{padding:10px 12px}
-  .ptl-ios .ptl-ic{width:32px;height:32px}
-  .ptl-ios .ptl-node b{font-size:13px}
-  .ptl-ios .ptl-node span{font-size:9.5px}
-  .seg-btn{min-width:52px;font-size:11.5px;padding:6px 7px}
-  .camera-live{aspect-ratio:4/5;border-radius:16px}
-  .cam-shutter-overlay{width:56px;height:56px;bottom:10px}
-  .cam-shutter-overlay .cs-inner{width:42px;height:42px}
-  .cam-time-pill{bottom:74px;font-size:9.5px;padding:3px 8px}
-  .cam-location-pill{font-size:9.5px;padding:3px 8px}
-  .cam-live-badge{font-size:9px;padding:3px 8px}
-  .map-wrap-ios{min-height:160px}
+  .grid-pres{
+    padding:6px;              /* ← Lebih minimal lagi */
+    gap:6px;
+    border-radius:12px;
+  }
+  .card-ios{
+    padding:10px;             /* ← Card padding minimal */
+    border-radius:14px;
+  }
+  .big-clock{font-size:32px;margin-bottom:10px}
+  .today-date{font-size:12.5px}
+  .ptl-ios{padding:8px 10px;gap:6px}
+  .ptl-ios .ptl-ic{width:28px;height:28px}
+  .ptl-ios .ptl-node b{font-size:12px}
+  .ptl-ios .ptl-node span{font-size:9px}
+  .seg-btn{min-width:44px;font-size:11px;padding:5px 5px}
+  .camera-live{aspect-ratio:4/5;border-radius:12px}
+  .cam-shutter-overlay{width:52px;height:52px;bottom:8px}
+  .cam-shutter-overlay .cs-inner{width:38px;height:38px}
+  .cam-time-pill{bottom:68px;font-size:9px;padding:3px 7px}
+  .cam-location-pill{font-size:9px;padding:3px 7px}
+  .cam-live-badge{font-size:9px;padding:3px 7px}
+  .map-wrap-ios{min-height:140px}
   .lc-title{font-size:12px}
-  .lc-sub{font-size:10px}
-  .btn-ios-primary{padding:12px 16px;font-size:14.5px}
+  .lc-sub{font-size:9.5px}
+  .btn-ios-primary{padding:10px 14px;font-size:14px}
   .cam-viewport{padding-bottom:50px}
   .cam-oval-guide{width:min(78vw, 260px);height:min(110vw, 360px)}
   .cam-face-status{font-size:11.5px;padding:8px 14px;bottom:-70px;gap:7px}
@@ -1418,6 +1343,6 @@
 
 @media (max-width:920px){
   body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
-  .page{padding-bottom:20px}
+  .page{padding-bottom:12px}
 }
 </style>
