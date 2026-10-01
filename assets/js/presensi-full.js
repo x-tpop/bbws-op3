@@ -290,22 +290,91 @@ async function initPresensi() {
     });
 
     // ============================================================
-    // TAHAP 3: INIT KAMERA
-    // ============================================================
-    const video = el('video');
-    if (video) {
-      const ok = await startCamera(video, presensiState.facingMode);
-      console.log('Camera:', ok);
-      if (!ok) toast('Gagal akses kamera', 'error');
+// TAHAP 3: OPEN FULLSCREEN (SUPER DEBUG)
+// ============================================================
+function openFullscreenDirect() {
+  console.log('=== openFullscreenDirect ===');
+  const el = id => document.getElementById(id);
+  
+  const modal = el('camFullscreen');
+  console.log('1. Modal:', modal);
+  
+  if (!modal) {
+    console.error('Modal camFullscreen TIDAK ADA di DOM!');
+    alert('Error: Modal kamera tidak ditemukan. Coba refresh halaman.');
+    return;
+  }
+
+  // Buka modal DULU
+  modal.classList.add('open');
+  console.log('2. Modal dibuka, class:', modal.className);
+
+  // Tunggu 300ms agar modal ter-render
+  setTimeout(async () => {
+    const videoFs = el('videoFullscreen');
+    console.log('3. VideoFullscreen:', videoFs);
+    
+    if (!videoFs) {
+      console.error('VideoFullscreen TIDAK ADA!');
+      alert('Error: Video element tidak ditemukan.');
+      return;
     }
 
-    const camWrap = el('camWrap');
-    if (camWrap) {
-      camWrap.addEventListener('click', (e) => {
-        if (e.target.closest('#btnCapture')) return;
-        openFullscreenDirect();
+    // Coba pakai stream yang sudah ada
+    if (window.cameraStream && window.cameraStream.active) {
+      console.log('4. Pakai stream yang sudah ada');
+      try {
+        videoFs.srcObject = window.cameraStream;
+        await videoFs.play();
+        console.log('5. Stream attached & playing');
+      } catch (e) {
+        console.error('5. Error attach stream:', e);
+      }
+    } else {
+      console.log('4. Stream tidak aktif, start camera baru...');
+      try {
+        const ok = await startCamera(videoFs, presensiState.facingMode);
+        console.log('5. Start camera result:', ok);
+        if (!ok) {
+          alert('Gagal buka kamera. Pastikan izin kamera sudah diberikan.');
+          return;
+        }
+      } catch (e) {
+        console.error('5. Error startCamera:', e);
+        alert('Error kamera: ' + e.message);
+        return;
+      }
+    }
+
+    // Reset mode
+    const fsLiveMode = el('fsLiveMode');
+    const fsReviewMode = el('fsReviewMode');
+    const fsDockLive = el('fsDockLive');
+    const fsDockReview = el('fsDockReview');
+    if (fsLiveMode) fsLiveMode.hidden = false;
+    if (fsReviewMode) fsReviewMode.hidden = true;
+    if (fsDockLive) fsDockLive.hidden = false;
+    if (fsDockReview) fsDockReview.hidden = true;
+
+    // Set nama lokasi
+    if (presensiState.lokasi) {
+      getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
+        if (el('camFsLoc')) el('camFsLoc').textContent = nama;
       });
     }
+
+    // Face detection
+    try {
+      initFaceDetection(videoFs);
+      console.log('6. Face detection initialized');
+    } catch (e) {
+      console.warn('6. Face detection error:', e);
+    }
+
+    if (window.refreshIcons) window.refreshIcons();
+    console.log('=== Fullscreen ready ===');
+  }, 300);
+}
 
     // ============================================================
     // TAHAP 1: INIT LOKASI + GEOFENCE
