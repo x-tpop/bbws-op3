@@ -112,6 +112,9 @@
       <div class="pres-note pres-note-ios" id="presNote">Memuat...</div>
     </div>
 
+    <!-- ★ PATCH: Card 3 diperbaiki — menghilangkan location-card duplikat,
+         ID duplikat (lcIcon/geoStatus/geoSub), dan </div> ekstra yang
+         mendorong Card 4 keluar dari .grid-pres -->
     <!-- Card 3: Peta + Geofence -->
     <div class="card card-ios card-map">
       <div class="card-head">
@@ -122,17 +125,7 @@
         </span>
       </div>
       <div class="map-wrap-ios">
-  <div id="miniMap" class="leaflet-map"></div>
-  <div class="location-card">
-    <div class="lc-icon" id="lcIcon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    </div>
-    <div class="lc-info">
-      <div class="lc-title" id="geoStatus">Mendeteksi lokasi...</div>
-      <div class="lc-sub" id="geoSub">—</div>
-    </div>
-  </div>
-</div>
+        <div id="miniMap" class="leaflet-map"></div>
         <div class="location-card">
           <div class="lc-icon" id="lcIcon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -591,7 +584,8 @@
 
 .segmented.locked {
   opacity: 0.65;
-  pointer-events: none;
+  /* ★ PATCH: pointer-events:none dihapus — klik diteruskan ke guard JS
+     agar toast "Status terkunci" bisa tampil (lihat catatan di bawah) */
   position: relative;
 }
 .segmented.locked::after {
