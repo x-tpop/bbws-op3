@@ -78,23 +78,25 @@
   </div>
 </div>
 
-<!-- BOTTOM NAV (Mobile) -->
+<!-- BOTTOM NAV DENGAN FAB -->
 <nav id="bnav" aria-label="Navigasi utama">
-  <button class="bnav-item on" data-page="dashboard">
+  <button class="bnav-item" data-page="dashboard">
     <span class="bnav-ic"><i data-lucide="layout-dashboard"></i></span>
     <span>Dashboard</span>
   </button>
-  <button class="bnav-item" data-page="presensi">
-    <span class="bnav-ic"><i data-lucide="fingerprint"></i></span>
-    <span>Presensi</span>
-  </button>
-  <button class="bnav-item" data-page="verifikasi" id="bnavVerifikasi">
-    <span class="bnav-ic"><i data-lucide="clipboard-check"></i></span>
-    <span>Verifikasi</span>
-  </button>
-  <button class="bnav-item" data-page="monitoring" id="bnavMonitoring">
+  <button class="bnav-item" data-page="monitoring">
     <span class="bnav-ic"><i data-lucide="eye"></i></span>
     <span>Monitoring</span>
+  </button>
+
+  <!-- FAB PRESENSI -->
+  <button class="bnav-fab" data-page="presensi" aria-label="Presensi">
+    <i data-lucide="fingerprint"></i>
+  </button>
+
+  <button class="bnav-item" data-page="verifikasi">
+    <span class="bnav-ic"><i data-lucide="clipboard-check"></i></span>
+    <span>Verifikasi</span>
   </button>
   <button class="bnav-item" data-page="biodata">
     <span class="bnav-ic"><i data-lucide="user-round"></i></span>
