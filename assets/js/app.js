@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Router + Logic Shell (v2 — no loop)
+// APP.JS — Router + Logic Shell (v3 — with admin)
 // ============================================================
 
 const $ = s => document.querySelector(s);
@@ -33,15 +33,23 @@ const PAGES = {
   koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', init: 'initKoordinasi', roles: ['admin','ppk','staf_pengamat'] },
   laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    init: 'initLaporan',    roles: ['*'] },
   biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    init: null,             roles: ['*'] },
-  admin: { k: 'Administrasi', t: 'Admin Panel', file: 'pages/admin.html', init: 'initAdmin', roles: ['admin'] },
+  admin:      { k: 'Administrasi',   t: 'Admin Panel',              file: 'pages/admin.html',      init: 'initAdmin',      roles: ['admin'] }
 };
 
-// Sembunyikan menu sesuai role
+// ============================================================
+// SEMBUNYIKAN MENU SESUAI ROLE
+// ============================================================
 Object.entries(PAGES).forEach(([key, page]) => {
   if (page.roles[0] === '*') return;
   if (!page.roles.includes(session.role)) {
     document.querySelector(`[data-page="${key}"]`)?.remove();
     document.querySelector(`#bnav [data-page="${key}"]`)?.remove();
+  } else {
+    // Tampilkan menu yang sesuai (misal admin)
+    const navEl = document.querySelector(`#sidebarNav [data-page="${key}"]`);
+    if (navEl) navEl.style.display = '';
+    const bnavEl = document.querySelector(`#bnav [data-page="${key}"]`);
+    if (bnavEl) bnavEl.style.display = '';
   }
 });
 
@@ -49,8 +57,7 @@ Object.entries(PAGES).forEach(([key, page]) => {
 // STATE
 // ============================================================
 let currentPage = null;
-let isNavigating = false;      // flag: sedang pindah halaman?
-let isInitialLoad = true;      // flag: load pertama?
+let isNavigating = false;
 
 // ============================================================
 // CLEANUP
@@ -58,6 +65,7 @@ let isInitialLoad = true;      // flag: load pertama?
 function cleanupPage() {
   if (window.__presInterval) { clearInterval(window.__presInterval); window.__presInterval = null; }
   if (window.__dashInterval) { clearInterval(window.__dashInterval); window.__dashInterval = null; }
+  if (window.__wmInterval) { clearInterval(window.__wmInterval); window.__wmInterval = null; }
   if (typeof window.stopCamera === 'function') {
     try { window.stopCamera(); } catch (e) {}
   }
@@ -69,19 +77,16 @@ function cleanupPage() {
 // ROUTER
 // ============================================================
 async function go(pageName, isFromHash = false) {
-  // GUARD 1: Halaman tidak dikenal
   if (!PAGES[pageName]) {
     console.warn('Halaman tidak dikenal:', pageName);
     return;
   }
 
-  // GUARD 2: Sudah di halaman ini → skip
   if (currentPage === pageName && !isFromHash) {
     console.log('Sudah di halaman', pageName, '— skip');
     return;
   }
 
-  // GUARD 3: Sedang navigasi → skip
   if (isNavigating) {
     console.log('Sedang navigasi — skip');
     return;
@@ -93,47 +98,36 @@ async function go(pageName, isFromHash = false) {
     currentPage = pageName;
     const page = PAGES[pageName];
 
-    // Cleanup halaman sebelumnya
     cleanupPage();
 
-    // Update sidebar & bottom nav
     $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
     $$('.bnav-item').forEach(b => b.classList.toggle('on', b.dataset.page === pageName));
 
-    // Update judul
     $('#tbKicker').textContent = page.k;
     $('#tbTitle').textContent = page.t;
 
-    // Update URL hash TANPA trigger hashchange
     if (!isFromHash && location.hash !== '#' + pageName) {
-      // Pakai history.replaceState agar tidak trigger hashchange
       history.replaceState(null, '', '#' + pageName);
     }
 
-    // Scroll ke atas
     window.scrollTo(0, 0);
 
-    // CLONE container
     const oldContainer = document.getElementById('pageContainer');
     const container = oldContainer.cloneNode(false);
     oldContainer.parentNode.replaceChild(container, oldContainer);
 
-    // Loading
     container.innerHTML = `
       <div style="text-align:center;padding:60px;color:var(--muted)">
         <div style="display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite"></div>
         <p style="margin-top:12px;font-weight:600">Memuat halaman...</p>
       </div>`;
 
-    // Fetch HTML
     const res = await fetch(page.file + '?v=' + Date.now());
     if (!res.ok) throw new Error('Gagal memuat halaman: ' + res.status);
     const html = await res.text();
 
-    // Inject
     container.innerHTML = html;
 
-    // Jalankan <script> di HTML
     const scripts = container.querySelectorAll('script');
     for (const oldScript of scripts) {
       const newScript = document.createElement('script');
@@ -142,7 +136,6 @@ async function go(pageName, isFromHash = false) {
       oldScript.parentNode.replaceChild(newScript, oldScript);
     }
 
-    // Panggil init
     const initFn = page.init;
     console.log('Router:', pageName, '| init:', initFn);
 
@@ -168,12 +161,11 @@ async function go(pageName, isFromHash = false) {
     }
   } finally {
     isNavigating = false;
-    isInitialLoad = false;
   }
 }
 
 // ============================================================
-// EVENT: Klik menu (listener terpasang SEKALI saja)
+// EVENT: Klik menu
 // ============================================================
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-page]');
