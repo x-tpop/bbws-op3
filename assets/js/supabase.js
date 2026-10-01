@@ -8,6 +8,16 @@ const supabaseClient = window.supabase.createClient(
 );
 
 // ============================================================
+// ★ PATCH: UTIL TANGGAL WIB
+// Fix bug UTC: toISOString() menghasilkan tanggal kemarin
+// untuk jam 00:00–06:59 WIB. Gunakan ini di semua tempat.
+// ============================================================
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+window.localDateStr = localDateStr;
+
+// ============================================================
 // HELPER: SELECT
 // ============================================================
 async function dbSelect(tabel, options = {}) {
@@ -52,16 +62,27 @@ async function dbInsert(tabel, data) {
 }
 
 // ============================================================
-// HELPER: UPDATE
+// ★ PATCH: HELPER: UPDATE
+// Tambah parameter `extraEq` — WAJIB dipakai untuk checkout
+// presensi agar tidak menimpa seluruh riwayat.
 // ============================================================
-async function dbUpdate(tabel, kolomId, idValue, data) {
-  const { data: result, error } = await supabaseClient
+async function dbUpdate(tabel, kolomId, idValue, data, extraEq = {}) {
+  let query = supabaseClient
     .from(tabel)
     .update(data)
-    .eq(kolomId, idValue)
-    .select();
+    .eq(kolomId, idValue);
 
+  Object.entries(extraEq).forEach(([k, v]) => {
+    query = query.eq(k, v);
+  });
+
+  const { data: result, error } = await query.select();
   if (error) throw error;
+
+  // Safety net: peringatkan jika update menyentuh >1 baris
+  if (result && result.length > 1) {
+    console.warn(`⚠️ dbUpdate: ${result.length} baris ter-update di "${tabel}" — kemungkinan filter kurang spesifik!`);
+  }
   return result;
 }
 
