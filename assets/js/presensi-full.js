@@ -25,36 +25,52 @@ const presensiState = {
 };
 
 // ============================================================
-// TAHAP 1: SERVER TIME SYNC
+// TAHAP 1: SERVER TIME SYNC (via Supabase)
 // ============================================================
 async function syncServerTime() {
-  try {
-    const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jakarta', {
-      signal: AbortSignal.timeout(5000)
-    });
-    const json = await res.json();
-    const serverTime = new Date(json.datetime);
-    presensiState.serverOffset = serverTime.getTime() - Date.now();
-    
-    const badge = document.getElementById('serverBadge');
-    const el = document.getElementById('serverTime');
-    if (badge) badge.classList.remove('error');
-    if (el) el.textContent = 'Server OK';
-    
-    console.log('Server time synced:', serverTime, 'Offset:', presensiState.serverOffset);
-    return true;
-  } catch (e) {
-    console.warn('Sync server time gagal, pakai device time:', e);
-    const badge = document.getElementById('serverBadge');
-    const el = document.getElementById('serverTime');
-    if (badge) badge.classList.add('error');
-    if (el) el.textContent = 'Offline';
-    return false;
-  }
-}
+  const badge = document.getElementById('serverBadge');
+  const el = document.getElementById('serverTime');
 
-function getServerNow() {
-  return new Date(Date.now() + presensiState.serverOffset);
+  try {
+    // Coba Supabase server time
+    const { data, error } = await supabaseClient.rpc('get_server_time');
+    
+    if (!error && data) {
+      const serverTime = new Date(data);
+      presensiState.serverOffset = serverTime.getTime() - Date.now();
+      
+      if (badge) badge.classList.remove('error');
+      if (el) el.textContent = 'Server OK';
+      
+      console.log('Server time (Supabase):', serverTime, 'Offset:', presensiState.serverOffset);
+      return true;
+    }
+
+    throw new Error('Supabase time tidak tersedia');
+    
+  } catch (e) {
+    // Fallback: coba WorldTimeAPI
+    try {
+      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jakarta', {
+        signal: AbortSignal.timeout(3000)
+      });
+      const json = await res.json();
+      const serverTime = new Date(json.datetime);
+      presensiState.serverOffset = serverTime.getTime() - Date.now();
+      
+      if (badge) badge.classList.remove('error');
+      if (el) el.textContent = 'Server OK';
+      
+      console.log('Server time (WorldTimeAPI):', serverTime);
+      return true;
+    } catch (e2) {
+      // Last fallback: device time
+      console.warn('Sync server time gagal, pakai device time');
+      if (badge) badge.classList.add('error');
+      if (el) el.textContent = 'Device Time';
+      return false;
+    }
+  }
 }
 
 // ============================================================
