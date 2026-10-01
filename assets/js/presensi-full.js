@@ -1,7 +1,8 @@
 // ============================================================
-// PRESENSI-FULL.JS — Logic halaman presensi (v16 FINAL)
+// PRESENSI-FULL.JS — Logic halaman presensi (v17 PATCHED)
 // Fitur: Server time, Geofence, Jam Kerja, Poin, Watermark,
-//        Timeline Dinamis, Kunci Segmented
+//        Timeline Dinamis, Kunci Segmented, Leaflet Map,
+//        Guard presensi selesai, Checkout berfilter tanggal
 // File: assets/js/presensi-full.js
 // ============================================================
 
@@ -268,10 +269,71 @@ async function getNamaLokasi(lat, lng) {
 }
 
 // ============================================================
+// ★ PATCH: INIT PETA LEAFLET (menggantikan kode iframe)
+// Kode iframe lama tidak berefek apa pun pada <div>.
+// ============================================================
+let miniMap = null;
+let userMarker = null;
+let officeCircle = null;
+
+function initMiniMap(lat, lng) {
+  if (!window.L) {
+    console.warn('Leaflet belum dimuat');
+    return;
+  }
+
+  if (!miniMap) {
+    miniMap = L.map('miniMap', {
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      tap: false,
+      attributionControl: true
+    }).setView([lat, lng], 16);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(miniMap);
+  } else {
+    miniMap.setView([lat, lng], 16);
+  }
+
+  // Marker user (titik biru berdenyut)
+  if (userMarker) userMarker.remove();
+  userMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: 'user-marker-icon',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    })
+  }).addTo(miniMap);
+
+  // ★ Radius kantor (visual geofence)
+  if (officeCircle) officeCircle.remove();
+  officeCircle = null;
+  if (presensiState.kantorLat && presensiState.kantorLng) {
+    officeCircle = L.circle([presensiState.kantorLat, presensiState.kantorLng], {
+      radius: presensiState.kantorRadius,
+      color: '#007AFF',
+      weight: 1.5,
+      fillColor: '#007AFF',
+      fillOpacity: 0.08
+    }).addTo(miniMap);
+  }
+
+  // Penting: container baru saja di-inject SPA, paksa Leaflet hitung ulang ukuran
+  setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 150);
+  setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 600);
+}
+
+// ============================================================
 // INIT UTAMA
 // ============================================================
 async function initPresensi() {
-  console.log('=== Init Presensi (Full) ===');
+  console.log('=== Init Presensi (Full v17) ===');
 
   if (window.__presensiInit) {
     console.log('skip, sudah init');
@@ -302,7 +364,6 @@ async function initPresensi() {
       if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
       if (el('fsReviewTime')) el('fsReviewTime').textContent = hms + ' WIB';
 
-      // UPDATE TIMELINE PROGRESS
       updateTimelineProgress();
     }
     tickPres();
@@ -311,8 +372,9 @@ async function initPresensi() {
 
     // ============================================================
     // CEK PRESENSI HARI INI
+    // ★ PATCH: localDateStr() menggantikan toISOString() (bug UTC)
     // ============================================================
-    const today = getServerNow().toISOString().slice(0, 10);
+    const today = localDateStr(getServerNow());
     try {
       const { data } = await supabaseClient
         .from('presensi').select('*')
@@ -328,7 +390,7 @@ async function initPresensi() {
     renderPresensi();
 
     // ============================================================
-    // TAHAP 2: SEGMENTED CONTROL
+    // SEGMENTED CONTROL
     // ============================================================
     const segButtons = document.querySelectorAll('.seg-btn');
     const segmented = el('segmentedStatus');
@@ -362,7 +424,6 @@ async function initPresensi() {
 
     segButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        // KUNCI: jangan izinkan ubah kalau sudah check-in
         if (segmented && segmented.classList.contains('locked')) {
           toast('Status terkunci setelah check-in', 'warn');
           return;
@@ -379,7 +440,6 @@ async function initPresensi() {
       updateFormByStatus(presensiState.status);
     }
 
-    // KUNCI SEGMENTED kalau sudah check-in & belum checkout
     if (presensiState.masuk && !presensiState.keluar && segmented) {
       segmented.classList.add('locked');
       segButtons.forEach(b => { b.disabled = true; });
@@ -387,7 +447,7 @@ async function initPresensi() {
     }
 
     // ============================================================
-    // TAHAP 2: UPLOAD SURAT
+    // UPLOAD SURAT
     // ============================================================
     const suratFile = el('suratFile');
     const fileUpload = el('fileUpload');
@@ -421,7 +481,7 @@ async function initPresensi() {
     });
 
     // ============================================================
-    // TAHAP 1: INIT LOKASI + GEOFENCE
+    // INIT LOKASI + GEOFENCE + PETA
     // ============================================================
     try {
       const loc = await getLocation();
@@ -434,12 +494,8 @@ async function initPresensi() {
       if (el('geoSub')) el('geoSub').textContent = locWithAcc;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
-      const mapIframe = el('miniMap');
-      if (mapIframe) {
-        const d = 0.003;
-        const bbox = `${loc.lng - d},${loc.lat - d},${loc.lng + d},${loc.lat + d}`;
-        mapIframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
-      }
+      // ★ PATCH: Leaflet (bukan iframe)
+      initMiniMap(loc.lat, loc.lng);
 
       getNamaLokasi(loc.lat, loc.lng).then(nama => {
         presensiState.lokasiNama = nama;
@@ -536,7 +592,7 @@ function updateWatermarkData() {
 }
 
 // ============================================================
-// TAHAP 3: HANDLER TOMBOL "BUKA KAMERA"
+// HANDLER TOMBOL "BUKA KAMERA"
 // ============================================================
 function attachCaptureHandler(btn) {
   if (!btn) return;
@@ -546,10 +602,16 @@ function attachCaptureHandler(btn) {
   newBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Tombol Buka Kamera diklik');
 
     if (!isHariKerja()) {
       toast('Hari ini bukan hari kerja', 'warn');
+      return;
+    }
+
+    // ★ PATCH: Guard presensi selesai — cegah checkout kedua
+    // yang menimpa data (dulu kamera masih bisa dibuka)
+    if (presensiState.masuk && presensiState.keluar) {
+      toast('Presensi hari ini sudah selesai', 'warn');
       return;
     }
 
@@ -573,7 +635,6 @@ function attachRetakeHandler(btn) {
   newBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Ambil Ulang diklik');
 
     presensiState.fotoBase64 = null;
     const el = id => document.getElementById(id);
@@ -587,7 +648,7 @@ function attachRetakeHandler(btn) {
 }
 
 // ============================================================
-// TAHAP 3: OPEN FULLSCREEN
+// OPEN FULLSCREEN
 // ============================================================
 function openFullscreenDirect() {
   console.log('=== openFullscreenDirect ===');
@@ -601,7 +662,6 @@ function openFullscreenDirect() {
   }
 
   modal.classList.add('open');
-  console.log('Modal dibuka');
 
   const fsLiveMode = el('fsLiveMode');
   const fsReviewMode = el('fsReviewMode');
@@ -630,7 +690,6 @@ function openFullscreenDirect() {
         console.log('Stream attached');
       } else {
         const ok = await startCamera(videoFs, presensiState.facingMode);
-        console.log('Start camera:', ok);
         if (!ok) {
           toast('Gagal buka kamera', 'error');
           return;
@@ -660,7 +719,7 @@ function openFullscreenDirect() {
 }
 
 // ============================================================
-// TAHAP 4: FACE DETECTION
+// FACE DETECTION
 // ============================================================
 let faceDetector = null;
 let faceDetectInterval = null;
@@ -770,7 +829,7 @@ function stopFaceDetection() {
 }
 
 // ============================================================
-// TAHAP 4: FULLSCREEN HANDLERS
+// FULLSCREEN HANDLERS
 // ============================================================
 function attachFullscreenHandlers() {
   const el = id => document.getElementById(id);
@@ -784,6 +843,11 @@ function attachFullscreenHandlers() {
       e.stopPropagation();
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
+      // ★ PATCH: matikan stream kamera saat modal ditutup
+      // (hemat baterai, indikator kamera benar-benar mati)
+      if (typeof stopCamera === 'function') stopCamera();
+      const v = el('videoFullscreen');
+      if (v) v.srcObject = null;
     });
   }
 
@@ -820,7 +884,7 @@ function attachFullscreenHandlers() {
   if (btnReviewRetake) {
     const newBtn = btnReviewRetake.cloneNode(true);
     btnReviewRetake.parentNode.replaceChild(newBtn, btnReviewRetake);
-    newBtn.addEventListener('click', (e) => {
+    newBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       presensiState.fotoBase64 = null;
@@ -828,10 +892,17 @@ function attachFullscreenHandlers() {
       el('fsReviewMode').hidden = true;
       el('fsDockLive').hidden = false;
       el('fsDockReview').hidden = true;
+
+      // ★ PATCH: fallback startCamera — dulu bergantung pada
+      // window.cameraStream yang tak pernah di-set (preview hitam)
       const videoFs = el('videoFullscreen');
-      if (videoFs && window.cameraStream) {
-        videoFs.srcObject = window.cameraStream;
-        videoFs.play();
+      if (videoFs) {
+        if (window.cameraStream && window.cameraStream.active) {
+          videoFs.srcObject = window.cameraStream;
+          videoFs.play();
+        } else {
+          await startCamera(videoFs, presensiState.facingMode);
+        }
         initFaceDetection(videoFs);
       }
     });
@@ -847,6 +918,10 @@ function attachFullscreenHandlers() {
 
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
+      // ★ PATCH: tutup stream juga (foto sudah terkunci di review)
+      if (typeof stopCamera === 'function') stopCamera();
+      const vFs = el('videoFullscreen');
+      if (vFs) vFs.srcObject = null;
 
       const previewImg = el('previewImg');
       const camPreview = el('camPreview');
@@ -868,7 +943,7 @@ function attachFullscreenHandlers() {
 }
 
 // ============================================================
-// TAHAP 5: CAPTURE + FREEZE FRAME
+// CAPTURE + FREEZE FRAME
 // ============================================================
 async function captureFromFullscreen() {
   const el = id => document.getElementById(id);
@@ -910,7 +985,7 @@ async function captureFromFullscreen() {
 }
 
 // ============================================================
-// TAHAP 6: SUBMIT
+// SUBMIT
 // ============================================================
 function attachSubmitHandler(btn, session, pegawai) {
   if (!btn) return;
@@ -929,6 +1004,12 @@ async function submitPresensi(btn, session, pegawai) {
   const status = presensiState.status;
   const ketEl = el('presKet');
   const ket = ketEl ? ketEl.value.trim() : '';
+
+  // ★ PATCH: Guard presensi selesai (double protection)
+  if (presensiState.masuk && presensiState.keluar) {
+    toast('Presensi hari ini sudah selesai', 'warn');
+    return;
+  }
 
   if (['Izin', 'Sakit'].includes(status)) {
     if (!presensiState.suratBase64) { toast('Surat pendukung wajib diupload', 'warn'); return; }
@@ -953,7 +1034,8 @@ async function submitPresensi(btn, session, pegawai) {
   btn.disabled = true;
 
   try {
-    const today = now.toISOString().slice(0, 10);
+    // ★ PATCH: localDateStr() menggantikan toISOString() (bug UTC)
+    const today = localDateStr(now);
     const timestamp = now.toISOString().replace(/[:.]/g, '-');
 
     let fotoUrl = null;
@@ -995,13 +1077,16 @@ async function submitPresensi(btn, session, pegawai) {
       });
       presensiState.masuk = now;
     } else {
+      // ★ PATCH KRITIS: checkout kini berfilter tanggal.
+      // Sebelumnya: UPDATE ... WHERE id_pegawai = X → MENIMPA
+      // SELURUH RIWAYAT presensi pegawai tersebut.
       await dbUpdate('presensi', 'id_pegawai', session.id_pegawai, {
         jam_keluar: jam,
         lokasi_keluar: lokasiStr,
         foto_keluar: fotoUrl,
         poin_keluar: poin,
         status_kehadiran_keluar: statusInfo.status
-      });
+      }, { tanggal: today });
       presensiState.keluar = now;
     }
 
@@ -1032,7 +1117,7 @@ async function submitPresensi(btn, session, pegawai) {
 }
 
 // ============================================================
-// TAHAP 7: RESET FORM
+// RESET FORM
 // ============================================================
 function resetPresensiForm() {
   const el = id => document.getElementById(id);
@@ -1053,7 +1138,7 @@ function resetPresensiForm() {
 }
 
 // ============================================================
-// TAHAP 6: MODAL SUKSES
+// MODAL SUKSES
 // ============================================================
 function showSuksesModal(data) {
   const modal = document.getElementById('suksesModal');
@@ -1103,7 +1188,7 @@ function closeSuksesModal() {
 }
 
 // ============================================================
-// TAHAP 6: LOADING
+// LOADING
 // ============================================================
 function showLoading(text = 'Memproses...') {
   const overlay = document.getElementById('loadingOverlay');
@@ -1118,7 +1203,7 @@ function hideLoading() {
 }
 
 // ============================================================
-// TAHAP 7: RENDER PRESENSI
+// RENDER PRESENSI
 // ============================================================
 function renderPresensi() {
   const fmt = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '—';
@@ -1147,7 +1232,6 @@ function renderPresensi() {
 
   if (el('presNote')) el('presNote').textContent = note;
 
-  // Update timeline juga
   updateTimelineProgress();
 }
 
@@ -1169,3 +1253,7 @@ window.isCheckoutAllowed = isCheckoutAllowed;
 window.isHariKerja = isHariKerja;
 window.updateWatermarkData = updateWatermarkData;
 window.updateTimelineProgress = updateTimelineProgress;
+// ★ PATCH: expose state — camera.js membaca status & lokasiNama
+// via window.presensiState (dulu selalu undefined → watermark
+// foto bukti selalu tertulis "Hadir" meski status Izin/Sakit)
+window.presensiState = presensiState;
