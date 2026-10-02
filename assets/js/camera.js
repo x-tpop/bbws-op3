@@ -1,9 +1,18 @@
 // ============================================================
-// CAMERA.JS — Kamera, Watermark, Kompresi, Upload
+// CAMERA.JS — Kamera, Watermark, Kompresi, Upload (v2 PATCHED)
+// Patch: window.cameraStream, kualitas capture 0.92,
+//        logo resmi di watermark + fallback vektor
 // File: assets/js/camera.js
 // ============================================================
 
 let cameraStream = null;
+
+// ============================================================
+// ★ PATCH: LOGO RESMI untuk watermark foto (preload sekali)
+// File: assets/img/logo-symbol.png (logo kotak kuning-biru PUPR)
+// ============================================================
+const WM_LOGO = new Image();
+WM_LOGO.src = 'assets/img/logo-symbol.png';
 
 // ============================================================
 // START CAMERA
@@ -15,6 +24,10 @@ async function startCamera(videoElement, facingMode = 'user') {
       video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false
     });
+    // ★ PATCH: expose ke window — presensi-full.js mengecek
+    // window.cameraStream.active (dulu selalu undefined → kamera
+    // selalu di-restart & retake preview bisa hitam)
+    window.cameraStream = cameraStream;
     videoElement.srcObject = cameraStream;
     await videoElement.play();
     return true;
@@ -29,6 +42,8 @@ function stopCamera() {
     cameraStream.getTracks().forEach(t => t.stop());
     cameraStream = null;
   }
+  // ★ PATCH: bersihkan referensi window juga
+  window.cameraStream = null;
 }
 
 // ============================================================
@@ -67,6 +82,8 @@ async function captureWithWatermark(videoElement, lokasi, keterangan = '') {
   const pegawai = session?.pegawai || {};
   const nama = pegawai.nama || session?.nama_lengkap || 'Pegawai';
   const jabatan = pegawai.jabatan || session?.role || '-';
+  // (★ CATATAN: window.presensiState kini di-set oleh presensi-full.js v17,
+  //  sehingga status & lokasiNama di watermark sudah benar)
   const status = window.presensiState?.status || 'Hadir';
   const lokasiNama = window.presensiState?.lokasiNama || null;
 
@@ -108,50 +125,81 @@ async function captureWithWatermark(videoElement, lokasi, keterangan = '') {
   ctx.stroke();
   ctx.restore();
 
-  // 3. Logo PUPR (circle)
-  const logoSize = cardHeight * 0.5;
-  const logoX = cardX + padding * 0.9;
+  // 3. Logo PUPR
+  // ★ PATCH: LOGO RESMI dari file (drawImage + clip sudut membulat),
+  // fallback ke simbol vektor lama bila file gagal dimuat.
+  const logoSize = cardHeight * 0.62;
+  const logoX = cardX + padding * 0.8;
   const logoY = cardY + (cardHeight - logoSize) / 2;
+  const logoR = logoSize * 0.22;   // sudut membulat logo
 
-  // Circle background putih
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fill();
-  ctx.restore();
+  let logoDrawn = false;
+  if (WM_LOGO.complete && WM_LOGO.naturalWidth > 0) {
+    try {
+      ctx.save();
+      roundRect(ctx, logoX, logoY, logoSize, logoSize, logoR);
+      ctx.clip();
+      ctx.drawImage(WM_LOGO, logoX, logoY, logoSize, logoSize);
+      ctx.restore();
+      logoDrawn = true;
+    } catch (e) {
+      console.warn('Gagal menggambar logo resmi, pakai fallback:', e);
+      logoDrawn = false;
+    }
+  }
 
-  // Logo PUPR symbol (simplified)
-  const cx = logoX + logoSize/2;
-  const cy = logoY + logoSize/2;
-  const r = logoSize * 0.38;
+  if (!logoDrawn) {
+    // ---- FALLBACK: lingkaran putih + simbol vektor (kode lama) ----
+    const fcSize = cardHeight * 0.5;
+    const fcX = cardX + padding * 0.9;
+    const fcY = cardY + (cardHeight - fcSize) / 2;
 
-  ctx.save();
-  // Yellow circle
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = '#FDB813';
-  ctx.fill();
+    // Circle background putih
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(fcX + fcSize/2, fcY + fcSize/2, fcSize/2, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.restore();
 
-  // Blue diamond
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - r * 0.75);
-  ctx.lineTo(cx + r * 0.6, cy);
-  ctx.lineTo(cx, cy + r * 0.75);
-  ctx.lineTo(cx - r * 0.6, cy);
-  ctx.closePath();
-  ctx.fillStyle = '#003366';
-  ctx.fill();
+    const cx = fcX + fcSize/2;
+    const cy = fcY + fcSize/2;
+    const r = fcSize * 0.38;
 
-  // Yellow center
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.32, 0, Math.PI * 2);
-  ctx.fillStyle = '#FDB813';
-  ctx.fill();
-  ctx.restore();
+    ctx.save();
+    // Yellow circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#FDB813';
+    ctx.fill();
+
+    // Blue diamond
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r * 0.75);
+    ctx.lineTo(cx + r * 0.6, cy);
+    ctx.lineTo(cx, cy + r * 0.75);
+    ctx.lineTo(cx - r * 0.6, cy);
+    ctx.closePath();
+    ctx.fillStyle = '#003366';
+    ctx.fill();
+
+    // Yellow center
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.32, 0, Math.PI * 2);
+    ctx.fillStyle = '#FDB813';
+    ctx.fill();
+    ctx.restore();
+
+    // Logo fallback sedikit lebih kecil → sesuaikan posisi divider
+    var logoSizeEff = fcSize;
+    var logoXEff = fcX;
+  } else {
+    var logoSizeEff = logoSize;
+    var logoXEff = logoX;
+  }
 
   // 4. Divider Line
-  const divX = logoX + logoSize + padding * 0.6;
+  const divX = logoXEff + logoSizeEff + padding * 0.6;
   const divY1 = cardY + cardHeight * 0.2;
   const divY2 = cardY + cardHeight * 0.8;
 
@@ -250,7 +298,11 @@ async function captureWithWatermark(videoElement, lokasi, keterangan = '') {
   ctx.fillText(`${tgl} • ${jam} WIB`, textX, cardY + cardHeight * 0.82);
   ctx.restore();
 
-  return canvas.toDataURL('image/jpeg', CONFIG.FOTO_QUALITY);
+  // ★ PATCH: quality 0.92 (sebelumnya CONFIG.FOTO_QUALITY = 0.7) —
+  // dulu foto dikompres JPEG DUA KALI (di sini 0.7, lalu compressImage
+  // 0.7 lagi) sehingga artefak menumpuk & teks watermark buram.
+  // Kompresi final tetap 1× di compressImage (800px, 0.7).
+  return canvas.toDataURL('image/jpeg', 0.92);
 }
 
 // Helper: roundRect polyfill
@@ -289,6 +341,9 @@ function compressImage(base64, maxWidth = 800, quality = 0.7) {
 
 // ============================================================
 // UPLOAD KE APPS SCRIPT
+// (★ CATATAN KEAMANAN: endpoint ini masih tanpa autentikasi —
+//  risiko diketahui & diterima; penanganan penuh menunggu
+//  migrasi auth server-side)
 // ============================================================
 async function uploadFoto(base64, namaFile, folderPath) {
   try {
