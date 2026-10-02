@@ -488,6 +488,7 @@ function rpRenderSelf() {
 // ============================================================
 function rpKopHTML() {
   return `<div class="pr-kop">
+    <img src="assets/img/logo-pupr.png" style="height:64px;margin-bottom:6px"><br>
     <h1>BALAI BESAR WILAYAH SUNGAI BRANTAS</h1>
     <h2>Direktorat Jenderal Sumber Daya Air — Kementerian Pekerjaan Umum dan Perumahan Rakyat</h2>
   </div>`;
