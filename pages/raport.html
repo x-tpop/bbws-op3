@@ -1,0 +1,192 @@
+<section class="page active">
+  <div class="grid-rp">
+
+    <!-- TOOLBAR PERIODE -->
+    <div class="card card-ios">
+      <div class="card-head">
+        <span class="kicker">Periode Raport</span>
+        <button type="button" class="rp-btn-ghost" id="rpRefresh">
+          <i data-lucide="refresh-cw"></i>Muat Ulang
+        </button>
+      </div>
+
+      <div class="rp-tabs" id="rpTabs">
+        <button type="button" data-tipe="bulanan" class="active">Bulanan</button>
+        <button type="button" data-tipe="triwulan">Triwulan</button>
+        <button type="button" data-tipe="tahunan">Tahunan</button>
+      </div>
+
+      <div class="rp-controls">
+        <div class="rp-ctrl" id="rpCtrlBulan">
+          <select id="rpBulan"></select>
+          <select id="rpTahunB"></select>
+        </div>
+        <div class="rp-ctrl" id="rpCtrlTW" hidden>
+          <select id="rpTW"></select>
+          <select id="rpTahunT"></select>
+        </div>
+        <div class="rp-ctrl" id="rpCtrlTahun" hidden>
+          <select id="rpTahunY"></select>
+        </div>
+        <div class="rp-ctrl" id="rpCtrlManager" hidden>
+          <select id="rpFilterDI"></select>
+          <select id="rpFilterJenis">
+            <option value="semua">Semua Jenis</option>
+            <option value="PPA">PPA — Pintu Air</option>
+            <option value="Pekarya">Pekarya — Saluran</option>
+          </select>
+        </div>
+      </div>
+      <div class="rp-meta" id="rpMeta">—</div>
+    </div>
+
+    <!-- RINGKASAN (mode manajemen) -->
+    <div class="card card-ios" id="rpSummaryCard" hidden>
+      <div class="card-head"><span class="kicker">Ringkasan Periode</span></div>
+      <div class="rp-sum-grid" id="rpSummary"></div>
+    </div>
+
+    <!-- SKOR DIRI (mode pegawai) -->
+    <div class="card card-ios" id="rpSelfCard" hidden>
+      <div class="rp-self" id="rpSelf"></div>
+    </div>
+
+    <!-- DAFTAR (mode manajemen) -->
+    <div class="card card-ios" id="rpListCard" hidden>
+      <div class="card-head">
+        <span class="kicker">Daftar Pegawai</span>
+        <button type="button" class="rp-btn-ghost" id="rpPrintRekap">
+          <i data-lucide="printer"></i>Cetak Rekap
+        </button>
+      </div>
+      <div class="rp-table-wrap">
+        <table class="rp-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Nama</th><th>Jabatan</th><th>DI</th>
+              <th>Hadir</th><th>Lapor</th><th>KG</th><th>Tugas</th>
+              <th>Skor</th><th>Predikat</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="rpTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETAIL (mode pegawai, ter-render inline) -->
+    <div id="rpSelfDetail"></div>
+  </div>
+</section>
+
+<!-- MODAL DETAIL -->
+<div id="rpModal" class="rp-modal-backdrop">
+  <div class="rp-modal-card">
+    <div class="rp-modal-head">
+      <h3 id="rpModalTitle">Detail Raport</h3>
+      <button type="button" class="rp-modal-close" id="rpModalClose">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="rp-modal-body" id="rpModalBody"></div>
+    <div class="rp-modal-foot">
+      <button type="button" class="rp-btn-ghost" id="rpModalPrint">
+        <i data-lucide="printer"></i>Cetak Raport
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AREA CETAK -->
+<div id="rpPrintArea"></div>
+
+<style>
+.grid-rp{display:grid;gap:10px}
+.card-ios{background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.card-head .kicker{font:800 10px var(--font);letter-spacing:.14em;text-transform:uppercase;color:#8E8E93}
+
+.rp-btn-ghost{
+  display:inline-flex;align-items:center;gap:5px;border:0;background:#F2F2F7;
+  color:#007AFF;font:600 12px -apple-system,sans-serif;padding:7px 12px;border-radius:99px;cursor:pointer;transition:.2s}
+.rp-btn-ghost:active{background:#E5E5EA}
+.rp-btn-ghost svg{width:14px;height:14px}
+
+.rp-tabs{display:flex;background:#E5E5EA;border-radius:12px;padding:3px;gap:2px;margin-bottom:10px}
+.rp-tabs button{flex:1;border:0;background:transparent;color:#3C3C43;font:600 12px -apple-system,sans-serif;padding:8px 6px;border-radius:10px;cursor:pointer;transition:.2s}
+.rp-tabs button.active{background:#fff;color:#000;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+
+.rp-controls{display:flex;flex-direction:column;gap:8px}
+.rp-ctrl{display:flex;gap:8px}
+.rp-ctrl select{
+  flex:1;border:0;background:#F2F2F7;border-radius:10px;padding:9px 12px;
+  font:600 13px -apple-system,sans-serif;color:#000;appearance:none;cursor:pointer}
+.rp-meta{margin-top:10px;font:500 12px -apple-system,sans-serif;color:#8E8E93;text-align:center}
+
+.rp-sum-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:760px){.rp-sum-grid{grid-template-columns:repeat(4,1fr)}}
+.rp-sum-box{background:#F2F2F7;border-radius:12px;padding:12px;text-align:center}
+.rp-sum-box b{display:block;font:700 22px -apple-system,'SF Pro Display',sans-serif;color:#000}
+.rp-sum-box small{font:600 10px var(--font);letter-spacing:.06em;text-transform:uppercase;color:#8E8E93}
+
+.rp-self{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.rp-self .rp-big-score{font:800 56px -apple-system,'SF Pro Display',sans-serif;line-height:1}
+.rp-grade{font:700 13px -apple-system,sans-serif;padding:5px 16px;border-radius:99px;display:inline-block}
+.rp-grade.g-green{background:rgba(52,199,89,.15);color:#248A3D}
+.rp-grade.g-blue{background:rgba(0,122,255,.12);color:#0062CC}
+.rp-grade.g-orange{background:rgba(255,149,0,.15);color:#B36200}
+.rp-grade.g-red{background:rgba(255,59,48,.12);color:#C41E18}
+
+.rp-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rp-table{width:100%;border-collapse:collapse;font:500 13px -apple-system,sans-serif;min-width:720px}
+.rp-table th{font:700 10px var(--font);letter-spacing:.06em;text-transform:uppercase;color:#8E8E93;text-align:left;padding:8px 10px;border-bottom:1px solid #E5E5EA;white-space:nowrap}
+.rp-table td{padding:10px;border-bottom:1px solid #F2F2F7;vertical-align:middle;white-space:nowrap}
+.rp-table tr:last-child td{border-bottom:0}
+.rp-table .rp-name b{display:block;color:#000}
+.rp-table .rp-name small{color:#8E8E93;font-size:11px}
+.rp-score{font:700 15px -apple-system,'SF Mono',monospace}
+.rp-detail-btn{border:0;background:#007AFF;color:#fff;font:600 12px -apple-system,sans-serif;padding:6px 12px;border-radius:99px;cursor:pointer}
+
+.rp-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:.25s}
+.rp-modal-backdrop.open{opacity:1;visibility:visible}
+.rp-modal-card{width:100%;max-width:560px;max-height:88vh;background:#fff;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;transform:scale(.92);transition:.25s cubic-bezier(.32,.72,0,1)}
+.rp-modal-backdrop.open .rp-modal-card{transform:scale(1)}
+.rp-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #F2F2F7}
+.rp-modal-head h3{margin:0;font:700 16px -apple-system,sans-serif;color:#000}
+.rp-modal-close{border:0;background:#F2F2F7;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#3C3C43}
+.rp-modal-close svg{width:15px;height:15px}
+.rp-modal-body{padding:14px 16px;overflow-y:auto;flex:1}
+.rp-modal-foot{padding:12px 16px;border-top:1px solid #F2F2F7;display:flex;justify-content:flex-end}
+
+.rp-id-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;background:#F2F2F7;border-radius:12px;padding:12px;margin-bottom:12px;font:500 12.5px -apple-system,sans-serif}
+.rp-id-grid b{color:#000}
+.rp-id-grid small{color:#8E8E93;display:block;font:600 9.5px var(--font);letter-spacing:.06em;text-transform:uppercase}
+.rp-comp-table{width:100%;border-collapse:collapse;font:500 12.5px -apple-system,sans-serif;margin-bottom:12px}
+.rp-comp-table th{text-align:left;font:700 10px var(--font);letter-spacing:.06em;text-transform:uppercase;color:#8E8E93;padding:6px 8px;border-bottom:1px solid #E5E5EA}
+.rp-comp-table td{padding:8px;border-bottom:1px solid #F2F2F7}
+.rp-comp-table .num{font:700 13px -apple-system,'SF Mono',monospace;text-align:right}
+.rp-comp-table tr.rp-total td{border-bottom:0;font-weight:700;font-size:13.5px}
+.rp-notes{background:#FFF8E6;border-radius:10px;padding:10px 12px;font:500 12px/1.6 -apple-system,sans-serif;color:#7A5800;margin-bottom:12px}
+.rp-notes b{display:block;margin-bottom:4px}
+.rp-absen-list{font:500 12px -apple-system,'SF Mono',monospace;color:#C41E18;word-spacing:6px}
+
+/* AREA CETAK */
+#rpPrintArea{display:none}
+@media print{
+  body *{visibility:hidden}
+  #rpPrintArea,#rpPrintArea *{visibility:visible}
+  #rpPrintArea{display:block!important;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;font-family:Georgia,'Times New Roman',serif;padding:24px 32px}
+  .pr-kop{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:18px}
+  .pr-kop h1{font-size:16pt;margin:0;letter-spacing:.5px}
+  .pr-kop h2{font-size:11pt;margin:2px 0;font-weight:normal}
+  .pr-title{text-align:center;font-size:14pt;font-weight:bold;letter-spacing:1px;margin:14px 0 2px;text-decoration:underline}
+  .pr-sub{text-align:center;font-size:11pt;margin-bottom:16px}
+  .pr-table{width:100%;border-collapse:collapse;font-size:10.5pt;margin-bottom:14px}
+  .pr-table th,.pr-table td{border:1px solid #000;padding:6px 8px;text-align:left;vertical-align:top}
+  .pr-table th{background:#eee;text-align:center}
+  .pr-table .num{text-align:center}
+  .pr-ident td{border:0;padding:2px 6px;font-size:10.5pt}
+  .pr-predikat{font-size:12pt;margin-bottom:24px}
+  .pr-sign{display:flex;justify-content:flex-end;margin-top:36px;font-size:10.5pt;text-align:center}
+  .pr-sign .pr-sign-name{margin-top:56px;font-weight:bold;text-decoration:underline}
+}
+</style>
