@@ -189,4 +189,48 @@
   .pr-sign{display:flex;justify-content:flex-end;margin-top:36px;font-size:10.5pt;text-align:center}
   .pr-sign .pr-sign-name{margin-top:56px;font-weight:bold;text-decoration:underline}
 }
+  /* ============================================================
+   ★ RESPONSIVE FIX + KALENDER KEHADIRAN
+   ============================================================ */
+.grid-rp,.card-ios{min-width:0;max-width:100%}
+.rp-ctrl select{min-width:0}
+.rp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rp-comp-table{min-width:460px}
+.rp-comp-table td:last-child{white-space:normal}
+
+/* Kalender */
+.rp-cal-sec{margin:2px 0 12px}
+.rp-cal-head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.rp-cal-title-k{font:800 10px var(--font);letter-spacing:.14em;text-transform:uppercase;color:#8E8E93}
+.rp-legend{display:flex;flex-wrap:wrap;gap:5px 10px}
+.rp-legend span{display:inline-flex;align-items:center;gap:4px;font:600 10.5px -apple-system,sans-serif;color:#3C3C43}
+.rp-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.rp-cal-months{display:flex;flex-wrap:wrap;gap:12px}
+.rp-cal-month{flex:1 1 100%;max-width:280px;min-width:0}
+@media(min-width:640px){.rp-cal-month{flex:0 1 calc(50% - 6px)}}
+.rp-cal-title{font:700 11.5px -apple-system,sans-serif;color:#000;margin-bottom:6px}
+.rp-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.rp-cal-dow{font:700 9px -apple-system,sans-serif;color:#8E8E93;text-align:center;padding-bottom:2px}
+.rp-cal-cell{aspect-ratio:1/1;border-radius:7px;display:grid;place-items:center;font:700 10px -apple-system,sans-serif;background:#F2F2F7;color:#8E8E93}
+.rp-cal-cell.c-tepat{background:#34C759;color:#fff}
+.rp-cal-cell.c-toleransi{background:#FFCC00;color:#7A5800}
+.rp-cal-cell.c-telat{background:#FF3B30;color:#fff}
+.rp-cal-cell.c-izin{background:#FF9500;color:#fff}
+.rp-cal-cell.c-sakit{background:#FF6482;color:#fff}
+.rp-cal-cell.c-dinas{background:#007AFF;color:#fff}
+.rp-cal-cell.c-kg{background:#AF52DE;color:#fff}
+.rp-cal-cell.c-absen{background:#fff;border:1.5px solid #FF3B30;color:#FF3B30}
+.rp-cal-cell.c-off{background:#F7F7F9;color:#D1D1D6}
+.rp-cal-cell.c-future{background:#fff;border:1px dashed #D8D8DC;color:#C7C7CC}
+
+@media(max-width:560px){
+  .rp-tabs button{font-size:11.5px;padding:7px 4px}
+  .rp-meta{font-size:11px;padding:0 4px}
+  .rp-id-grid{gap:6px 10px}
+  .rp-sum-box b{font-size:18px}
+  .rp-modal-card{max-height:92vh}
+}
+@media(max-width:380px){
+  .rp-id-grid{grid-template-columns:1fr}
+}
 </style>
