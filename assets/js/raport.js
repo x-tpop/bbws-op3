@@ -1,10 +1,19 @@
 // ============================================================
-// RAPORT.JS — Raport Kinerja PPA & Pekarya
+// RAPORT.JS — Raport Kinerja PPA & Pekarya (v2 PATCHED)
 // Sumber: presensi, laporan (rutin), Kerja Gabungan/QR
 //         (presensi.status='Kerja Gabungan'), monitoring (tugas staf)
-// Periode: bulanan / triwulan / tahunan + cetak format instansi
+// Periode: bulanan / triwulan / tahunan + kalender kehadiran
+//          + cetak format instansi
 // File: assets/js/raport.js
 // ============================================================
+
+// ★ PATCH: fallback localDateStr — bila supabase.js belum versi patch,
+// fungsi ini tetap tersedia (mencegah "localDateStr is not defined")
+if (typeof localDateStr !== 'function') {
+  window.localDateStr = function (d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+}
 
 // ---------- KONFIGURASI PENILAIAN (ubah di sini bila kebijakan berubah) ----------
 const RP_BOBOT = {
@@ -153,6 +162,9 @@ function rpTargets() {
 
 // ============================================================
 // SKOR PER PEGAWAI
+// ★ PATCH: return ganda dihapus — kini SATU return yang memuat
+// peta kalender (cal). Versi sebelumnya punya return patch +
+// return lama menumpuk (dead code) dan fungsi kalender tidak ada.
 // ============================================================
 function rpScore(target, presRows, lapCount, monRows) {
   const N = raportState.days.length;
@@ -187,6 +199,10 @@ function rpScore(target, presRows, lapCount, monRows) {
 
   const total = sKehadiran + sKetepatan + sLaporan + sKG + sMon;
 
+  // ★ peta tanggal → baris presensi (untuk kalender kehadiran)
+  const cal = {};
+  presRows.forEach(r => { if (r && r.tanggal) cal[r.tanggal] = r; });
+
   return {
     target,
     N, W,
@@ -195,6 +211,7 @@ function rpScore(target, presRows, lapCount, monRows) {
     lapCount, monCount: monRows.length, monPoin: monRows.reduce((a, m) => a + (m.poin || 0), 0),
     sKehadiran, sKetepatan, sLaporan, sKG, sMon, total,
     grade: rpGrade(total),
+    cal,
     absenDates: raportState.days.filter(d =>
       !presRows.some(r => r.tanggal === d && (r.jam_masuk || ['Izin', 'Sakit'].includes(r.status)))).slice(0, 10),
     monNotes: monRows.slice(0, 5).map(m => m.catatan)
@@ -257,7 +274,6 @@ async function computeRaport() {
 // RENDER
 // ============================================================
 function rpRenderAll() {
-  const s = getSession();
   const meta = rpEl('rpMeta');
   if (meta) meta.textContent = `Periode: ${raportState.label} · Hari kerja efektif: ${raportState.days.length} · Minggu efektif: ${raportState.weekKeys.length}`;
 
@@ -285,11 +301,13 @@ function rpRenderSummary() {
   const avg = h.reduce((a, x) => a + x.total, 0) / h.length;
   const avgHadir = h.reduce((a, x) => a + (x.N ? (x.hadir + x.izin + x.sakit) / x.N : 0), 0) / h.length * 100;
   const best = h[0];
+  // ★ PATCH: guard nama kosong/null
+  const bestFirst = (best.target.nama || '—').split(' ')[0];
   box.innerHTML = `
     <div class="rp-sum-box"><b>${h.length}</b><small>Pegawai Dinilai</small></div>
     <div class="rp-sum-box"><b>${rpFmt(avg)}</b><small>Rata-rata Skor</small></div>
     <div class="rp-sum-box"><b>${Math.round(avgHadir)}%</b><small>Rata Kehadiran</small></div>
-    <div class="rp-sum-box"><b>${rpFmt(best.total)}</b><small>Terbaik: ${rpEsc(best.target.nama.split(' ')[0])}</small></div>`;
+    <div class="rp-sum-box"><b>${rpFmt(best.total)}</b><small>Terbaik: ${rpEsc(bestFirst)}</small></div>`;
 }
 
 function rpRenderList() {
@@ -315,7 +333,98 @@ function rpRenderList() {
     </tr>`).join('');
 }
 
-// Kartu detail — dipakai modal (manager) & tampilan pegawai
+// ============================================================
+// ★ PATCH BARU: KALENDER KEHADIRAN
+// (sebelumnya cal dikirim dari rpScore tapi tidak pernah dirender)
+// ============================================================
+function rpMonthsInRange() {
+  const s = new Date(raportState.start + 'T00:00:00');
+  const e = new Date(raportState.end + 'T00:00:00');
+  const out = [];
+  const d = new Date(s.getFullYear(), s.getMonth(), 1);
+  while (d <= e) { out.push({ y: d.getFullYear(), m: d.getMonth() }); d.setMonth(d.getMonth() + 1); }
+  return out;
+}
+
+function rpMonthCalHTML(x, y, m) {
+  const today = localDateStr();
+  const dim = new Date(y, m + 1, 0).getDate();
+  const off = (new Date(y, m, 1).getDay() + 6) % 7; // Senin=0
+  const hkSet = new Set((raportState.pengaturan.hari_kerja || '1,2,3,4,5').split(','));
+  const DOW = ['Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb', 'Mg'];
+
+  let cells = DOW.map(d => `<div class="rp-cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < off; i++) cells += '<div></div>';
+
+  for (let day = 1; day <= dim; day++) {
+    const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dowN = new Date(y, m, day).getDay() || 7;
+    const isWork = hkSet.has(String(dowN));
+    const row = x.cal[ds];
+
+    let cls = 'c-off', txt = '·', title = ds + ': bukan hari kerja';
+    if (row) {
+      const st = row.status;
+      if (st === 'Kerja Gabungan')                    { cls = 'c-kg';        txt = 'KG'; title = `${ds}: Kerja Gabungan`; }
+      else if (st === 'Dinas Luar')                   { cls = 'c-dinas';     txt = 'DL'; title = `${ds}: Dinas Luar`; }
+      else if (st === 'Izin')                         { cls = 'c-izin';      txt = 'I';  title = `${ds}: Izin`; }
+      else if (st === 'Sakit')                        { cls = 'c-sakit';     txt = 'S';  title = `${ds}: Sakit`; }
+      else if (row.status_kehadiran === 'terlambat')  { cls = 'c-telat';     txt = 'T';  title = `${ds}: Terlambat (masuk ${row.jam_masuk || '-'})`; }
+      else if (row.status_kehadiran === 'toleransi')  { cls = 'c-toleransi'; txt = '✓';  title = `${ds}: Toleransi (masuk ${row.jam_masuk || '-'})`; }
+      else                                            { cls = 'c-tepat';     txt = '✓';  title = `${ds}: Hadir tepat waktu (masuk ${row.jam_masuk || '-'})`; }
+    } else if (isWork && ds > today) {
+      cls = 'c-future'; txt = ''; title = ds + ': belum berjalan';
+    } else if (isWork) {
+      cls = 'c-absen'; txt = '✕'; title = ds + ': Absen (tanpa presensi)';
+    }
+    cells += `<div class="rp-cal-cell ${cls}" title="${rpEsc(title)}">${txt}</div>`;
+  }
+
+  return `<div class="rp-cal-month">
+    <div class="rp-cal-title">${RP_BULAN_ID[m]} ${y}</div>
+    <div class="rp-cal-grid">${cells}</div>
+  </div>`;
+}
+
+function rpCalendarHTML(x) {
+  // Rekap per jenis status untuk legend
+  const cnt = { tepat: 0, telat: 0, izin: 0, sakit: 0, dinas: 0, kg: 0 };
+  Object.values(x.cal).forEach(r => {
+    const st = r.status;
+    if (st === 'Izin') cnt.izin++;
+    else if (st === 'Sakit') cnt.sakit++;
+    else if (st === 'Dinas Luar') cnt.dinas++;
+    else if (st === 'Kerja Gabungan') cnt.kg++;
+    else if (r.status_kehadiran === 'terlambat') cnt.telat++;
+    else cnt.tepat++;
+  });
+
+  const legend = `<div class="rp-legend">
+    <span><i style="background:#34C759"></i>Hadir ${cnt.tepat}</span>
+    <span><i style="background:#FFCC00"></i>Toleransi</span>
+    <span><i style="background:#FF3B30"></i>Telat ${cnt.telat}</span>
+    <span><i style="background:#FF9500"></i>Izin ${cnt.izin}</span>
+    <span><i style="background:#FF6482"></i>Sakit ${cnt.sakit}</span>
+    <span><i style="background:#007AFF"></i>Dinas ${cnt.dinas}</span>
+    <span><i style="background:#AF52DE"></i>KG ${cnt.kg}</span>
+    <span><i style="background:#fff;border:1.5px solid #FF3B30"></i>Absen ${x.absen}</span>
+  </div>`;
+
+  const blocks = rpMonthsInRange().map(({ y, m }) => rpMonthCalHTML(x, y, m)).join('');
+  return `<div class="rp-cal-sec">
+    <div class="rp-cal-head">
+      <span class="rp-cal-title-k">Kalender Kehadiran</span>
+      ${legend}
+    </div>
+    <div class="rp-cal-months">${blocks}</div>
+  </div>`;
+}
+
+// ============================================================
+// DETAIL (modal manager + tampilan pegawai)
+// ★ PATCH: kalender disisipkan setelah identitas; tabel dibungkus
+// .rp-scroll agar tidak meluber di layar HP
+// ============================================================
 function rpDetailHTML(x) {
   const t = x.target;
   const comp = [
@@ -339,13 +448,16 @@ function rpDetailHTML(x) {
       <div><small>Jabatan</small><b>${rpEsc(t.jabatan || '-')}</b></div>
       <div><small>DI</small><b>${rpEsc(raportState.diMap[t.id_di] || '-')}</b></div>
     </div>
-    <table class="rp-comp-table">
-      <thead><tr><th>Komponen</th><th style="text-align:right">Maks</th><th style="text-align:right">Perolehan</th><th>Keterangan</th></tr></thead>
-      <tbody>${comp}
-        <tr class="rp-total"><td>JUMLAH</td><td class="num">100</td><td class="num">${rpFmt(x.total)}</td>
-        <td><span class="rp-grade ${x.grade.cls}">${x.grade.predikat}</span></td></tr>
-      </tbody>
-    </table>
+    ${rpCalendarHTML(x)}
+    <div class="rp-scroll">
+      <table class="rp-comp-table">
+        <thead><tr><th>Komponen</th><th style="text-align:right">Maks</th><th style="text-align:right">Perolehan</th><th>Keterangan</th></tr></thead>
+        <tbody>${comp}
+          <tr class="rp-total"><td>JUMLAH</td><td class="num">100</td><td class="num">${rpFmt(x.total)}</td>
+          <td><span class="rp-grade ${x.grade.cls}">${x.grade.predikat}</span></td></tr>
+        </tbody>
+      </table>
+    </div>
     ${x.pulangCepat || x.tidakCheckout ? `<div class="rp-notes" style="background:#F2F2F7;color:#3C3C43"><b>Catatan tambahan:</b>Pulang cepat: ${x.pulangCepat}× · Tidak checkout: ${x.tidakCheckout}×</div>` : ''}
     ${absenHTML}${monHTML}`;
 }
