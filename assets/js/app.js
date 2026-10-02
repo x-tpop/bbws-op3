@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Router + Logic Shell (v4 PATCHED — with admin)
+// APP.JS — Router + Logic Shell (v5 — dynamic bnav + raport + role guard)
 // ============================================================
 
 const $ = s => document.querySelector(s);
@@ -30,7 +30,7 @@ const PAGES = {
   presensi:   { k: 'E-Kehadiran',    t: 'Presensi',                 file: 'pages/presensi.html',   init: 'initPresensi',   roles: ['*'] },
   verifikasi: { k: 'Verifikasi',     t: 'Verifikasi Presensi',      file: 'pages/verifikasi.html', init: 'initVerifikasi', roles: ['admin','ppk','staf_pengamat'] },
   monitoring: { k: 'Monitoring',     t: 'Monitoring PPA & Pekarya', file: 'pages/monitoring.html', init: 'initMonitoring', roles: ['admin','ppk','staf_pengamat'] },
-    raport:     { k: 'Raport Kinerja', t: 'Raport PPA & Pekarya',     file: 'pages/raport.html',     init: 'initRaport',     roles: ['*'] },
+  raport:     { k: 'Raport Kinerja', t: 'Raport PPA & Pekarya',     file: 'pages/raport.html',     init: 'initRaport',     roles: ['*'] },
   koordinasi: { k: 'Koordinasi',     t: 'Koordinasi Juru & Krosda', file: 'pages/koordinasi.html', init: 'initKoordinasi', roles: ['admin','ppk','staf_pengamat'] },
   laporan:    { k: 'Laporan',        t: 'Laporan Harian',           file: 'pages/laporan.html',    init: 'initLaporan',    roles: ['*'] },
   biodata:    { k: 'Profil Pegawai', t: 'Biodata',                  file: 'pages/biodata.html',    init: null,             roles: ['*'] },
@@ -38,21 +38,70 @@ const PAGES = {
 };
 
 // ============================================================
-// SEMBUNYIKAN MENU SESUAI ROLE
+// SEMBUNYIKAN MENU SESUAI ROLE (sidebar saja)
+// ★ PATCH: bnav TIDAK lagi dihapus statis — dibangun dinamis
+// oleh buildBnav() sesuai role (lihat blok berikutnya).
 // ============================================================
 Object.entries(PAGES).forEach(([key, page]) => {
   if (page.roles[0] === '*') return;
   if (!page.roles.includes(session.role)) {
-    document.querySelector(`[data-page="${key}"]`)?.remove();
-    document.querySelector(`#bnav [data-page="${key}"]`)?.remove();
+    document.querySelector(`#sidebarNav [data-page="${key}"]`)?.remove();
   } else {
-    // Tampilkan menu yang sesuai (misal admin)
     const navEl = document.querySelector(`#sidebarNav [data-page="${key}"]`);
     if (navEl) navEl.style.display = '';
-    const bnavEl = document.querySelector(`#bnav [data-page="${key}"]`);
-    if (bnavEl) bnavEl.style.display = '';
   }
 });
+
+// ============================================================
+// ★ TAMBAHAN: BOTTOM NAV DINAMIS SESUAI ROLE
+// PPA/Pekarya : Dashboard · Laporan · FAB · Raport · Profil
+// Manajemen   : Dashboard · Monitor · FAB · Verif  · Profil
+// ============================================================
+const BNAV_LAYOUT = {
+  pegawai: [
+    { page: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+    { page: 'laporan',   icon: 'file-text',        label: 'Laporan'   },
+    'FAB',
+    { page: 'raport',    icon: 'award',            label: 'Raport'    },
+    { page: 'biodata',   icon: 'user-round',       label: 'Profil'    }
+  ],
+  manajemen: [
+    { page: 'dashboard',  icon: 'layout-dashboard', label: 'Dashboard' },
+    { page: 'monitoring', icon: 'eye',              label: 'Monitor'   },
+    'FAB',
+    { page: 'verifikasi', icon: 'clipboard-check',  label: 'Verif'     },
+    { page: 'biodata',    icon: 'user-round',       label: 'Profil'    }
+  ]
+};
+
+function buildBnav() {
+  const bnav = document.getElementById('bnav');
+  if (!bnav) return;
+
+  const isManager = ['admin', 'ppk', 'staf_pengamat'].includes(session.role);
+  const layout = isManager ? BNAV_LAYOUT.manajemen : BNAV_LAYOUT.pegawai;
+
+  // Safety: jangan render item yang role-nya tak diizinkan
+  const items = layout.filter(it =>
+    it === 'FAB' ||
+    PAGES[it.page]?.roles[0] === '*' ||
+    PAGES[it.page]?.roles.includes(session.role)
+  );
+
+  bnav.innerHTML = items.map(it => {
+    if (it === 'FAB') {
+      return `<button class="bnav-fab" data-page="presensi" aria-label="Presensi">
+        <i data-lucide="fingerprint"></i>
+      </button>`;
+    }
+    return `<button class="bnav-item" data-page="${it.page}">
+      <span class="bnav-ic"><i data-lucide="${it.icon}"></i></span>
+      <span>${it.label}</span>
+    </button>`;
+  }).join('');
+}
+buildBnav();
+refreshIcons();
 
 // ============================================================
 // STATE
@@ -84,8 +133,16 @@ function cleanupPage() {
 // ROUTER
 // ============================================================
 async function go(pageName, isFromHash = false) {
-  if (!PAGES[pageName]) {
+  // ★ TAMBAHAN: validasi role di router — bukan hanya di menu.
+  // Menutup akses via hash manual (mis. app.html#monitoring oleh pegawai).
+  const pageDef = PAGES[pageName];
+  if (!pageDef) {
     console.warn('Halaman tidak dikenal:', pageName);
+    return;
+  }
+  if (pageDef.roles[0] !== '*' && !pageDef.roles.includes(session.role)) {
+    toast('Anda tidak punya akses ke halaman ini', 'warn');
+    if (pageName !== 'dashboard') return go('dashboard', true);
     return;
   }
 
@@ -103,7 +160,7 @@ async function go(pageName, isFromHash = false) {
 
   try {
     currentPage = pageName;
-    const page = PAGES[pageName];
+    const page = pageDef;
 
     cleanupPage();
 
@@ -190,11 +247,13 @@ document.addEventListener('click', e => {
 });
 
 // ============================================================
-// EVENT: Logout
+// EVENT: Logout (sidebar + topbar mobile)
+// ★ TAMBAHAN: #btnLogoutMobile — sidebar tersembunyi di HP,
+// tanpa ini pegawai tidak punya cara keluar di mode mobile.
 // ============================================================
- $('#btnLogout')?.addEventListener('click', () => {
+ $$('#btnLogout, #btnLogoutMobile').forEach(b => b?.addEventListener('click', () => {
   if (confirm('Keluar dari Portal Pegawai?')) logout();
-});
+}));
 
 // ============================================================
 // JAM
