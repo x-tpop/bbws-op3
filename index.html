@@ -2,8 +2,13 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ★ PATCH: viewport-fit=cover (konsisten dgn app.html) + theme-color -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A8A">
 <title>Login — Portal Pegawai BBWS Brantas</title>
+<!-- ★ TAMBAHAN: favicon logo resmi -->
+<link rel="icon" type="image/png" href="assets/img/logo-symbol.png">
+<link rel="apple-touch-icon" href="assets/img/logo-symbol.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -24,7 +29,8 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
   box-shadow:var(--shadow-lg);border-top:6px solid var(--yellow);animation:cardIn .6s cubic-bezier(.2,1.2,.3,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(.95)}}
 .login-brand{text-align:center;margin-bottom:32px}
-.login-brand svg{width:64px;height:64px;margin-bottom:16px}
+/* ★ PATCH: selector svg → img (logo resmi) */
+.login-brand img{max-width:230px;height:auto;margin-bottom:16px}
 .login-brand h1{font:800 22px var(--font);color:var(--ink);margin-bottom:6px}
 .login-brand p{font:600 12px var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .field{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
@@ -32,6 +38,15 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
 .field input{border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;font:500 15px var(--font);background:#fff;transition:.15s;width:100%}
 .field input:focus{border-color:var(--blue);outline:3px solid rgba(37,99,235,.15)}
 .field .hint{font:500 11.5px var(--font);color:var(--muted)}
+/* ★ TAMBAHAN: wrapper password + toggle */
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:48px}
+.pw-toggle{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border:0;border-radius:10px;background:transparent;
+  color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:.15s}
+.pw-toggle:hover{background:var(--line-soft);color:var(--ink-2)}
+.pw-toggle svg{width:19px;height:19px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--font);padding:15px 24px;border-radius:99px;border:1.5px solid var(--ink);background:var(--ink);color:#FFF;transition:.2s;width:100%;cursor:pointer}
 .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(30,58,138,.6);background:var(--blue-dark);border-color:var(--blue-dark)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
@@ -42,8 +57,13 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .login-footer{text-align:center;margin-top:26px;padding-top:22px;border-top:1px dashed var(--line);font:600 11.5px var(--font);color:var(--muted);line-height:1.8}
 .login-footer b{color:var(--ink-2)}
-.hint-box{background:var(--yellow-soft);border-radius:14px;padding:14px 16px;margin-bottom:24px;font:500 12.5px var(--font);color:#92400E;line-height:1.6}
+.hint-box{position:relative;background:var(--yellow-soft);border-radius:14px;padding:14px 16px;margin-bottom:24px;font:500 12.5px var(--font);color:#92400E;line-height:1.6}
 .hint-box b{font-weight:800}
+.hint-box code{background:rgba(146,64,14,.1);padding:1px 6px;border-radius:6px;font-size:11.5px}
+/* ★ TAMBAHAN: tombol tutup hint-box */
+.hint-close{position:absolute;top:6px;right:6px;width:26px;height:26px;border:0;border-radius:50%;
+  background:rgba(146,64,14,.1);color:#92400E;cursor:pointer;display:grid;place-items:center}
+.hint-close svg{width:13px;height:13px}
 @media(max-width:480px){.login-card{padding:32px 24px 28px}}
 </style>
 </head>
@@ -51,16 +71,19 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
 
 <div class="login-card">
   <div class="login-brand">
-    <svg viewBox="0 0 44 44" width="64" height="64" aria-hidden="true">
-      <rect width="44" height="44" rx="13" fill="#1E3A8A"/>
-      <path d="M22 8.5c3.6 4.3 6 7.6 6 10.6a6 6 0 1 1-12 0c0-3 2.4-6.3 6-10.6z" fill="#FBB917"/>
-      <path d="M10 33.5c2.2-2.6 4.4-2.6 6.6 0s4.4 2.6 6.6 0 4.4-2.6 6.6 0 4.4 2.6 6.6 0" stroke="#FBB917" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    </svg>
+    <!-- ★ LOGO RESMI: BBWS Brantas horizontal (logo 2)
+         fallback: bila file belum ada, tampil simbol (logo 3) via onerror -->
+    <img id="loginLogo" src="assets/img/logo-bbws.png" alt="BBWS Brantas — Kementerian PUPR">
     <h1>Portal Pegawai</h1>
     <p>BBWS Brantas — Kementerian PUPR</p>
   </div>
 
-  <div class="hint-box">
+  <!-- ★ PATCH: hint-box bisa ditutup + CATATAN: hapus blok ini
+       di produksi (jangan paparkan format username ke publik) -->
+  <div class="hint-box" id="hintBox">
+    <button type="button" class="hint-close" id="hintClose" aria-label="Tutup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <b>💡 Info Login:</b><br>
     Gunakan <b>NSP/NPA/NPK</b> atau username yang diberikan admin.<br>
     Contoh: <code>NSP.05.84.15.13.027</code>
@@ -74,12 +97,20 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
   <form id="loginForm" novalidate>
     <div class="field">
       <label for="username">Username</label>
-      <input type="text" id="username" placeholder="NSP/NPA/NPK atau username" required autocomplete="username" autofocus>
+      <input type="text" id="username" placeholder="NSP/NPA/NPK atau username" required autocomplete="username">
     </div>
 
     <div class="field">
       <label for="password">Password</label>
-      <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password">
+      <!-- ★ TAMBAHAN: toggle lihat password -->
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="Masukkan password" required autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="pwToggle" aria-label="Tampilkan password">
+          <svg id="pwEye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <button type="submit" class="btn" id="btnLogin">
@@ -90,7 +121,7 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
   <div class="login-footer">
     <b>Balai Besar Wilayah Sungai Brantas</b><br>
     Direktorat Jenderal Sumber Daya Air<br>
-    © 2026 — Versi 1.0.0
+    © <span id="yearNow">2026</span> — Versi 1.0.0
   </div>
 </div>
 
@@ -103,25 +134,70 @@ body{font:500 15px/1.55 var(--font);background:linear-gradient(135deg,#1E3A8A 0%
 // Redirect jika sudah login
 if (getSession()) window.location.href = 'app.html';
 
+// ★ TAMBAHAN: tahun footer otomatis
+document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+// ★ TAMBAHAN: fallback logo — bila logo-bbws.png belum tersedia,
+// pakai simbol (logo 3); bila itu pun gagal, sembunyikan img
+const loginLogo = document.getElementById('loginLogo');
+loginLogo.addEventListener('error', () => {
+  if (!loginLogo.dataset.fb) {
+    loginLogo.dataset.fb = '1';
+    loginLogo.src = 'assets/img/logo-symbol.png';
+  } else {
+    loginLogo.style.display = 'none';
+  }
+});
+
+// ★ TAMBAHAN: tutup hint-box
+document.getElementById('hintClose')?.addEventListener('click', () => {
+  document.getElementById('hintBox').style.display = 'none';
+});
+
+// ★ TAMBAHAN: toggle lihat password
+const pwInput = document.getElementById('password');
+const pwToggle = document.getElementById('pwToggle');
+const pwEye = document.getElementById('pwEye');
+pwToggle.addEventListener('click', () => {
+  const show = pwInput.type === 'password';
+  pwInput.type = show ? 'text' : 'password';
+  pwToggle.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+  pwEye.innerHTML = show
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+});
+
+// ★ PATCH: autofocus hanya di desktop — di HP autofocus memunculkan
+// keyboard yang menutupi logo sejak halaman dibuka
+if (window.matchMedia('(min-width: 481px)').matches) {
+  document.getElementById('username').focus();
+}
+
 // Handle form login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
   const btn = document.getElementById('btnLogin');
   const btnText = document.getElementById('btnText');
   const errorMsg = document.getElementById('errorMsg');
   const errorText = document.getElementById('errorText');
-  
+
+  if (!username || !password) {
+    errorText.textContent = 'Username dan password wajib diisi';
+    errorMsg.classList.add('show');
+    return;
+  }
+
   // Reset
   errorMsg.classList.remove('show');
   btn.disabled = true;
   btnText.innerHTML = '<span class="spinner"></span> Memproses...';
-  
+
   // Login
   const result = await login(username, password);
-  
+
   if (result.success) {
     btnText.textContent = 'Berhasil! Mengalihkan...';
     setTimeout(() => window.location.href = 'app.html', 500);
