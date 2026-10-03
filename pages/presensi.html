@@ -112,9 +112,6 @@
       <div class="pres-note pres-note-ios" id="presNote">Memuat...</div>
     </div>
 
-    <!-- ★ PATCH: Card 3 diperbaiki — menghilangkan location-card duplikat,
-         ID duplikat (lcIcon/geoStatus/geoSub), dan </div> ekstra yang
-         mendorong Card 4 keluar dari .grid-pres -->
     <!-- Card 3: Peta + Geofence -->
     <div class="card card-ios card-map">
       <div class="card-head">
@@ -186,10 +183,9 @@
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
   <!-- WATERMARK FLOATING CARD -->
-    <!-- WATERMARK FLOATING CARD -->
   <div class="ios-wm-card" id="iosWmCard">
     <div class="ios-wm-brand">
-      <!-- ★ PATCH: logo resmi (logo 3, kotak) + fallback SVG bila file gagal -->
+      <!-- ★ LOGO RESMI (logo 3, kotak) + fallback SVG bila file gagal -->
       <div class="pupr-logo-circle" id="puprLogoCircle">
         <img src="assets/img/logo-symbol.png" alt=""
              onerror="this.classList.add('hide');this.parentElement.classList.add('no-img')">
@@ -588,8 +584,8 @@
 
 .segmented.locked {
   opacity: 0.65;
-  /* ★ PATCH: pointer-events:none dihapus — klik diteruskan ke guard JS
-     agar toast "Status terkunci" bisa tampil (lihat catatan di bawah) */
+  /* pointer-events:none sengaja dihapus — klik diteruskan ke guard JS
+     agar toast "Status terkunci" bisa tampil */
   position: relative;
 }
 .segmented.locked::after {
@@ -683,7 +679,7 @@
 }
 
 .leaflet-control-zoom {
-  display: none !important; /* Sembunyikan tombol zoom, biar bersih */
+  display: none !important;
 }
 
 /* Marker user (titik biru) */
@@ -829,7 +825,7 @@
   pointer-events: none;
 }
 .ios-wm-brand{display:flex;align-items:center;gap:8px;flex:none}
-/* ★ PATCH: container rounded-rect (logo 3 kotak — jangan dipaksa
+/* ★ LOGO RESMI: container rounded-rect (logo 3 kotak — jangan dipaksa
    lingkaran, sudutnya terpotong) + fallback SVG */
 .pupr-logo-circle{
   width:36px;height:36px;border-radius:10px;
