@@ -5,7 +5,11 @@
 <!-- ★ PATCH: viewport-fit=cover — agar env(safe-area-inset-*) di UI
      kamera berfungsi benar di iOS standalone/PWA -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A8A">
 <title>Portal Pegawai — BBWS Brantas</title>
+<!-- ★ TAMBAHAN: favicon logo resmi -->
+<link rel="icon" type="image/png" href="assets/img/logo-symbol.png">
+<link rel="apple-touch-icon" href="assets/img/logo-symbol.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
@@ -33,7 +37,11 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="brand">
-    <svg viewBox="0 0 44 44" width="40" height="40">
+    <!-- ★ LOGO RESMI: simbol PUPR (logo 3) — fallback SVG bila file gagal -->
+    <img src="assets/img/logo-symbol.png" alt="Logo PUPR" width="40" height="40"
+         style="border-radius:10px;object-fit:cover"
+         onerror="this.style.display='none';document.getElementById('brandSvgSide').style.display=''">
+    <svg id="brandSvgSide" viewBox="0 0 44 44" width="40" height="40" style="display:none">
       <rect width="44" height="44" rx="13" fill="#1E3A8A"/>
       <path d="M22 8.5c3.6 4.3 6 7.6 6 10.6a6 6 0 1 1-12 0c0-3 2.4-6.3 6-10.6z" fill="#FBB917"/>
       <path d="M10 33.5c2.2-2.6 4.4-2.6 6.6 0s4.4 2.6 6.6 0 4.4-2.6 6.6 0 4.4 2.6 6.6 0" stroke="#FBB917" stroke-width="2.4" fill="none" stroke-linecap="round"/>
@@ -67,7 +75,11 @@
   <header class="topbar">
     <div class="tb-in">
       <div class="tb-brand-m">
-        <svg viewBox="0 0 44 44" width="34" height="34">
+        <!-- ★ LOGO RESMI: simbol PUPR (logo 3) — fallback SVG bila file gagal -->
+        <img src="assets/img/logo-symbol.png" alt="Logo PUPR" width="34" height="34"
+             style="border-radius:9px;object-fit:cover"
+             onerror="this.style.display='none';document.getElementById('brandSvgTop').style.display=''">
+        <svg id="brandSvgTop" viewBox="0 0 44 44" width="34" height="34" style="display:none">
           <rect width="44" height="44" rx="12" fill="#1E3A8A"/>
           <path d="M22 8.5c3.6 4.3 6 7.6 6 10.6a6 6 0 1 1-12 0c0-3 2.4-6.3 6-10.6z" fill="#FBB917"/>
         </svg>
