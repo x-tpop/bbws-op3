@@ -829,11 +829,20 @@
   pointer-events: none;
 }
 .ios-wm-brand{display:flex;align-items:center;gap:8px;flex:none}
+/* ★ PATCH: container rounded-rect (logo 3 kotak — jangan dipaksa
+   lingkaran, sudutnya terpotong) + fallback SVG */
 .pupr-logo-circle{
-  width:36px;height:36px;border-radius:50%;
+  width:36px;height:36px;border-radius:10px;
   background:#FFFFFF;padding:2px;display:grid;place-items:center;
   box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  overflow:hidden;
 }
+.pupr-logo-circle img{
+  width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;
+}
+.pupr-logo-circle img.hide{display:none}
+.pupr-logo-circle .pupr-fallback{display:none}
+.pupr-logo-circle.no-img .pupr-fallback{display:block;width:100%;height:100%}
 .pupr-svg{width:100%;height:100%}
 .brand-text{display:flex;flex-direction:column}
 .brand-title{font-size:11px;font-weight:800;letter-spacing:.4px;color:#FDB813}
