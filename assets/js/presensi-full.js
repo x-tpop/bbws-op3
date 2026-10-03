@@ -1,7 +1,9 @@
 // ============================================================
-// PRESENSI-FULL.JS — Logic halaman presensi (v17 PATCHED)
-// Fitur: Server time, Geofence, Jam Kerja, Poin, Watermark,
-//        Timeline Dinamis, Kunci Segmented, Leaflet Map,
+// PRESENSI-FULL.JS — Logic halaman presensi (v18)
+// Fitur: Server time, Geofence, Kompensasi waktu kerja (telat →
+//        pulang wajib +X mnt), Hero + Minibar (gaya WhatsApp),
+//        Pengajuan (Sakit/Izin/Dinas/Lupa Absen via pengajuan.js),
+//        Timeline dinamis, Kunci segmented, Leaflet Map,
 //        Guard presensi selesai, Checkout berfilter tanggal
 // File: assets/js/presensi-full.js
 // ============================================================
@@ -35,7 +37,7 @@ const presensiState = {
 };
 
 // ============================================================
-// TAHAP 1: SERVER TIME
+// SERVER TIME
 // ============================================================
 async function syncServerTime() {
   const badge = document.getElementById('serverBadge');
@@ -76,7 +78,31 @@ function getServerNow() {
 }
 
 // ============================================================
+// HELPER: jam pulang wajib (dengan kompensasi telat)
+// ★ BARU v18: dipakai bersama oleh timeline, status & render
+// ============================================================
+function getPulangWajibMenit() {
+  const p = presensiState.pengaturan;
+  const [ph, pm] = p.jam_pulang.split(':').map(Number);
+  let menitPulang = ph * 60 + pm;
+
+  if (presensiState.masuk) {
+    const [mh, mm] = p.jam_masuk.split(':').map(Number);
+    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
+    const telat = Math.max(0, menitCheckin - (mh * 60 + mm));
+    menitPulang += telat;
+  }
+  return menitPulang;
+}
+
+function fmtMenit(m) {
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+// ============================================================
 // UPDATE TIMELINE PROGRESS BAR DINAMIS
+// ★ PATCH v18: ujung timeline mengikuti jam pulang WAJIB
+// (kompensasi telat) — masuk 08:10 → track memanjang ke 16:40
 // ============================================================
 function updateTimelineProgress() {
   const fill = document.getElementById('timelineFill');
@@ -87,9 +113,8 @@ function updateTimelineProgress() {
   const menitSekarang = now.getHours() * 60 + now.getMinutes();
 
   const [mh, mm] = p.jam_masuk.split(':').map(Number);
-  const [ph, pm] = p.jam_pulang.split(':').map(Number);
   const menitMasuk = mh * 60 + mm;
-  const menitPulang = ph * 60 + pm;
+  const menitPulang = getPulangWajibMenit(); // ★ sudah termasuk kompensasi
 
   let persen = 0;
 
@@ -97,7 +122,7 @@ function updateTimelineProgress() {
     const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
     const totalDurasi = menitPulang - menitCheckin;
     const elapsed = menitSekarang - menitCheckin;
-    persen = Math.min(100, Math.max(0, (elapsed / totalDurasi) * 100));
+    persen = totalDurasi > 0 ? Math.min(100, Math.max(0, (elapsed / totalDurasi) * 100)) : 100;
   } else {
     if (menitSekarang < menitMasuk) persen = 0;
     else if (menitSekarang > menitPulang) persen = 100;
@@ -152,6 +177,9 @@ async function loadAppSettings() {
 
 // ============================================================
 // CEK STATUS PRESENSI
+// ★ PATCH v18: untuk checkout, baseline = jam pulang WAJIB
+// (jam_pulang + telat check-in). Hadir 08:10 → checkout 16:40
+// dihitung TEPAT WAKTU; 16:35 = pulang cepat 5 mnt.
 // ============================================================
 function getPresensiStatus(jamStr, tipe = 'masuk') {
   const p = presensiState.pengaturan;
@@ -173,11 +201,16 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
       return { status: 'terlambat', label: `Terlambat ${telat}m`, poin: p.poin_terlambat, warna: 'merah' };
     }
   } else {
-    const [jh, jm] = p.jam_pulang.split(':').map(Number);
-    const batasPulang = jh * 60 + jm;
+    const batasPulang = getPulangWajibMenit(); // ★ termasuk kompensasi
+    const telat = batasPulang - (parseInt(p.jam_pulang) * 60);
 
     if (menitSekarang >= batasPulang) {
-      return { status: 'tepat_waktu', label: 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
+      return {
+        status: 'tepat_waktu',
+        label: telat > 0 ? `Tepat Waktu (kompensasi +${telat}m)` : 'Tepat Waktu',
+        poin: p.poin_tepat_waktu,
+        warna: 'hijau'
+      };
     } else {
       const cepat = batasPulang - menitSekarang;
       return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`, poin: p.poin_pulang_cepat, warna: 'oranye' };
@@ -187,19 +220,35 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
 
 // ============================================================
 // CEK BOLEH CHECKOUT
+// ★ PATCH v18 (kompensasi waktu kerja):
+// - Tanpa telat  : boleh checkout dari (jam_pulang - batas_checkout_awal)
+// - Dengan telat : boleh checkout dari jam PULANG WAJIB
+//                  (jam_pulang + telat) — hadir 08:10 → pulang 16:40
+// Berlaku untuk presensi normal & Kerja Gabungan (QR).
 // ============================================================
 function isCheckoutAllowed() {
   const p = presensiState.pengaturan;
-  const [jh, jm] = p.jam_pulang.split(':').map(Number);
-  const menitPulang = jh * 60 + jm;
-  const menitBolehCheckout = menitPulang - p.batas_checkout_awal;
+  const [jh, jm] = p.jam_masuk.split(':').map(Number);
+  const menitMasukStd = jh * 60 + jm;
+  const menitPulang = getPulangWajibMenit();
+
+  let telat = 0;
+  if (presensiState.masuk) {
+    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
+    telat = Math.max(0, menitCheckin - menitMasukStd);
+  }
+
+  // Telat → batas = pulang wajib; tepat waktu → batas = pulang - buffer
+  const batas = telat > 0 ? menitPulang : (menitPulang - p.batas_checkout_awal);
 
   const now = getServerNow();
   const menitSekarang = now.getHours() * 60 + now.getMinutes();
 
   return {
-    allowed: menitSekarang >= menitBolehCheckout,
-    batasJam: `${String(Math.floor(menitBolehCheckout / 60)).padStart(2,'0')}:${String(menitBolehCheckout % 60).padStart(2,'0')}`,
+    allowed: menitSekarang >= batas,
+    batasJam: fmtMenit(batas),
+    pulangWajibJam: fmtMenit(menitPulang),
+    telat,
     menitSekarang
   };
 }
@@ -269,8 +318,7 @@ async function getNamaLokasi(lat, lng) {
 }
 
 // ============================================================
-// ★ PATCH: INIT PETA LEAFLET (menggantikan kode iframe)
-// Kode iframe lama tidak berefek apa pun pada <div>.
+// INIT PETA LEAFLET
 // ============================================================
 let miniMap = null;
 let userMarker = null;
@@ -301,7 +349,6 @@ function initMiniMap(lat, lng) {
     miniMap.setView([lat, lng], 16);
   }
 
-  // Marker user (titik biru berdenyut)
   if (userMarker) userMarker.remove();
   userMarker = L.marker([lat, lng], {
     icon: L.divIcon({
@@ -311,7 +358,6 @@ function initMiniMap(lat, lng) {
     })
   }).addTo(miniMap);
 
-  // ★ Radius kantor (visual geofence)
   if (officeCircle) officeCircle.remove();
   officeCircle = null;
   if (presensiState.kantorLat && presensiState.kantorLng) {
@@ -324,16 +370,44 @@ function initMiniMap(lat, lng) {
     }).addTo(miniMap);
   }
 
-  // Penting: container baru saja di-inject SPA, paksa Leaflet hitung ulang ukuran
   setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 150);
   setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 600);
+}
+
+// ============================================================
+// ★ BARU v18: HERO + MINIBAR (gaya profil WhatsApp)
+// Foto profil pop-out di cover; saat scroll >200px, minibar
+// sticky muncul dari atas berisi foto kecil + nama + jam live.
+// ============================================================
+function initHeroUI(pegawai, session) {
+  const el = id => document.getElementById(id);
+  const nama = pegawai.nama || session.nama_lengkap || 'Pegawai';
+
+  if (el('heroNama')) el('heroNama').textContent = nama;
+  if (el('miniNama')) el('miniNama').textContent = nama;
+  if (el('heroJabatan')) el('heroJabatan').textContent = pegawai.jabatan || session.role || '-';
+  if (el('heroNpk')) el('heroNpk').textContent = pegawai.nomor_identitas || session.username || '—';
+
+  const av = pegawai.link_foto_2 || pegawai.link_foto_1;
+  if (av) ['heroAvatar', 'miniAvatar'].forEach(id => { const i = el(id); if (i) i.src = av; });
+
+  const bar = el('presMiniBar');
+  if (window.__heroScrollHandler) window.removeEventListener('scroll', window.__heroScrollHandler);
+  if (bar) {
+    window.__heroScrollHandler = () => {
+      if (!document.body.contains(bar)) return; // halaman sudah diganti (SPA)
+      bar.classList.toggle('show', window.scrollY > 200);
+    };
+    window.addEventListener('scroll', window.__heroScrollHandler, { passive: true });
+    window.__heroScrollHandler();
+  }
 }
 
 // ============================================================
 // INIT UTAMA
 // ============================================================
 async function initPresensi() {
-  console.log('=== Init Presensi (Full v17) ===');
+  console.log('=== Init Presensi (Full v18) ===');
 
   if (window.__presensiInit) {
     console.log('skip, sudah init');
@@ -353,6 +427,7 @@ async function initPresensi() {
 
     // ============================================================
     // JAM LIVE + TIMELINE PROGRESS
+    // ★ PATCH v18: jam live juga di minibar
     // ============================================================
     function tickPres() {
       const d = getServerNow();
@@ -360,6 +435,7 @@ async function initPresensi() {
       const hm = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
       if (el('presClock')) el('presClock').textContent = hms;
       if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      if (el('miniClock')) el('miniClock').textContent = hm;          // ★ BARU
       if (el('camTime')) el('camTime').textContent = hms;
       if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
       if (el('fsReviewTime')) el('fsReviewTime').textContent = hms + ' WIB';
@@ -372,7 +448,9 @@ async function initPresensi() {
 
     // ============================================================
     // CEK PRESENSI HARI INI
-    // ★ PATCH: localDateStr() menggantikan toISOString() (bug UTC)
+    // ★ PATCH v18: status dari DB dipaksa ke domain segmented baru
+    // (Hadir / Kerja Gabungan) — Sakit/Izin/Dinas kini lewat
+    // Pengajuan, bukan presensi langsung.
     // ============================================================
     const today = localDateStr(getServerNow());
     try {
@@ -383,40 +461,33 @@ async function initPresensi() {
       if (data) {
         presensiState.masuk = data.jam_masuk ? new Date(today + 'T' + data.jam_masuk) : null;
         presensiState.keluar = data.jam_keluar ? new Date(today + 'T' + data.jam_keluar) : null;
-        if (data.status) presensiState.status = data.status;
+        if (data.status) {
+          presensiState.status = ['Hadir', 'Kerja Gabungan'].includes(data.status)
+            ? data.status : 'Hadir';
+        }
       }
     } catch (e) { console.error(e); }
 
     renderPresensi();
 
     // ============================================================
-    // SEGMENTED CONTROL
+    // SEGMENTED CONTROL — hanya Hadir & Kerja Gabungan (QR)
+    // ★ PATCH v18: Sakit/Izin/Dinas Luar/Lupa Absen pindah ke
+    // modal Pengajuan (pengajuan.js). ketWrap/suratWrap tidak
+    // ada lagi di HTML — fungsi disederhanakan & null-safe.
     // ============================================================
     const segButtons = document.querySelectorAll('.seg-btn');
     const segmented = el('segmentedStatus');
-    const ketWrap = el('ketWrap');
-    const suratWrap = el('suratWrap');
     const camCard = document.querySelector('.card-camera');
 
     function updateFormByStatus(status) {
-      const butuhKet = ['Izin', 'Sakit', 'Dinas Luar'].includes(status);
-      if (ketWrap) ketWrap.style.display = butuhKet ? 'flex' : 'none';
-
-      const butuhSurat = ['Izin', 'Sakit'].includes(status);
-      if (suratWrap) suratWrap.style.display = butuhSurat ? 'flex' : 'none';
-
-      const butuhKamera = !butuhSurat;
-      if (camCard) {
-        camCard.style.opacity = butuhKamera ? '1' : '0.5';
-        camCard.style.pointerEvents = butuhKamera ? 'auto' : 'none';
-      }
-
       const note = el('presNote');
       if (note) {
-        if (butuhSurat) note.textContent = `Silakan upload surat ${status.toLowerCase()}. Foto wajah tidak diperlukan.`;
-        else if (status === 'Dinas Luar') note.textContent = 'Pastikan Anda berada di lokasi dinas. Foto dengan watermark GPS akan dicatat.';
-        else if (status === 'Kerja Gabungan') note.textContent = 'Kerja Gabungan (QR) — Anda bisa presensi dari mana saja.';
-        else note.textContent = 'Silakan lakukan check-in dengan foto berwatermark GPS.';
+        if (status === 'Kerja Gabungan') {
+          note.textContent = 'Kerja Gabungan (QR) — Anda bisa presensi dari mana saja.';
+        } else {
+          note.textContent = 'Silakan lakukan check-in dengan foto berwatermark GPS.';
+        }
       }
 
       updateWatermarkData();
@@ -440,45 +511,13 @@ async function initPresensi() {
       updateFormByStatus(presensiState.status);
     }
 
+    // Kunci segmented saat sudah check-in & belum checkout
+    // ★ PATCH v18: b.disabled dihapus — klik diteruskan ke guard JS
+    // agar toast "Status terkunci" tampil
     if (presensiState.masuk && !presensiState.keluar && segmented) {
       segmented.classList.add('locked');
-      segButtons.forEach(b => { b.disabled = true; });
       console.log('Segmented terkunci:', presensiState.status);
     }
-
-    // ============================================================
-    // UPLOAD SURAT
-    // ============================================================
-    const suratFile = el('suratFile');
-    const fileUpload = el('fileUpload');
-    const fuPreview = el('fuPreview');
-    const fuPreviewImg = el('fuPreviewImg');
-    const fuRemove = el('fuRemove');
-
-    fileUpload?.addEventListener('click', () => suratFile?.click());
-
-    suratFile?.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { toast('Ukuran file max 5 MB', 'warn'); return; }
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const compressed = await compressImage(ev.target.result, 1000, 0.6);
-        presensiState.suratBase64 = compressed;
-        if (fuPreviewImg) fuPreviewImg.src = compressed;
-        if (fuPreview) fuPreview.hidden = false;
-        if (fileUpload) fileUpload.style.display = 'none';
-        toast('Surat berhasil diupload', 'success');
-      };
-      reader.readAsDataURL(file);
-    });
-
-    fuRemove?.addEventListener('click', () => {
-      presensiState.suratBase64 = null;
-      if (suratFile) suratFile.value = '';
-      if (fuPreview) fuPreview.hidden = true;
-      if (fileUpload) fileUpload.style.display = 'flex';
-    });
 
     // ============================================================
     // INIT LOKASI + GEOFENCE + PETA
@@ -494,7 +533,6 @@ async function initPresensi() {
       if (el('geoSub')) el('geoSub').textContent = locWithAcc;
       if (el('btnCapture')) el('btnCapture').disabled = false;
 
-      // ★ PATCH: Leaflet (bukan iframe)
       initMiniMap(loc.lat, loc.lng);
 
       getNamaLokasi(loc.lat, loc.lng).then(nama => {
@@ -545,6 +583,15 @@ async function initPresensi() {
     if (window.__wmInterval) clearInterval(window.__wmInterval);
     window.__wmInterval = setInterval(updateWatermarkData, 1000);
 
+    // ============================================================
+    // ★ BARU v18: HERO + MINIBAR + PENGAJUAN
+    // ============================================================
+    initHeroUI(pegawai, session);
+    if (typeof window.initPengajuan === 'function') {
+      try { await window.initPengajuan(session); }
+      catch (e) { console.warn('initPengajuan gagal:', e); }
+    }
+
     if (window.refreshIcons) window.refreshIcons();
     console.log('=== Presensi loaded ===');
 
@@ -593,6 +640,8 @@ function updateWatermarkData() {
 
 // ============================================================
 // HANDLER TOMBOL "BUKA KAMERA"
+// ★ PATCH v18: pesan checkout menyebut jam pulang wajib
+// saat ada kompensasi telat
 // ============================================================
 function attachCaptureHandler(btn) {
   if (!btn) return;
@@ -608,8 +657,7 @@ function attachCaptureHandler(btn) {
       return;
     }
 
-    // ★ PATCH: Guard presensi selesai — cegah checkout kedua
-    // yang menimpa data (dulu kamera masih bisa dibuka)
+    // Guard presensi selesai — cegah checkout kedua
     if (presensiState.masuk && presensiState.keluar) {
       toast('Presensi hari ini sudah selesai', 'warn');
       return;
@@ -618,7 +666,9 @@ function attachCaptureHandler(btn) {
     if (presensiState.masuk && !presensiState.keluar) {
       const cek = isCheckoutAllowed();
       if (!cek.allowed) {
-        toast(`Checkout baru bisa dari ${cek.batasJam} WIB`, 'warn');
+        toast(cek.telat > 0
+          ? `Pulang wajib ${cek.batasJam} WIB (kompensasi telat +${cek.telat} mnt)`
+          : `Checkout baru bisa dari ${cek.batasJam} WIB`, 'warn');
         return;
       }
     }
@@ -843,8 +893,6 @@ function attachFullscreenHandlers() {
       e.stopPropagation();
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
-      // ★ PATCH: matikan stream kamera saat modal ditutup
-      // (hemat baterai, indikator kamera benar-benar mati)
       if (typeof stopCamera === 'function') stopCamera();
       const v = el('videoFullscreen');
       if (v) v.srcObject = null;
@@ -893,8 +941,6 @@ function attachFullscreenHandlers() {
       el('fsDockLive').hidden = false;
       el('fsDockReview').hidden = true;
 
-      // ★ PATCH: fallback startCamera — dulu bergantung pada
-      // window.cameraStream yang tak pernah di-set (preview hitam)
       const videoFs = el('videoFullscreen');
       if (videoFs) {
         if (window.cameraStream && window.cameraStream.active) {
@@ -918,7 +964,6 @@ function attachFullscreenHandlers() {
 
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
-      // ★ PATCH: tutup stream juga (foto sudah terkunci di review)
       if (typeof stopCamera === 'function') stopCamera();
       const vFs = el('videoFullscreen');
       if (vFs) vFs.srcObject = null;
@@ -1005,19 +1050,17 @@ async function submitPresensi(btn, session, pegawai) {
   const ketEl = el('presKet');
   const ket = ketEl ? ketEl.value.trim() : '';
 
-  // ★ PATCH: Guard presensi selesai (double protection)
+  // Guard presensi selesai (double protection)
   if (presensiState.masuk && presensiState.keluar) {
     toast('Presensi hari ini sudah selesai', 'warn');
     return;
   }
 
-  if (['Izin', 'Sakit'].includes(status)) {
-    if (!presensiState.suratBase64) { toast('Surat pendukung wajib diupload', 'warn'); return; }
-    if (!ket) { toast('Keterangan wajib diisi', 'warn'); return; }
-  } else {
-    if (!presensiState.fotoBase64) { toast('Foto wajib diambil', 'warn'); return; }
-    if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
-  }
+  // ★ PATCH v18: validasi disederhanakan — segmented hanya Hadir/QR.
+  // Sakit/Izin/Dinas/Lupa Absen kini lewat modal Pengajuan
+  // (pengajuan.js), bukan lewat form presensi.
+  if (!presensiState.fotoBase64) { toast('Foto wajib diambil', 'warn'); return; }
+  if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
 
   if (status === 'Hadir' && !presensiState.isInRadius) {
     if (!confirm('Anda berada di luar radius kantor. Tetap lanjutkan presensi Hadir?')) return;
@@ -1034,7 +1077,6 @@ async function submitPresensi(btn, session, pegawai) {
   btn.disabled = true;
 
   try {
-    // ★ PATCH: localDateStr() menggantikan toISOString() (bug UTC)
     const today = localDateStr(now);
     const timestamp = now.toISOString().replace(/[:.]/g, '-');
 
@@ -1047,14 +1089,6 @@ async function submitPresensi(btn, session, pegawai) {
       const uploadResult = await uploadFoto(presensiState.fotoBase64, namaFile, folderPath);
       if (!uploadResult.success) throw new Error(uploadResult.error || 'Upload foto gagal');
       fotoUrl = uploadResult.linkLh3;
-    }
-
-    if (presensiState.suratBase64) {
-      const namaFile = `surat_${session.username}_${today}_${timestamp}.jpg`;
-      const folderPath = `Surat/${today.slice(0, 7)}/DI-${pegawai.id_di || 'X'}`;
-      const uploadResult = await uploadFoto(presensiState.suratBase64, namaFile, folderPath);
-      if (!uploadResult.success) throw new Error(uploadResult.error || 'Upload surat gagal');
-      suratUrl = uploadResult.linkLh3;
     }
 
     const lokasiStr = presensiState.lokasi
@@ -1077,9 +1111,7 @@ async function submitPresensi(btn, session, pegawai) {
       });
       presensiState.masuk = now;
     } else {
-      // ★ PATCH KRITIS: checkout kini berfilter tanggal.
-      // Sebelumnya: UPDATE ... WHERE id_pegawai = X → MENIMPA
-      // SELURUH RIWAYAT presensi pegawai tersebut.
+      // Checkout WAJIB berfilter tanggal — jangan pernah hapus filter ini
       await dbUpdate('presensi', 'id_pegawai', session.id_pegawai, {
         jam_keluar: jam,
         lokasi_keluar: lokasiStr,
@@ -1130,9 +1162,6 @@ function resetPresensiForm() {
   if (el('infoAfter')) { el('infoAfter').hidden = true; el('infoAfter').style.display = 'none'; }
 
   presensiState.suratBase64 = null;
-  if (el('suratFile')) el('suratFile').value = '';
-  if (el('fuPreview')) el('fuPreview').hidden = true;
-  if (el('fileUpload')) el('fileUpload').style.display = 'flex';
 
   if (el('presKet')) el('presKet').value = '';
 }
@@ -1204,6 +1233,8 @@ function hideLoading() {
 
 // ============================================================
 // RENDER PRESENSI
+// ★ PATCH v18: mengisi kartu "Hitung Waktu Kerja"
+// (compStd / compTelat / compWajib) + catatan kompensasi
 // ============================================================
 function renderPresensi() {
   const fmt = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '—';
@@ -1216,15 +1247,22 @@ function renderPresensi() {
   if (el('ptl')) el('ptl').classList.toggle('on', !!presensiState.masuk);
 
   const p = presensiState.pengaturan;
+  const rule = isCheckoutAllowed();
+
+  // ★ Kartu kompensasi
+  if (el('compStd')) el('compStd').textContent = `${p.jam_masuk} – ${p.jam_pulang}`;
+  if (el('compTelat')) el('compTelat').textContent = rule.telat > 0 ? `+${rule.telat} mnt` : '0 mnt';
+  if (el('compWajib')) el('compWajib').textContent =
+    presensiState.masuk ? `${rule.pulangWajibJam} WIB` : '—';
+
   let note;
   if (!presensiState.masuk) {
-    note = `Silakan check-in. Jam masuk ${p.jam_masuk} WIB (toleransi ${p.toleransi_terlambat} menit).`;
+    note = `Silakan check-in. Jam masuk ${p.jam_masuk} WIB (toleransi ${p.toleransi_terlambat} mnt). Terlambat dikompensasi di jam pulang.`;
   } else if (!presensiState.keluar) {
-    const cek = isCheckoutAllowed();
-    if (!cek.allowed) {
-      note = `Sudah check-in pukul ${fmt(presensiState.masuk)}. Checkout baru bisa dari ${cek.batasJam} WIB.`;
+    if (!rule.allowed) {
+      note = `Check-in ${fmt(presensiState.masuk)}. Pulang wajib ${rule.pulangWajibJam} WIB${rule.telat > 0 ? ` (kompensasi +${rule.telat} mnt)` : ''}.`;
     } else {
-      note = `Sudah check-in pukul ${fmt(presensiState.masuk)}. Jangan lupa check-out.`;
+      note = `Check-in ${fmt(presensiState.masuk)}. Jangan lupa check-out.`;
     }
   } else {
     note = `Presensi selesai. Masuk ${fmt(presensiState.masuk)}, keluar ${fmt(presensiState.keluar)}.`;
@@ -1253,7 +1291,5 @@ window.isCheckoutAllowed = isCheckoutAllowed;
 window.isHariKerja = isHariKerja;
 window.updateWatermarkData = updateWatermarkData;
 window.updateTimelineProgress = updateTimelineProgress;
-// ★ PATCH: expose state — camera.js membaca status & lokasiNama
-// via window.presensiState (dulu selalu undefined → watermark
-// foto bukti selalu tertulis "Hadir" meski status Izin/Sakit)
-window.presensiState = presensiState;
+window.initHeroUI = initHeroUI;            // ★ BARU v18
+window.presensiState = presensiState;      // dibaca camera.js untuk watermark
