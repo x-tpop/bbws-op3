@@ -1,42 +1,45 @@
 <section class="page active" data-page="verifikasi">
   <div class="card">
-    <div style="margin-bottom:20px">
-      <span class="kicker">Verifikasi Presensi</span>
-      <h3 style="margin:6px 0 4px">Verifikasi Kehadiran PPA &amp; Pekarya</h3>
-      <p style="color:var(--muted);font-size:13px">Periksa foto + watermark GPS, lalu tentukan Layak atau Tidak Layak.</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div>
+        <span class="kicker">Pusat Verifikasi</span>
+        <h3 style="margin:6px 0 0">Verifikasi Presensi &amp; Pengajuan</h3>
+      </div>
     </div>
 
-    <div class="filter-bar">
+    <!-- TABS -->
+    <div class="vrf-tabs">
+      <button type="button" class="vrf-tab active" id="vrfTabPresensi">
+        <i data-lucide="fingerprint"></i>Presensi Harian
+      </button>
+      <button type="button" class="vrf-tab" id="vrfTabPengajuan">
+        <i data-lucide="inbox"></i>Pengajuan
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ TAB 1: PRESENSI ============ -->
+  <div class="card" id="vrfSecPresensi">
+    <div class="vrf-toolbar">
       <div class="field">
         <label>Tanggal</label>
         <input type="date" id="verifTanggal">
       </div>
       <div class="field">
-        <label>Status</label>
+        <label>Status Verifikasi</label>
         <select id="verifStatus">
           <option value="belum">Belum Diverifikasi</option>
           <option value="layak">Layak</option>
           <option value="tidak_layak">Tidak Layak</option>
-          <option value="semua">Semua</option>
         </select>
       </div>
-      <div class="field">
-        <label>&nbsp;</label>
-        <button class="btn btn-blue" id="verifRefresh"><i data-lucide="refresh-cw"></i>Muat Ulang</button>
-      </div>
+      <button class="btn btn-ghost sm" id="verifRefresh"><i data-lucide="refresh-cw"></i>Refresh</button>
     </div>
 
     <div class="tbl-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Pegawai</th>
-            <th>Jabatan / DI</th>
-            <th>Waktu</th>
-            <th>Foto</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
+          <tr><th>Pegawai</th><th>Jabatan / DI</th><th>Waktu</th><th>Foto</th><th>Status</th><th>Aksi</th></tr>
         </thead>
         <tbody id="verifTbody">
           <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
@@ -44,4 +47,70 @@
       </table>
     </div>
   </div>
+
+  <!-- ============ TAB 2: PENGAJUAN ============ -->
+  <div class="card" id="vrfSecPengajuan" hidden>
+    <div class="vrf-toolbar">
+      <div class="field">
+        <label>Status Pengajuan</label>
+        <select id="pjFilterStatus">
+          <option value="menunggu">Menunggu</option>
+          <option value="disetujui">Disetujui</option>
+          <option value="revisi">Revisi</option>
+          <option value="ditolak">Ditolak</option>
+          <option value="semua">Semua</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost sm" id="pjRefresh"><i data-lucide="refresh-cw"></i>Refresh</button>
+    </div>
+
+    <div class="vrf-note">
+      <b>Catatan:</b> Menyetujui pengajuan akan otomatis memperbarui data presensi —
+      <b>Lupa Absen</b> mengisi jam hadir/pulang; <b>Sakit/Izin/Dinas</b> membuat record
+      untuk seluruh rentang tanggal. Maksimal kuota pegawai: 4×/bulan.
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Pegawai</th><th>Jenis</th><th>Tanggal &amp; Alasan</th><th>Lampiran</th><th>Status</th><th>Aksi</th></tr>
+        </thead>
+        <tbody id="pjTbody">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>
+
+<style>
+/* ★ RESPONSIVE: track grid terkunci (pola fix laporan) */
+.card{min-width:0;max-width:100%}
+.vrf-tabs{display:flex;gap:4px;background:#F1F5F9;border-radius:12px;padding:4px;margin-bottom:16px}
+.vrf-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  border:0;background:transparent;color:var(--ink-2,#334155);
+  font:700 13px -apple-system,'Plus Jakarta Sans',sans-serif;
+  padding:10px 8px;border-radius:9px;cursor:pointer;transition:.2s}
+.vrf-tab svg{width:15px;height:15px}
+.vrf-tab.active{background:var(--ink,#1E3A8A);color:#fff;box-shadow:0 2px 8px rgba(30,58,138,.3)}
+.vrf-toolbar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.vrf-toolbar .field{min-width:160px;flex:1;max-width:220px}
+.vrf-toolbar .btn{margin-bottom:2px}
+.vrf-note{background:#FEF3C7;border-radius:10px;padding:10px 12px;
+  font:500 12px/1.6 -apple-system,sans-serif;color:#92400E;margin-bottom:14px}
+.vrf-note b{font-weight:800}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tbl-wrap table{min-width:760px;width:100%;border-collapse:collapse}
+.tbl-wrap th{font:700 11px var(--font,'Plus Jakarta Sans',sans-serif);letter-spacing:.06em;
+  text-transform:uppercase;color:#64748B;text-align:left;padding:8px 10px;
+  border-bottom:2px solid #E2E8F0;white-space:nowrap}
+.tbl-wrap td{padding:10px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
+.tbl-wrap tr:last-child td{border-bottom:0}
+/* Badge tambahan untuk Ditolak */
+.badge.b-deny{background:#FEE2E2;color:#991B1B}
+.badge.b-deny .dot{background:#DC2626}
+@media (max-width:560px){
+  .vrf-tab{font-size:12px;padding:9px 4px}
+  .vrf-toolbar .field{max-width:100%;min-width:0}
+}
+</style>
