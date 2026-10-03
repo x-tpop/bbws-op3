@@ -186,10 +186,14 @@
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
   <!-- WATERMARK FLOATING CARD -->
+    <!-- WATERMARK FLOATING CARD -->
   <div class="ios-wm-card" id="iosWmCard">
     <div class="ios-wm-brand">
-      <div class="pupr-logo-circle">
-        <svg viewBox="0 0 100 100" class="pupr-svg">
+      <!-- ★ PATCH: logo resmi (logo 3, kotak) + fallback SVG bila file gagal -->
+      <div class="pupr-logo-circle" id="puprLogoCircle">
+        <img src="assets/img/logo-symbol.png" alt=""
+             onerror="this.classList.add('hide');this.parentElement.classList.add('no-img')">
+        <svg viewBox="0 0 100 100" class="pupr-svg pupr-fallback">
           <circle cx="50" cy="50" r="48" fill="#FDB813"/>
           <path d="M50 15 L80 35 L80 65 L50 85 L20 65 L20 35 Z" fill="#003366"/>
           <circle cx="50" cy="50" r="18" fill="#FDB813"/>
