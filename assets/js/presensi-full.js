@@ -251,7 +251,7 @@ const heroState = { list: [], self: null, pool: [], idx: 0, q: '', di: 'ALL', is
 async function initHeroUI(pegawai, session) {
   const el = id => document.getElementById(id);
   const role = session.role || '';
-  heroState.isManager = ['admin', 'staf_pengamat'].includes(role);
+  heroState.isManager = role === 'admin';
   heroState.idx = 0; heroState.q = ''; heroState.di = 'ALL'; heroState.viewingOther = false;
 
   heroState.self = {
