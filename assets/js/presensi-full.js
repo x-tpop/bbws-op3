@@ -388,7 +388,6 @@ function updateActionButtons() {
   const rule = isCheckoutAllowed();
   const fmtT = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '';
 
-  // Semua elemen dideklarasikan DI AWAL (aman urutan referensi)
   const lH = el('hadirLabel'), sH = el('hadirSub');
   const lP = el('pulangLabel'), sP = el('pulangSub');
   const alert = el('lateAlert'), lb = el('lateLabel'), pn = el('latePoin');
@@ -459,28 +458,42 @@ function updateActionButtons() {
     sP.textContent = '✓ ' + fmtT(keluar);
   }
 
-  // ===== ALERT telat/poin (jangan timpa alert "Menunggu") =====
+  // ===== ALERT: deteksi belum presensi / keterlambatan =====
   if (alert && lb && pn) {
     const alertPending = pa && !masuk && pa.status === 'Menunggu';
     if (!alertPending) {
       alert.hidden = false;
+
       if (!isHariKerja()) {
         alert.className = 'px-alert t-warn';
         lb.textContent = 'Bukan hari kerja';
         pn.textContent = 'Presensi dinonaktifkan hari ini';
-      } else if (masuk) {
-        const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
-        const tier = getTelatTier(Math.max(0, (masuk.getHours() * 60 + masuk.getMinutes()) - (jh * 60 + jm)));
-        alert.className = 'px-alert ' + tier.cls;
-        lb.textContent = tier.label;
-        pn.textContent = `Poin: ${tier.poin}`;
-      } else {
-        const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
-        const now = getServerNow();
-        const tier = getTelatTier(Math.max(0, (now.getHours() * 60 + now.getMinutes()) - (jh * 60 + jm)));
-        alert.className = 'px-alert ' + tier.cls;
-        lb.textContent = tier.label;
+        return;
+      }
+
+      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+      // ★ deteksi: menit telat dari jam masuk (jika sudah check-in)
+      // atau dari waktu sekarang (jika belum check-in)
+      const ref = masuk || getServerNow();
+      const menitTelat = Math.max(0, (ref.getHours() * 60 + ref.getMinutes()) - (jh * 60 + jm));
+      const tier = getTelatTier(menitTelat);
+
+      alert.className = 'px-alert ' + tier.cls;
+
+      if (!masuk && menitTelat <= 0) {
+        // ★ belum presensi & belum terlambat
+        lb.textContent = 'Anda belum Presensi hari ini';
         pn.textContent = `Poin: ${tier.poin} jika check-in sekarang`;
+      } else if (menitTelat > 0) {
+        // ★ ganti "Terlambat Berat" → format sederhana
+        lb.textContent = `Anda Terlambat ${menitTelat} menit`;
+        pn.textContent = masuk
+          ? `Poin: ${tier.poin}`
+          : `Poin: ${tier.poin} jika check-in sekarang`;
+      } else {
+        // sudah check-in & tepat waktu
+        lb.textContent = 'Presensi hari ini tercatat ✓';
+        pn.textContent = `Poin: ${tier.poin}`;
       }
     }
   }
