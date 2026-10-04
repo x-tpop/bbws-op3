@@ -143,16 +143,27 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
 
   if (tipe === 'masuk') {
     const [jh, jm] = p.jam_masuk.split(':').map(Number);
-    return getTelatTier(menit - (jh * 60 + jm)); // ★ v20
+    const tier = getTelatTier(menit - (jh * 60 + jm));
+    // ★ FIX A: petakan tier → bentuk {status,label,poin,warna}
+    // agar status_kehadiran TERSIMPAN di DB (raport tidak rusak)
+    return {
+      status: tier.st,        // tepat_waktu | toleransi | terlambat
+      label: tier.label,
+      poin: tier.poin,
+      warna: tier.cls === 't-ok' ? 'hijau' : tier.cls === 't-bad' ? 'merah' : 'kuning'
+    };
   }
 
   const batasPulang = getPulangWajibMenit();
   const telat = batasPulang - (parseInt(p.jam_pulang) * 60);
   if (menit >= batasPulang) {
-    return { status: 'tepat_waktu', label: telat > 0 ? `Tepat Waktu (kompensasi +${telat}m)` : 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
+    return { status: 'tepat_waktu',
+      label: telat > 0 ? `Tepat Waktu (kompensasi +${telat}m)` : 'Tepat Waktu',
+      poin: p.poin_tepat_waktu, warna: 'hijau' };
   }
   const cepat = batasPulang - menit;
-  return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`, poin: p.poin_pulang_cepat, warna: 'oranye' };
+  return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`,
+    poin: p.poin_pulang_cepat, warna: 'oranye' };
 }
 
 function isCheckoutAllowed() {
@@ -270,6 +281,21 @@ async function initHeroUI(pegawai, session) {
       if (role === 'staf_pengamat' && session.pegawai?.id_di)
         list = list.filter(p => p.id_di === session.pegawai.id_di);
       list.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
+            // ★ FIX B: akun sendiri (admin/staf juga pegawai) selalu ada di pool
+      // → tampilan default = diri sendiri, dan bisa presensi sendiri
+      if (session.id_pegawai &&
+          !list.some(x => String(x.id_pegawai) === String(session.id_pegawai))) {
+        list.unshift({
+          id_pegawai: session.id_pegawai,
+          nama: heroState.self.nama,
+          jabatan: heroState.self.jabatan,
+          id_di: heroState.self.id_di,
+          link_foto_1: heroState.self.link_foto_1,
+          link_foto_2: heroState.self.link_foto_2,
+          diNama: diNama[session.pegawai?.id_di] || '—'
+        });
+      }
+      heroState.list = list;
       heroState.list = list;
       const dis = [...new Set(list.map(p => p.id_di).filter(Boolean))];
       if (el('phChips')) el('phChips').innerHTML =
