@@ -477,26 +477,40 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-acc.open .chev{transform:rotate(180deg)}
 .acc-body{padding:2px 12px 12px}
 
-/* ---------- PENGAJUAN PASTEL (4 kartu putih kecil) ---------- */
+/* ---------- PENGAJUAN PASTEL (kartu full pastel) ---------- */
 .px-qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
-.px-q{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;border-radius:14px;
-  background:#fff;padding:12px 4px 10px;cursor:pointer;transition:.15s;
-  font:700 10.5px -apple-system,sans-serif;color:#1C1C1E;
-  box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 10px rgba(0,0,0,.04)}
+.px-q{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;border-radius:16px;
+  padding:12px 4px 10px;cursor:pointer;transition:.15s;
+  font:700 10.5px -apple-system,sans-serif;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 3px 10px rgba(0,0,0,.05)}
 .px-q:active{transform:scale(.95)}
 .px-q i,.px-q svg{width:20px;height:20px}
-.px-q i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px}
-.px-q.q-sakit i {background:#FFE9EC;color:#E5484D}
-.px-q.q-izin i  {background:#FFF3D6;color:#D99000}
-.px-q.q-dinas i {background:#E8F1FF;color:#1E3A8A}
-.px-q.q-lupa i  {background:#F1EBFF;color:#7C4DD8}
-.px-q.qr{width:100%;flex-direction:row;justify-content:center;gap:8px;
-  background:#F6EDFF;color:#7C4DD8;padding:11px;font:700 12px var(--font)}
-.px-q.qr i{background:transparent;width:auto;height:auto}
-.px-q.qr.active{background:#7C4DD8;color:#fff}
+/* chip icon putih di atas kartu pastel */
+.px-q i{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;
+  background:rgba(255,255,255,.85)}
 
-.px-note{background:#F2F2F7;border-radius:10px;padding:9px 12px;
-  font:500 12px/1.5 -apple-system,sans-serif;color:#3C3C43}
+/* ★ SAKIT — pink pastel */
+.px-q.q-sakit{background:#FFE9EC;color:#C0392B}
+.px-q.q-sakit i{color:#E5484D}
+
+/* ★ IZIN — kuning PUPR pastel */
+.px-q.q-izin{background:#FFF3D6;color:#A86A00}
+.px-q.q-izin i{color:#D99000}
+
+/* ★ DINAS — biru navy pastel */
+.px-q.q-dinas{background:#E8F1FF;color:#1E3A8A}
+.px-q.q-dinas i{color:#2B5CFF}
+
+/* ★ LUPA — ungu pastel */
+.px-q.q-lupa{background:#F1EBFF;color:#6B3FBF}
+.px-q.q-lupa i{color:#7C4DD8}
+
+/* ★ KERJA GABUNGAN (QR) — ungu pastel, satu baris */
+.px-q.qr{width:100%;flex-direction:row;justify-content:center;gap:8px;
+  background:#F1EBFF;color:#6B3FBF;padding:12px;font:700 12px var(--font)}
+.px-q.qr i{background:transparent;width:auto;height:auto}
+.px-q.qr.active{background:#7C4DD8;color:#fff;
+  box-shadow:0 6px 16px rgba(124,77,216,.35)}
 
 /* ---------- REVIEW CARD (kartu putih) ---------- */
 .px-review{padding:10px;margin-bottom:12px}
