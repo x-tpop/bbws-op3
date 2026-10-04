@@ -339,92 +339,75 @@
 
 <style>
 /* ============================================================
-   PRESENSI v20.1 — PANEL DARK (lengkap & bersih)
+   PRESENSI v21.1 — iOS INSET GROUPED (light PUPR)
+   Section = abu lembut · tiap widget = kartu putih terpisah
    ============================================================ */
-section[data-page="presensi"]{background:#0B1026;border-radius:20px;padding:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.25)}
+section[data-page="presensi"]{background:#F2F2F7;border-radius:20px;padding:10px}
 
-/* ---------- MINIBAR (sticky) ---------- */
+/* ---------- MINIBAR (kartu putih) ---------- */
 .pres-minibar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;
-  background:rgba(17,25,69,.92);backdrop-filter:blur(20px) saturate(180%);
-  border:1.5px solid #232E63;border-radius:14px;padding:8px 12px;margin:0 0 10px;
-  box-shadow:0 4px 16px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);
+  border-radius:16px;padding:8px 12px;margin:0 0 10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05);
   transform:translateY(-130%);opacity:0;transition:.35s cubic-bezier(.32,.72,0,1);pointer-events:none}
 .pres-minibar.show{transform:translateY(0);opacity:1;pointer-events:auto}
 .pres-minibar img{width:36px;height:36px;border-radius:50%;object-fit:cover;
-  border:2px solid rgba(255,255,255,.3);background:#0A0F33}
-.mb-id{flex:1;min-width:0}
-.mb-id b{display:block;font:700 13px -apple-system,sans-serif;color:#fff;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mb-id small{font:600 10px -apple-system,sans-serif;color:#8FA0D8;letter-spacing:.06em;text-transform:uppercase}
-.mb-clock{font:700 15px 'Space Grotesk',monospace;color:#37E0C8}
-
-/* ---------- HEADER COMPACT ---------- */
-.px-head{display:flex;gap:12px;align-items:flex-end;margin:4px 2px 14px}
-.px-cut{height:128px;width:auto;max-width:38vw;object-fit:contain;flex:none;
-  filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}
-/* ============================================================
-   PRESENSI v21 — LIGHT (senada tema PUPR)
-   ============================================================ */
-
-/* ---------- MINIBAR (light) ---------- */
-.pres-minibar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;
-  background:rgba(255,255,255,.92);backdrop-filter:blur(20px) saturate(180%);
-  border-radius:14px;padding:8px 12px;margin:0 0 10px;
-  box-shadow:0 4px 16px rgba(0,0,0,.08);
-  transform:translateY(-130%);opacity:0;transition:.35s cubic-bezier(.32,.72,0,1);pointer-events:none}
-.pres-minibar.show{transform:translateY(0);opacity:1;pointer-events:auto}
-.pres-minibar img{width:36px;height:36px;border-radius:50%;object-fit:cover;
-  border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  background:#F2F2F7;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mb-id{flex:1;min-width:0}
 .mb-id b{display:block;font:700 13px -apple-system,sans-serif;color:#000;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mb-id small{font:600 10px -apple-system,sans-serif;color:#8E8E93;letter-spacing:.06em;text-transform:uppercase}
 .mb-clock{font:700 15px 'Space Grotesk',monospace;color:#1E3A8A}
 
-/* ---------- HEADER (tetap; teks navy di light) ---------- */
-.px-head{display:flex;gap:12px;align-items:flex-end;margin:4px 2px 14px}
-.px-cut{height:128px;width:auto;max-width:38vw;object-fit:contain;flex:none;
-  filter:drop-shadow(0 10px 18px rgba(30,58,138,.25))}
+/* ---------- HEADER PROFIL (bukan kartu — foto popout di atas abu) ---------- */
+.px-head{display:flex;gap:14px;align-items:flex-end;margin:6px 6px 14px}
+/* ★ foto cutout PNG: TANPA border, hanya drop-shadow */
+.px-cut{height:132px;width:auto;max-width:40vw;object-fit:contain;flex:none;
+  filter:drop-shadow(0 12px 20px rgba(30,58,138,.28))}
+/* fallback tanpa foto: avatar bulat, shadow (tanpa border) */
 section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-radius:50%;
-  object-fit:cover;border:3px solid #fff;background:#F2F2F7;
-  box-shadow:0 8px 20px rgba(30,58,138,.2);filter:none}
-.px-meta{flex:1;min-width:0;padding-bottom:6px}
+  object-fit:cover;background:#fff;filter:none;
+  box-shadow:0 6px 18px rgba(30,58,138,.18)}
+.px-meta{flex:1;min-width:0;padding-bottom:8px}
 .px-nrow{display:flex;align-items:center;gap:6px}
 .px-nrow h2{flex:1;margin:0;font:800 clamp(17px,5vw,22px)/1.15 var(--font);color:#1E3A8A;letter-spacing:.02em}
 .px-head.mgr .px-nrow h2{cursor:pointer}
-.px-arrow{width:30px;height:30px;flex:none;border-radius:50%;border:1.5px solid #E5E5EA;
-  background:#fff;color:#1E3A8A;display:grid;place-items:center;cursor:pointer}
+.px-arrow{width:30px;height:30px;flex:none;border:0;border-radius:50%;
+  background:#fff;color:#1E3A8A;display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .px-arrow svg{width:14px;height:14px}
 .px-line{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;
   font:700 12px -apple-system,sans-serif;color:#248A3D}
 .px-line svg{width:14px;height:14px;flex:none}
 .px-line .px-sep{color:#C7C7CC;font-weight:400}
 
-/* ---------- ADMIN (light) ---------- */
-.px-admin{margin:0 2px 12px;display:flex;flex-direction:column;gap:8px}
-.px-search{display:flex;background:#F2F2F7;border-radius:12px;padding:0 12px}
+/* ---------- ADMIN (kartu putih) ---------- */
+.px-admin{margin:0 4px 12px;display:flex;flex-direction:column;gap:8px}
+.px-search{display:flex;background:#fff;border-radius:13px;padding:0 12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)}
 .px-search input{flex:1;min-width:0;background:transparent;border:0;color:#000;
-  font:500 13px -apple-system,sans-serif;padding:10px 0;outline:0}
+  font:500 13px -apple-system,sans-serif;padding:11px 0;outline:0}
 .px-search input::placeholder{color:#8E8E93}
 .px-chips{display:flex;flex-wrap:wrap;gap:6px}
-.px-chip{border:1.5px solid #E5E5EA;background:#fff;color:#3C3C43;font:700 10px var(--font);
-  letter-spacing:.06em;padding:6px 12px;border-radius:99px;cursor:pointer;transition:.15s}
-.px-chip.active{background:#FDB813;border-color:#FDB813;color:#1E3A8A}
+.px-chip{border:0;background:#fff;color:#3C3C43;font:700 10px var(--font);
+  letter-spacing:.06em;padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s;
+  box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.px-chip.active{background:#FDB813;color:#1E3A8A;
+  box-shadow:0 4px 12px rgba(253,184,19,.4)}
 
-/* ---------- KARTU + MAP ---------- */
-.px-card{position:relative;background:#fff;border-radius:16px;overflow:hidden;
-  box-shadow:0 2px 12px rgba(0,0,0,.06)}
+/* ---------- KARTU MAP (inset grouped) ---------- */
+.px-card{position:relative;background:#fff;border-radius:18px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
 .px-map{height:240px;margin-bottom:12px}
 .px-map #miniMap{width:100%;height:100%;background:#E8EDF5;z-index:1}
 .pin-biru{filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
-.leaflet-control-attribution{font-size:8.5px !important;background:rgba(255,255,255,.7) !important}
+.leaflet-control-attribution{font-size:8.5px !important;background:rgba(255,255,255,.75) !important}
 
-/* ★ GPS MELAYANG di atas map */
+/* ★ GPS pill MELAYANG di atas map */
 .gps-float{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;
   display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.94);
   backdrop-filter:blur(14px);border-radius:14px;padding:10px 12px;
-  box-shadow:0 6px 20px rgba(0,0,0,.15)}
+  box-shadow:0 6px 20px rgba(0,0,0,.16)}
 .gps-ic{width:26px;height:26px;flex:none;border-radius:8px;background:#E8F8F1;
   color:#248A3D;display:grid;place-items:center}
 .gps-ic svg{width:15px;height:15px}
@@ -441,23 +424,22 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .gps-float button svg{width:15px;height:15px}
 .gps-float button.spun svg{animation:spin 1s linear infinite}
 
-/* ---------- ALERT (light, satu baris) ---------- */
-.px-alert{display:flex;align-items:center;gap:8px;border-radius:14px;padding:12px 14px;
-  margin-bottom:12px}
+/* ---------- ALERT (kartu pastel terpisah) ---------- */
+.px-alert{display:flex;align-items:center;gap:8px;border-radius:15px;padding:12px 14px;
+  margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .al-ic{width:22px;height:22px;flex:none;display:grid;place-items:center}
 .al-ic svg{width:18px;height:18px}
 .px-alert b{font:700 13px var(--font)}
-.al-sep{color:inherit;opacity:.5}
+.al-sep{opacity:.5}
 .px-alert span:last-child{font:600 12px -apple-system,sans-serif;opacity:.85}
 .px-alert.t-ok  {background:#E8F8F1;color:#248A3D}
 .px-alert.t-warn{background:#FFF4E0;color:#B36200}
 .px-alert.t-bad {background:#FEECEB;color:#C41E18}
 
-/* ---------- CHECK-IN / CHECK-OUT ---------- */
+/* ---------- CHECK-IN / CHECK-OUT (2 kartu terpisah) ---------- */
 .px-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.px-act{border:0;border-radius:18px;padding:16px 12px 14px;display:flex;flex-direction:column;
-  align-items:flex-start;gap:10px;cursor:pointer;transition:.2s;font-family:var(--font);
-  text-align:left}
+.px-act{border:0;border-radius:18px;padding:16px 14px 14px;display:flex;flex-direction:column;
+  align-items:flex-start;gap:10px;cursor:pointer;transition:.2s;font-family:var(--font);text-align:left}
 .pxa-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center}
 .pxa-ic svg{width:20px;height:20px}
 .pxa-ic.sun{background:rgba(255,255,255,.18);color:#FDB813}
@@ -465,24 +447,26 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-act b{font:800 14px var(--font);letter-spacing:.05em}
 .px-act small{font:600 10.5px -apple-system,sans-serif;min-height:13px}
 
+/* aktif = navy PUPR */
 .px-act.on{background:linear-gradient(150deg,#1E3A8A 0%,#2B5CFF 100%);
-  box-shadow:0 8px 20px rgba(30,58,138,.3)}
+  box-shadow:0 8px 20px rgba(30,58,138,.32)}
 .px-act.on b{color:#fff}
 .px-act.on small{color:rgba(255,255,255,.75)}
 .px-act.on:active{transform:scale(.97)}
 
-.px-act.off{background:#fff;border:1.5px solid #E5E5EA;cursor:not-allowed;
-  box-shadow:0 2px 12px rgba(0,0,0,.04)}
+/* nonaktif = kartu putih */
+.px-act.off{background:#fff;cursor:not-allowed;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04)}
 .px-act.off b{color:#C7C7CC}
 .px-act.off small{color:#8E8E93}
 .px-act.off .pxa-ic{background:#F2F2F7;color:#C7C7CC}
-.px-act.off .pxa-ic.moon{background:#F7F7F9;color:#D8B84D}
+.px-act.off .pxa-ic.moon{background:#F7F3E4;color:#D8B84D}
 
-/* ---------- KICKER + ACCORDION (light) ---------- */
-.px-kicker{margin:2px 2px 8px;font:800 10px var(--font);letter-spacing:.14em;
+/* ---------- KICKER + ACCORDION (kartu putih) ---------- */
+.px-kicker{margin:2px 6px 8px;font:800 10px var(--font);letter-spacing:.14em;
   text-transform:uppercase;color:#8E8E93}
-.px-acc{background:#fff;border-radius:16px;overflow:hidden;margin-bottom:12px;
-  box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.px-acc{background:#fff;border-radius:18px;overflow:hidden;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
 .acc-head{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;
   padding:14px;cursor:pointer;color:#000;font-family:var(--font)}
 .ah-ic{width:30px;height:30px;border-radius:9px;background:#E8F1FF;color:#1E3A8A;
@@ -493,19 +477,19 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-acc.open .chev{transform:rotate(180deg)}
 .acc-body{padding:2px 12px 12px}
 
-/* ---------- PENGAJUAN PASTEL (senada PUPR) ---------- */
+/* ---------- PENGAJUAN PASTEL (4 kartu putih kecil) ---------- */
 .px-qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
 .px-q{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;border-radius:14px;
   background:#fff;padding:12px 4px 10px;cursor:pointer;transition:.15s;
   font:700 10.5px -apple-system,sans-serif;color:#1C1C1E;
-  box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 10px rgba(0,0,0,.04)}
 .px-q:active{transform:scale(.95)}
 .px-q i,.px-q svg{width:20px;height:20px}
 .px-q i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px}
-.px-q.q-sakit i {background:#FFE9EC;color:#E5484D}   /* pink pastel  */
-.px-q.q-izin i  {background:#FFF3D6;color:#D99000}   /* kuning PUPR pastel */
-.px-q.q-dinas i {background:#E8F1FF;color:#1E3A8A}   /* biru navy pastel */
-.px-q.q-lupa i  {background:#F1EBFF;color:#7C4DD8}   /* ungu pastel  */
+.px-q.q-sakit i {background:#FFE9EC;color:#E5484D}
+.px-q.q-izin i  {background:#FFF3D6;color:#D99000}
+.px-q.q-dinas i {background:#E8F1FF;color:#1E3A8A}
+.px-q.q-lupa i  {background:#F1EBFF;color:#7C4DD8}
 .px-q.qr{width:100%;flex-direction:row;justify-content:center;gap:8px;
   background:#F6EDFF;color:#7C4DD8;padding:11px;font:700 12px var(--font)}
 .px-q.qr i{background:transparent;width:auto;height:auto}
@@ -514,7 +498,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-note{background:#F2F2F7;border-radius:10px;padding:9px 12px;
   font:500 12px/1.5 -apple-system,sans-serif;color:#3C3C43}
 
-/* ---------- REVIEW CARD (light) ---------- */
+/* ---------- REVIEW CARD (kartu putih) ---------- */
 .px-review{padding:10px;margin-bottom:12px}
 .px-review img{width:100%;border-radius:12px;display:block}
 .rv-btns{display:flex;gap:8px;margin-top:10px}
@@ -526,7 +510,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .rv-btns .primary{background:linear-gradient(150deg,#1E3A8A,#2B5CFF);color:#fff}
 
 @media (max-width:380px){
-  .px-cut{height:100px}
+  .px-cut{height:104px}
   .px-map{height:210px}
   .px-qgrid{gap:6px}
 }
