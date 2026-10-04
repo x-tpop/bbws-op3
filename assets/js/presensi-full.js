@@ -1,48 +1,24 @@
 // ============================================================
-// PRESENSI-FULL.JS — Logic halaman presensi (v19)
-// Fitur: Server time, Geofence, Kompensasi waktu kerja (telat →
-//        pulang wajib +X mnt), HERO POPOUT v19 (dark + cutout +
-//        carousel/search/chips utk admin & staf_pengamat),
-//        Minibar sticky, Pengajuan (via pengajuan.js),
-//        Timeline dinamis, Kunci segmented, Leaflet Map,
-//        Guard presensi selesai, Checkout berfilter tanggal
+// PRESENSI-FULL.JS v20 — Panel dark (Hadir/Pulang + GPS + tier telat)
 // File: assets/js/presensi-full.js
 // ============================================================
 
 const presensiState = {
-  lokasi: null,
-  lokasiNama: null,
-  fotoBase64: null,
-  suratBase64: null,
-  masuk: null,
-  keluar: null,
-  status: 'Hadir',
-  facingMode: 'user',
-  serverOffset: 0,
-  isInRadius: false,
-  kantorLat: null,
-  kantorLng: null,
-  kantorRadius: 500,
+  lokasi: null, lokasiNama: null, fotoBase64: null, suratBase64: null,
+  masuk: null, keluar: null, status: 'Hadir', facingMode: 'user',
+  serverOffset: 0, isInRadius: false,
+  kantorLat: null, kantorLng: null, kantorRadius: 500,
   faceStableStart: null,
   pengaturan: {
-    jam_masuk: '07:30',
-    jam_pulang: '16:30',
-    toleransi_terlambat: 15,
-    batas_checkout_awal: 30,
-    hari_kerja: '1,2,3,4,5',
-    poin_tepat_waktu: 1,
-    poin_terlambat: 0,
-    poin_pulang_cepat: 0,
-    poin_tidak_checkout: 0
+    jam_masuk: '07:30', jam_pulang: '16:30', toleransi_terlambat: 15,
+    batas_checkout_awal: 30, hari_kerja: '1,2,3,4,5',
+    poin_tepat_waktu: 1, poin_terlambat: 0, poin_pulang_cepat: 0, poin_tidak_checkout: 0,
+    telat_sedang_menit: 30, telat_berat_menit: 60,
+    poin_telat_ringan: 10, poin_telat_sedang: 15, poin_telat_berat: 25
   }
 };
 
-// ============================================================
-// ★ BARU v19: HELPERS UMUM
-// gdDirect  : link share Google Drive → direct thumbnail
-// hEsc      : escape HTML utk injeksi innerHTML
-// presensiEntryGuard : guard terpadu CTA hero & tombol kamera
-// ============================================================
+// ---------- HELPERS v19/v20 ----------
 function gdDirect(url, sz = 600) {
   if (!url) return null;
   if (url.includes('drive.google.com') && !url.includes('thumbnail')) {
@@ -51,21 +27,13 @@ function gdDirect(url, sz = 600) {
   }
   return url;
 }
-
 function hEsc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-
 function presensiEntryGuard() {
   if (!isHariKerja()) { toast('Hari ini bukan hari kerja', 'warn'); return false; }
-
-  // Guard presensi selesai — cegah checkout kedua
-  if (presensiState.masuk && presensiState.keluar) {
-    toast('Presensi hari ini sudah selesai', 'warn');
-    return false;
-  }
-
+  if (presensiState.masuk && presensiState.keluar) { toast('Presensi hari ini sudah selesai', 'warn'); return false; }
   if (presensiState.masuk && !presensiState.keluar) {
     const cek = isCheckoutAllowed();
     if (!cek.allowed) {
@@ -78,379 +46,221 @@ function presensiEntryGuard() {
   return true;
 }
 
-// ============================================================
-// SERVER TIME
-// ============================================================
+// ---------- SERVER TIME ----------
 async function syncServerTime() {
-  const badge = document.getElementById('serverBadge');
   const el = document.getElementById('serverTime');
-
   try {
     const { data, error } = await supabaseClient.rpc('get_server_time');
     if (!error && data) {
-      const serverTime = new Date(data);
-      presensiState.serverOffset = serverTime.getTime() - Date.now();
-      if (badge) badge.classList.remove('error');
+      presensiState.serverOffset = new Date(data).getTime() - Date.now();
       if (el) el.textContent = 'Server OK';
-      console.log('Server time (Supabase):', serverTime);
       return true;
     }
-    throw new Error('Supabase time tidak tersedia');
+    throw new Error('no');
   } catch (e) {
     try {
-      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jakarta', {
-        signal: AbortSignal.timeout(3000)
-      });
+      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jakarta', { signal: AbortSignal.timeout(3000) });
       const json = await res.json();
-      const serverTime = new Date(json.datetime);
-      presensiState.serverOffset = serverTime.getTime() - Date.now();
-      if (badge) badge.classList.remove('error');
+      presensiState.serverOffset = new Date(json.datetime).getTime() - Date.now();
       if (el) el.textContent = 'Server OK';
       return true;
     } catch (e2) {
-      if (badge) badge.classList.add('error');
       if (el) el.textContent = 'Device Time';
       return false;
     }
   }
 }
+function getServerNow() { return new Date(Date.now() + presensiState.serverOffset); }
 
-function getServerNow() {
-  return new Date(Date.now() + presensiState.serverOffset);
-}
-
-// ============================================================
-// HELPER: jam pulang wajib (dengan kompensasi telat)
-// ============================================================
+// ---------- KOMPENSASI ----------
 function getPulangWajibMenit() {
   const p = presensiState.pengaturan;
   const [ph, pm] = p.jam_pulang.split(':').map(Number);
   let menitPulang = ph * 60 + pm;
-
   if (presensiState.masuk) {
     const [mh, mm] = p.jam_masuk.split(':').map(Number);
-    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
-    const telat = Math.max(0, menitCheckin - (mh * 60 + mm));
-    menitPulang += telat;
+    const c = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
+    menitPulang += Math.max(0, c - (mh * 60 + mm));
   }
   return menitPulang;
 }
+function fmtMenit(m) { return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
 
-function fmtMenit(m) {
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-}
+function updateTimelineProgress() { /* dihapus di v20 — didisabilitikan aman */ }
 
-// ============================================================
-// UPDATE TIMELINE PROGRESS BAR DINAMIS
-// ============================================================
-function updateTimelineProgress() {
-  const fill = document.getElementById('timelineFill');
-  if (!fill) return;
-
-  const p = presensiState.pengaturan;
-  const now = getServerNow();
-  const menitSekarang = now.getHours() * 60 + now.getMinutes();
-
-  const [mh, mm] = p.jam_masuk.split(':').map(Number);
-  const menitMasuk = mh * 60 + mm;
-  const menitPulang = getPulangWajibMenit();
-
-  let persen = 0;
-
-  if (presensiState.masuk) {
-    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
-    const totalDurasi = menitPulang - menitCheckin;
-    const elapsed = menitSekarang - menitCheckin;
-    persen = totalDurasi > 0 ? Math.min(100, Math.max(0, (elapsed / totalDurasi) * 100)) : 100;
-  } else {
-    if (menitSekarang < menitMasuk) persen = 0;
-    else if (menitSekarang > menitPulang) persen = 100;
-    else persen = ((menitSekarang - menitMasuk) / (menitPulang - menitMasuk)) * 100;
-  }
-
-  if (presensiState.keluar) persen = 100;
-
-  fill.style.width = persen + '%';
-  fill.style.background = persen >= 100
-    ? 'linear-gradient(90deg, #007AFF 0%, #0051D5 100%)'
-    : 'linear-gradient(90deg, #34C759 0%, #30B750 100%)';
-}
-
-// ============================================================
-// LOAD PENGATURAN JAM KERJA
-// ============================================================
+// ---------- LOAD PENGATURAN ----------
 async function loadAppSettings() {
   try {
-    const { data, error } = await supabaseClient
-      .from('pengaturan')
-      .select('kunci, nilai');
-
+    const { data, error } = await supabaseClient.from('pengaturan').select('kunci, nilai');
     if (error) throw error;
-
     const s = {};
     (data || []).forEach(r => { s[r.kunci] = r.nilai; });
-
-    if (s.jam_masuk) presensiState.pengaturan.jam_masuk = s.jam_masuk;
-    if (s.jam_pulang) presensiState.pengaturan.jam_pulang = s.jam_pulang;
-    if (s.toleransi_terlambat) presensiState.pengaturan.toleransi_terlambat = parseInt(s.toleransi_terlambat);
-    if (s.batas_checkout_awal) presensiState.pengaturan.batas_checkout_awal = parseInt(s.batas_checkout_awal);
-    if (s.hari_kerja) presensiState.pengaturan.hari_kerja = s.hari_kerja;
-    if (s.poin_tepat_waktu) presensiState.pengaturan.poin_tepat_waktu = parseInt(s.poin_tepat_waktu);
-    if (s.poin_terlambat) presensiState.pengaturan.poin_terlambat = parseInt(s.poin_terlambat);
-    if (s.poin_pulang_cepat) presensiState.pengaturan.poin_pulang_cepat = parseInt(s.poin_pulang_cepat);
-    if (s.poin_tidak_checkout) presensiState.pengaturan.poin_tidak_checkout = parseInt(s.poin_tidak_checkout);
-
+    const P = presensiState.pengaturan;
+    if (s.jam_masuk) P.jam_masuk = s.jam_masuk;
+    if (s.jam_pulang) P.jam_pulang = s.jam_pulang;
+    if (s.toleransi_terlambat) P.toleransi_terlambat = parseInt(s.toleransi_terlambat);
+    if (s.batas_checkout_awal) P.batas_checkout_awal = parseInt(s.batas_checkout_awal);
+    if (s.hari_kerja) P.hari_kerja = s.hari_kerja;
+    if (s.poin_tepat_waktu) P.poin_tepat_waktu = parseInt(s.poin_tepat_waktu);
+    if (s.poin_terlambat) P.poin_terlambat = parseInt(s.poin_terlambat);
+    if (s.poin_pulang_cepat) P.poin_pulang_cepat = parseInt(s.poin_pulang_cepat);
+    if (s.poin_tidak_checkout) P.poin_tidak_checkout = parseInt(s.poin_tidak_checkout);
+    // ★ v20 tier telat (opsional di tabel pengaturan)
+    if (s.telat_sedang_menit) P.telat_sedang_menit = parseInt(s.telat_sedang_menit);
+    if (s.telat_berat_menit) P.telat_berat_menit = parseInt(s.telat_berat_menit);
+    if (s.poin_telat_ringan) P.poin_telat_ringan = parseInt(s.poin_telat_ringan);
+    if (s.poin_telat_sedang) P.poin_telat_sedang = parseInt(s.poin_telat_sedang);
+    if (s.poin_telat_berat) P.poin_telat_berat = parseInt(s.poin_telat_berat);
     if (s.kantor_lat) presensiState.kantorLat = parseFloat(s.kantor_lat);
     if (s.kantor_lng) presensiState.kantorLng = parseFloat(s.kantor_lng);
     if (s.radius_kantor) presensiState.kantorRadius = parseInt(s.radius_kantor);
-
     window.APP_SETTINGS = s;
-    console.log('Pengaturan dimuat:', presensiState.pengaturan);
     return s;
-
   } catch (err) {
     console.warn('Load pengaturan gagal, pakai default:', err);
     return presensiState.pengaturan;
   }
 }
 
-// ============================================================
-// CEK STATUS PRESENSI (baseline checkout = pulang wajib)
-// ============================================================
+// ---------- ★ v20 TIER KETERLAMBATAN ----------
+function getTelatTier(menitTelat) {
+  const P = presensiState.pengaturan;
+  if (menitTelat <= 0)
+    return { key: 'tepat', label: 'Tepat Waktu', poin: P.poin_tepat_waktu, cls: 't-ok', st: 'tepat_waktu' };
+  if (menitTelat <= P.toleransi_terlambat)
+    return { key: 'toleransi', label: `Toleransi +${menitTelat}m`, poin: P.poin_tepat_waktu, cls: 't-ok', st: 'toleransi' };
+  if (menitTelat <= P.telat_sedang_menit)
+    return { key: 'ringan', label: `Terlambat Ringan (${menitTelat}m)`, poin: P.poin_telat_ringan, cls: 't-warn', st: 'terlambat' };
+  if (menitTelat <= P.telat_berat_menit)
+    return { key: 'sedang', label: `Terlambat Sedang (${menitTelat}m)`, poin: P.poin_telat_sedang, cls: 't-warn', st: 'terlambat' };
+  return { key: 'berat', label: 'Terlambat Berat', poin: P.poin_telat_berat, cls: 't-bad', st: 'terlambat' };
+}
+
 function getPresensiStatus(jamStr, tipe = 'masuk') {
   const p = presensiState.pengaturan;
   const [h, m] = jamStr.split(':').map(Number);
-  const menitSekarang = h * 60 + m;
+  const menit = h * 60 + m;
 
   if (tipe === 'masuk') {
     const [jh, jm] = p.jam_masuk.split(':').map(Number);
-    const batasMasuk = jh * 60 + jm;
-    const batasToleransi = batasMasuk + p.toleransi_terlambat;
-
-    if (menitSekarang <= batasMasuk) {
-      return { status: 'tepat_waktu', label: 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
-    } else if (menitSekarang <= batasToleransi) {
-      const telat = menitSekarang - batasMasuk;
-      return { status: 'toleransi', label: `Toleransi +${telat}m`, poin: p.poin_tepat_waktu, warna: 'kuning' };
-    } else {
-      const telat = menitSekarang - batasMasuk;
-      return { status: 'terlambat', label: `Terlambat ${telat}m`, poin: p.poin_terlambat, warna: 'merah' };
-    }
-  } else {
-    const batasPulang = getPulangWajibMenit();
-    const telat = batasPulang - (parseInt(p.jam_pulang) * 60);
-
-    if (menitSekarang >= batasPulang) {
-      return {
-        status: 'tepat_waktu',
-        label: telat > 0 ? `Tepat Waktu (kompensasi +${telat}m)` : 'Tepat Waktu',
-        poin: p.poin_tepat_waktu,
-        warna: 'hijau'
-      };
-    } else {
-      const cepat = batasPulang - menitSekarang;
-      return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`, poin: p.poin_pulang_cepat, warna: 'oranye' };
-    }
+    return getTelatTier(menit - (jh * 60 + jm)); // ★ v20
   }
+
+  const batasPulang = getPulangWajibMenit();
+  const telat = batasPulang - (parseInt(p.jam_pulang) * 60);
+  if (menit >= batasPulang) {
+    return { status: 'tepat_waktu', label: telat > 0 ? `Tepat Waktu (kompensasi +${telat}m)` : 'Tepat Waktu', poin: p.poin_tepat_waktu, warna: 'hijau' };
+  }
+  const cepat = batasPulang - menit;
+  return { status: 'pulang_cepat', label: `Pulang Cepat ${cepat}m`, poin: p.poin_pulang_cepat, warna: 'oranye' };
 }
 
-// ============================================================
-// CEK BOLEH CHECKOUT (kompensasi waktu kerja)
-// ============================================================
 function isCheckoutAllowed() {
   const p = presensiState.pengaturan;
   const [jh, jm] = p.jam_masuk.split(':').map(Number);
   const menitMasukStd = jh * 60 + jm;
   const menitPulang = getPulangWajibMenit();
-
   let telat = 0;
   if (presensiState.masuk) {
-    const menitCheckin = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
-    telat = Math.max(0, menitCheckin - menitMasukStd);
+    const c = presensiState.masuk.getHours() * 60 + presensiState.masuk.getMinutes();
+    telat = Math.max(0, c - menitMasukStd);
   }
-
   const batas = telat > 0 ? menitPulang : (menitPulang - p.batas_checkout_awal);
-
   const now = getServerNow();
   const menitSekarang = now.getHours() * 60 + now.getMinutes();
-
-  return {
-    allowed: menitSekarang >= batas,
-    batasJam: fmtMenit(batas),
-    pulangWajibJam: fmtMenit(menitPulang),
-    telat,
-    menitSekarang
-  };
+  return { allowed: menitSekarang >= batas, batasMenit: batas, batasJam: fmtMenit(batas),
+           pulangWajibJam: fmtMenit(menitPulang), telat, menitSekarang };
 }
 
-// ============================================================
-// CEK HARI KERJA
-// ============================================================
 function isHariKerja() {
-  const p = presensiState.pengaturan;
-  const hariKerja = p.hari_kerja.split(',');
-  const today = getServerNow().getDay() || 7;
-  return hariKerja.includes(String(today));
+  const hk = presensiState.pengaturan.hari_kerja.split(',');
+  return hk.includes(String(getServerNow().getDay() || 7));
 }
 
-// ============================================================
-// GEOFENCE
-// ============================================================
+// ---------- GEOFENCE / GEOCODING ----------
 function hitungJarak(lat1, lon1, lat2, lon2) {
   const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  const dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
 function checkGeofence(lat, lng) {
-  if (!presensiState.kantorLat || !presensiState.kantorLng) {
-    return { ok: true, jarak: 0, message: 'Lokasi bebas' };
-  }
+  if (!presensiState.kantorLat || !presensiState.kantorLng) return { ok: true, jarak: 0, message: 'Lokasi bebas' };
   const jarak = hitungJarak(lat, lng, presensiState.kantorLat, presensiState.kantorLng);
   const ok = jarak <= presensiState.kantorRadius;
-  return {
-    ok,
-    jarak: Math.round(jarak),
-    message: ok ? `Dalam radius (${Math.round(jarak)}m)` : `Di luar radius (${Math.round(jarak)}m)`
-  };
+  return { ok, jarak: Math.round(jarak), message: ok ? `Dalam radius (${Math.round(jarak)}m)` : `Di luar radius (${Math.round(jarak)}m)` };
 }
-
-// ============================================================
-// REVERSE GEOCODING
-// ============================================================
 async function getNamaLokasi(lat, lng) {
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
-      { headers: { 'Accept-Language': 'id' }, signal: AbortSignal.timeout(5000) }
-    );
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+      { headers: { 'Accept-Language': 'id' }, signal: AbortSignal.timeout(5000) });
     const data = await res.json();
     const addr = data.address || {};
     const kota = addr.city || addr.town || addr.village || addr.county || addr.state_district || '';
-    const prov = addr.state || '';
-    const provShort = prov
-      .replace('Jawa Timur', 'Jatim')
-      .replace('Jawa Tengah', 'Jateng')
-      .replace('Jawa Barat', 'Jabar')
-      .replace('DKI Jakarta', 'Jakarta')
-      .replace('DI Yogyakarta', 'DIY');
+    const provShort = (addr.state || '')
+      .replace('Jawa Timur', 'Jatim').replace('Jawa Tengah', 'Jateng')
+      .replace('Jawa Barat', 'Jabar').replace('DKI Jakarta', 'Jakarta').replace('DI Yogyakarta', 'DIY');
     if (kota && provShort) return `${kota}, ${provShort}`;
     if (kota) return kota;
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  } catch (e) {
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  }
+  } catch (e) { return `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
 }
 
-// ============================================================
-// INIT PETA LEAFLET
-// ============================================================
-let miniMap = null;
-let userMarker = null;
-let officeCircle = null;
-
+// ---------- ★ v20 MAP SATELIT + PIN BIRU ----------
+let miniMap = null, userMarker = null;
 function initMiniMap(lat, lng) {
-  if (!window.L) {
-    console.warn('Leaflet belum dimuat');
-    return;
-  }
-
+  if (!window.L) return;
   if (!miniMap) {
     miniMap = L.map('miniMap', {
-      zoomControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false,
-      tap: false,
+      zoomControl: false, dragging: false, scrollWheelZoom: false,
+      doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false,
       attributionControl: true
     }).setView([lat, lng], 16);
-
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19, attribution: 'Esri World Imagery'
     }).addTo(miniMap);
-  } else {
-    miniMap.setView([lat, lng], 16);
-  }
+  } else miniMap.setView([lat, lng], 16);
 
   if (userMarker) userMarker.remove();
   userMarker = L.marker([lat, lng], {
     icon: L.divIcon({
-      className: 'user-marker-icon',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
+      className: 'pin-biru',
+      html: `<svg width="34" height="42" viewBox="0 0 34 42"><path d="M17 0C7.6 0 0 7.6 0 17c0 12.8 17 25 17 25s17-12.2 17-25C34 7.6 26.4 0 17 0z" fill="#3B82F6"/><circle cx="17" cy="17" r="6.5" fill="#fff"/></svg>`,
+      iconSize: [34, 42], iconAnchor: [17, 40]
     })
   }).addTo(miniMap);
-
-  if (officeCircle) officeCircle.remove();
-  officeCircle = null;
-  if (presensiState.kantorLat && presensiState.kantorLng) {
-    officeCircle = L.circle([presensiState.kantorLat, presensiState.kantorLng], {
-      radius: presensiState.kantorRadius,
-      color: '#007AFF',
-      weight: 1.5,
-      fillColor: '#007AFF',
-      fillOpacity: 0.08
-    }).addTo(miniMap);
-  }
 
   setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 150);
   setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 600);
 }
 
-// ============================================================
-// ★ BARU v19: HERO POPOUT + CAROUSEL/SEARCH/CHIPS
-// - Konvensi foto: link_foto_1 = resmi · link_foto_2 = cutout PNG
-// - Carousel + search + chips wilayah: HANYA admin & staf_pengamat
-//   (staf_pengamat dibatasi pegawai DI-nya sendiri)
-// - CTA dinamis: lihat petugas lain → "LIHAT RAPORT PETUGAS"
-// - Foto anti-stale + onerror fallback (cutout → resmi → logo)
-// - Minibar tetap menampilkan AKUN SESI (bukan petugas dilihat)
-// ============================================================
-const heroState = {
-  list: [], self: null, pool: [], idx: 0,
-  q: '', di: 'ALL', isManager: false, viewingOther: false
-};
-
-const SVG_FACE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8.5 14.5s1.2 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/><circle cx="9" cy="10" r=".5"/><circle cx="15" cy="10" r=".5"/></svg>`;
-const SVG_EYE  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+// ---------- ★ v20 HERO COMPACT + ADMIN ----------
+const heroState = { list: [], self: null, pool: [], idx: 0, q: '', di: 'ALL', isManager: false, viewingOther: false };
 
 async function initHeroUI(pegawai, session) {
   const el = id => document.getElementById(id);
   const role = session.role || '';
   heroState.isManager = ['admin', 'staf_pengamat'].includes(role);
-  heroState.idx = 0; heroState.q = ''; heroState.di = 'ALL';
-  heroState.viewingOther = false;
+  heroState.idx = 0; heroState.q = ''; heroState.di = 'ALL'; heroState.viewingOther = false;
 
   heroState.self = {
     id_pegawai: session.id_pegawai,
     nama: pegawai.nama || session.nama_lengkap || 'Pegawai',
     jabatan: pegawai.jabatan || session.role || '—',
     id_di: pegawai.id_di,
-    link_foto_1: pegawai.link_foto_1,
-    link_foto_2: pegawai.link_foto_2,
-    diNama: '—'
+    link_foto_1: pegawai.link_foto_1, link_foto_2: pegawai.link_foto_2, diNama: '—'
   };
 
-  // Minibar = akun sesi (selalu diri sendiri)
   if (el('miniNama')) el('miniNama').textContent = heroState.self.nama;
   const resmiSelf = gdDirect(pegawai.link_foto_1 || pegawai.link_foto_2);
   if (resmiSelf && el('miniAvatar')) el('miniAvatar').src = resmiSelf;
 
-  // ---------- MODE ADMIN/STAF: muat daftar petugas ----------
   if (heroState.isManager) {
     if (el('phAdmin')) el('phAdmin').hidden = false;
     el('presHero')?.classList.add('mgr');
     try {
       const [pw, dw] = await Promise.all([
-        supabaseClient.from('pegawai')
-          .select('id_pegawai,nama,jabatan,id_di,link_foto_1,link_foto_2')
+        supabaseClient.from('pegawai').select('id_pegawai,nama,jabatan,id_di,link_foto_1,link_foto_2')
           .in('jabatan', ['Petugas Pintu Air', 'Pekarya Pengairan']),
         supabaseClient.from('di').select('id_di,nama_di')
       ]);
@@ -458,35 +268,27 @@ async function initHeroUI(pegawai, session) {
       (dw.data || []).forEach(d => { diNama[d.id_di] = d.nama_di; });
       let list = (pw.data || []).map(p => ({ ...p, diNama: diNama[p.id_di] || '—' }));
       if (role === 'staf_pengamat' && session.pegawai?.id_di)
-        list = list.filter(p => p.id_di === session.pegawai.id_di); // staf hanya DI-nya
+        list = list.filter(p => p.id_di === session.pegawai.id_di);
       list.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
       heroState.list = list;
-
-      // Chips wilayah
       const dis = [...new Set(list.map(p => p.id_di).filter(Boolean))];
-      if (el('phChips')) {
-        el('phChips').innerHTML =
-          `<button class="ph-chip active" data-di="ALL">ALL</button>` +
-          dis.map(id => `<button class="ph-chip" data-di="${hEsc(id)}">${hEsc(diNama[id] || id)}</button>`).join('');
-      }
+      if (el('phChips')) el('phChips').innerHTML =
+        `<button class="px-chip active" data-di="ALL">ALL</button>` +
+        dis.map(id => `<button class="px-chip" data-di="${hEsc(id)}">${hEsc(diNama[id] || id)}</button>`).join('');
     } catch (e) { console.warn('Hero: gagal muat petugas', e); }
   } else if (pegawai.id_di) {
-    // Pegawai biasa: ambil nama DI-nya sendiri
     try {
-      const { data } = await supabaseClient.from('di')
-        .select('nama_di').eq('id_di', pegawai.id_di).maybeSingle();
+      const { data } = await supabaseClient.from('di').select('nama_di').eq('id_di', pegawai.id_di).maybeSingle();
       if (data?.nama_di) heroState.self.diNama = data.nama_di;
     } catch (e) {}
   }
 
-  // ---------- NAVIGASI KE RAPORT (admin/staf → pegawai lain) ----------
   function goRaport(p) {
     sessionStorage.setItem('rpTargetId', p.id_pegawai);
     document.querySelector('.nav-btn[data-page="raport"]')?.click()
       || document.querySelector('.bnav-item[data-page="raport"]')?.click();
   }
 
-  // ---------- RENDER HERO ----------
   function heroRender() {
     let pool = heroState.list.length ? heroState.list : [heroState.self];
     if (heroState.di !== 'ALL') pool = pool.filter(p => p.id_di === heroState.di);
@@ -496,265 +298,237 @@ async function initHeroUI(pegawai, session) {
     heroState.idx = Math.max(0, Math.min(heroState.idx, pool.length - 1));
     const p = pool[heroState.idx];
 
-    if (el('phNama'))    el('phNama').textContent = (p.nama || '—').toUpperCase();
+    if (el('phNama')) el('phNama').textContent = (p.nama || '—').toUpperCase();
     if (el('phJabatan')) el('phJabatan').textContent = (p.jabatan || '—').toUpperCase();
     if (el('phWilayah')) el('phWilayah').textContent = (p.diNama || '—').toUpperCase();
-    if (el('phTagWil'))  el('phTagWil').textContent = (p.diNama || '—').toUpperCase();
 
-    // ★ Foto anti-stale: reset tiap render + onerror fallback berlapis
-    const hero = el('presHero'), img = el('heroCutout');
+    const sec = document.querySelector('section[data-page="presensi"]'), img = el('heroCutout');
     if (img) {
       const cut = gdDirect(p.link_foto_2), resmi = gdDirect(p.link_foto_1);
-      img.onerror = () => {
-        img.onerror = null; // cegah loop
-        img.src = resmi || 'assets/img/logo-symbol.png';
-        hero?.classList.add('no-cutout');
-      };
-      if (cut)        { img.src = cut; hero?.classList.remove('no-cutout'); }
-      else if (resmi) { img.src = resmi; hero?.classList.add('no-cutout'); }
-      else            { img.src = 'assets/img/logo-symbol.png'; hero?.classList.add('no-cutout'); }
+      img.onerror = () => { img.onerror = null; img.src = resmi || 'assets/img/logo-symbol.png'; sec?.classList.add('no-cutout'); };
+      if (cut)        { img.src = cut; sec?.classList.remove('no-cutout'); }
+      else if (resmi) { img.src = resmi; sec?.classList.add('no-cutout'); }
+      else            { img.src = 'assets/img/logo-symbol.png'; sec?.classList.add('no-cutout'); }
     }
-
-    // Panah hanya utk manager & pool > 1
     const showArrows = heroState.isManager && pool.length > 1;
     if (el('phPrev')) el('phPrev').hidden = !showArrows;
     if (el('phNext')) el('phNext').hidden = !showArrows;
 
-    // ★ CTA dinamis: lihat petugas lain ≠ presensi diri sendiri
-    heroState.viewingOther = heroState.isManager &&
-      String(p.id_pegawai) !== String(session.id_pegawai);
-    const cta = el('phCtaMulai');
-    if (cta) {
-      cta.innerHTML = heroState.viewingOther
-        ? `${SVG_EYE}<span>LIHAT RAPORT PETUGAS</span>`
-        : `${SVG_FACE}<span>MULAI PRESENSI DIGITAL</span>`;
-    }
+    heroState.viewingOther = heroState.isManager && String(p.id_pegawai) !== String(session.id_pegawai);
+    updateActionButtons();
   }
   heroState.render = heroRender;
   heroRender();
 
-  // ---------- EVENT: CAROUSEL ----------
-  el('phPrev')?.addEventListener('click', (e) => {
-    e.stopPropagation(); // ★ jangan bubble ke phIdMid
-    const n = heroState.pool.length; if (n < 2) return;
-    heroState.idx = (heroState.idx - 1 + n) % n; heroRender();
-  });
-  el('phNext')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const n = heroState.pool.length; if (n < 2) return;
-    heroState.idx = (heroState.idx + 1) % n; heroRender();
-  });
-
-  // ---------- EVENT: SEARCH + CHIPS ----------
-  el('phSearchInput')?.addEventListener('input', e => {
-    heroState.q = e.target.value.trim().toLowerCase();
-    heroState.idx = 0; heroRender();
-  });
+  el('phPrev')?.addEventListener('click', e => { e.stopPropagation(); const n = heroState.pool.length; if (n < 2) return; heroState.idx = (heroState.idx - 1 + n) % n; heroRender(); });
+  el('phNext')?.addEventListener('click', e => { e.stopPropagation(); const n = heroState.pool.length; if (n < 2) return; heroState.idx = (heroState.idx + 1) % n; heroRender(); });
+  el('phSearchInput')?.addEventListener('input', e => { heroState.q = e.target.value.trim().toLowerCase(); heroState.idx = 0; heroRender(); });
   el('phChips')?.addEventListener('click', e => {
-    const b = e.target.closest('.ph-chip'); if (!b) return;
-    el('phChips').querySelectorAll('.ph-chip').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    heroState.di = b.dataset.di; heroState.idx = 0; heroRender();
+    const b = e.target.closest('.px-chip'); if (!b) return;
+    el('phChips').querySelectorAll('.px-chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); heroState.di = b.dataset.di; heroState.idx = 0; heroRender();
+  });
+  el('phNama')?.addEventListener('click', () => {
+    if (!heroState.isManager || !heroState.viewingOther) return;
+    const p = heroState.pool?.[heroState.idx]; if (p) goRaport(p);
   });
 
-  // ---------- EVENT: KLIK IDENTITAS → RAPORT ----------
-  // (abaikan klik dari tombol panah — sudah distop di atas,
-  //  lapis kedua: cek closest('.ph-arrow'))
-  el('phIdMid')?.addEventListener('click', (e) => {
-    if (e.target.closest('.ph-arrow')) return;
-    if (!heroState.isManager) return;
-    const p = heroState.pool?.[heroState.idx]; if (!p) return;
-    if (String(p.id_pegawai) === String(session.id_pegawai)) return;
-    goRaport(p);
-  });
-
-  // ---------- EVENT: CTA UTAMA ----------
-  el('phCtaMulai')?.addEventListener('click', () => {
-    if (heroState.viewingOther) {
-      const p = heroState.pool?.[heroState.idx];
-      if (p) goRaport(p);
-      return;
-    }
-    if (presensiEntryGuard()) openFullscreenDirect();
-  });
-
-  // ---------- MINIBAR (sticky saat scroll) ----------
   const bar = el('presMiniBar');
   if (window.__heroScrollHandler) window.removeEventListener('scroll', window.__heroScrollHandler);
   if (bar) {
     window.__heroScrollHandler = () => {
-      if (!document.body.contains(bar)) return; // halaman sudah diganti (SPA)
-      bar.classList.toggle('show', window.scrollY > 340); // ★ tuning sesuai tinggi hero
+      if (!document.body.contains(bar)) return;
+      bar.classList.toggle('show', window.scrollY > 240);
     };
     window.addEventListener('scroll', window.__heroScrollHandler, { passive: true });
     window.__heroScrollHandler();
   }
 }
 
-// ============================================================
-// INIT UTAMA
-// ============================================================
-async function initPresensi() {
-  console.log('=== Init Presensi (Full v19) ===');
+// ---------- ★ v20 TOMBOL HADIR/PULANG + COUNTDOWN + ALERT ----------
+function fmtCountdown(menit) {
+  if (menit <= 0) return null;
+  const h = Math.floor(menit / 60), m = menit % 60;
+  return h > 0 ? `${h}j ${m}m lagi` : `${m}m lagi`;
+}
 
-  if (window.__presensiInit) {
-    console.log('skip, sudah init');
-    return;
+function updateActionButtons() {
+  const el = id => document.getElementById(id);
+  const bH = el('btnHadir'), bP = el('btnPulang');
+  if (!bH || !bP) return;
+
+  const masuk = presensiState.masuk, keluar = presensiState.keluar;
+  const rule = isCheckoutAllowed();
+  const fmtT = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '';
+
+  // HADIR
+  const lH = el('hadirLabel'), sH = el('hadirSub');
+  if (!masuk) {
+    bH.disabled = false;
+    bH.classList.add('on'); bH.classList.remove('off');
+    lH.textContent = presensiState.status === 'Kerja Gabungan' ? 'KERJA GABUNGAN' : 'HADIR';
+    sH.textContent = heroState.viewingOther ? 'mode lihat data' : '\u00A0';
+  } else {
+    bH.disabled = true;
+    bH.classList.remove('on'); bH.classList.add('off');
+    lH.textContent = 'HADIR';
+    sH.textContent = '✓ ' + fmtT(masuk);
   }
+
+  // PULANG
+  const sP = el('pulangSub');
+  if (!masuk) {
+    bP.disabled = true;
+    bP.classList.remove('on'); bP.classList.add('off');
+    sP.textContent = fmtCountdown(rule.batasMenit - rule.menitSekarang) || 'bisa dipulangkan';
+  } else if (!keluar) {
+    if (rule.allowed) {
+      bP.disabled = false;
+      bP.classList.add('on'); bP.classList.remove('off');
+      sP.textContent = 'sekarang';
+    } else {
+      bP.disabled = true;
+      bP.classList.remove('on'); bP.classList.add('off');
+      sP.textContent = fmtCountdown(rule.batasMenit - rule.menitSekarang) || 'sekarang';
+    }
+  } else {
+    bP.disabled = true;
+    bP.classList.remove('on'); bP.classList.add('off');
+    sP.textContent = '✓ ' + fmtT(keluar);
+  }
+
+  // ALERT TELAT / POIN
+  const alert = el('lateAlert'), lb = el('lateLabel'), pn = el('latePoin');
+  if (alert && lb && pn) {
+    alert.hidden = false;
+    if (!isHariKerja()) {
+      alert.className = 'px-alert t-warn';
+      lb.textContent = 'Bukan hari kerja';
+      pn.textContent = 'Presensi dinonaktifkan hari ini';
+    } else if (masuk) {
+      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+      const tier = getTelatTier(Math.max(0, (masuk.getHours() * 60 + masuk.getMinutes()) - (jh * 60 + jm)));
+      alert.className = 'px-alert ' + tier.cls;
+      lb.textContent = tier.label;
+      pn.textContent = `Poin: ${tier.poin}`;
+    } else {
+      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+      const now = getServerNow();
+      const tier = getTelatTier(Math.max(0, (now.getHours() * 60 + now.getMinutes()) - (jh * 60 + jm)));
+      alert.className = 'px-alert ' + tier.cls;
+      lb.textContent = tier.label;
+      pn.textContent = `Poin: ${tier.poin} · jika check-in sekarang`;
+    }
+  }
+}
+
+// ---------- INIT UTAMA ----------
+async function initPresensi() {
+  console.log('=== Init Presensi (Full v20) ===');
+  if (window.__presensiInit) return;
   window.__presensiInit = true;
 
   try {
     const session = getSession();
     if (!session) return;
-
     const pegawai = session.pegawai || {};
     const el = id => document.getElementById(id);
 
     await loadAppSettings();
     await syncServerTime();
 
-    // ============================================================
-    // JAM LIVE + TIMELINE PROGRESS
-    // ★ PATCH v19: jam live juga di badge hero (phTagClock)
-    // ============================================================
+    // JAM LIVE + COUNTDOWN
     function tickPres() {
       const d = getServerNow();
-      const hms = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
       const hm = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
-      if (el('presClock')) el('presClock').textContent = hms;
-      if (el('presDate')) el('presDate').textContent = d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       if (el('miniClock')) el('miniClock').textContent = hm;
-      if (el('phTagClock')) el('phTagClock').textContent = hm;   // ★ BARU v19
-      if (el('camTime')) el('camTime').textContent = hms;
-      if (el('camFsTime')) el('camFsTime').textContent = hm + ' WIB';
-      if (el('fsReviewTime')) el('fsReviewTime').textContent = hms + ' WIB';
-
-      updateTimelineProgress();
+      if (el('phTagClock')) el('phTagClock').textContent = hm;
+      updateActionButtons();
     }
     tickPres();
     if (window.__presInterval) clearInterval(window.__presInterval);
     window.__presInterval = setInterval(tickPres, 1000);
 
-    // ============================================================
-    // CEK PRESENSI HARI INI
-    // ============================================================
+    // PRESENSI HARI INI
     const today = localDateStr(getServerNow());
     try {
-      const { data } = await supabaseClient
-        .from('presensi').select('*')
-        .eq('id_pegawai', session.id_pegawai)
-        .eq('tanggal', today).maybeSingle();
+      const { data } = await supabaseClient.from('presensi').select('*')
+        .eq('id_pegawai', session.id_pegawai).eq('tanggal', today).maybeSingle();
       if (data) {
         presensiState.masuk = data.jam_masuk ? new Date(today + 'T' + data.jam_masuk) : null;
         presensiState.keluar = data.jam_keluar ? new Date(today + 'T' + data.jam_keluar) : null;
-        if (data.status) {
-          presensiState.status = ['Hadir', 'Kerja Gabungan'].includes(data.status)
-            ? data.status : 'Hadir';
-        }
+        if (data.status) presensiState.status =
+          ['Hadir', 'Kerja Gabungan'].includes(data.status) ? data.status : 'Hadir';
       }
     } catch (e) { console.error(e); }
+    updateActionButtons();
 
-    renderPresensi();
+    // ---- LOKASI (dipisah agar bisa di-refresh) ----
+    async function locateMe() {
+      const btnG = el('btnRefreshGps');
+      if (btnG) btnG.classList.add('spun');
+      try {
+        const loc = await getLocation();
+        presensiState.lokasi = loc;
+        initMiniMap(loc.lat, loc.lng);
 
-    // ============================================================
-    // SEGMENTED CONTROL — hanya Hadir & Kerja Gabungan (QR)
-    // ============================================================
-    const segButtons = document.querySelectorAll('.seg-btn');
-    const segmented = el('segmentedStatus');
-    const camCard = document.querySelector('.card-camera');
+        const g = checkGeofence(loc.lat, loc.lng);
+        presensiState.isInRadius = g.ok;
 
-    function updateFormByStatus(status) {
-      const note = el('presNote');
-      if (note) {
-        if (status === 'Kerja Gabungan') {
-          note.textContent = 'Kerja Gabungan (QR) — Anda bisa presensi dari mana saja.';
-        } else {
-          note.textContent = 'Silakan lakukan check-in dengan foto berwatermark GPS.';
+        const ic = el('gpsIcon'), tx = el('gpsText');
+        if (tx) tx.textContent = `GPS: ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}` +
+          (g.ok ? '' : ' • Di luar radius kantor');
+        if (ic) {
+          ic.classList.toggle('bad', !g.ok);
+          ic.innerHTML = g.ok
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
         }
+
+        getNamaLokasi(loc.lat, loc.lng).then(nama => { presensiState.lokasiNama = nama; updateWatermarkData(); });
+      } catch (err) {
+        const tx = el('gpsText');
+        if (tx) tx.textContent = 'GPS gagal: ' + err.message;
+      } finally {
+        if (btnG) setTimeout(() => btnG.classList.remove('spun'), 600);
       }
-
-      updateWatermarkData();
     }
+    el('btnRefreshGps')?.addEventListener('click', locateMe);
+    locateMe();
 
-    segButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (segmented && segmented.classList.contains('locked')) {
-          toast('Status terkunci setelah check-in', 'warn');
-          return;
-        }
-        segButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        presensiState.status = btn.dataset.status;
-        updateFormByStatus(presensiState.status);
-      });
+    // ---- TOMBOL HADIR / PULANG ----
+    el('btnHadir')?.addEventListener('click', () => {
+      if (heroState.viewingOther) { toast('Anda sedang melihat data petugas lain — klik nama untuk buka Raport', 'info'); return; }
+      if (presensiState.masuk) { toast('Anda sudah check-in hari ini', 'warn'); return; }
+      if (presensiEntryGuard()) openFullscreenDirect();
+    });
+    el('btnPulang')?.addEventListener('click', () => {
+      if (heroState.viewingOther) { toast('Checkout hanya untuk akun Anda sendiri', 'info'); return; }
+      if (!presensiState.masuk) { toast('Belum check-in hari ini', 'warn'); return; }
+      if (presensiState.keluar) { toast('Presensi hari ini sudah selesai', 'warn'); return; }
+      if (presensiEntryGuard()) openFullscreenDirect();
     });
 
-    if (presensiState.status) {
-      segButtons.forEach(b => b.classList.toggle('active', b.dataset.status === presensiState.status));
-      updateFormByStatus(presensiState.status);
-    }
+    // ---- ACCORDION STATUS KHUSUS ----
+    el('accHead')?.addEventListener('click', () => {
+      const acc = el('accKhusus'), body = el('accBody');
+      const open = acc.classList.toggle('open');
+      if (body) body.hidden = !open;
+    });
 
-    if (presensiState.masuk && !presensiState.keluar && segmented) {
-      segmented.classList.add('locked');
-      console.log('Segmented terkunci:', presensiState.status);
-    }
+    // ---- QR / KERJA GABUNGAN ----
+    el('btnKerjaGabungan')?.addEventListener('click', () => {
+      if (heroState.viewingOther) { toast('Presensi hanya untuk akun Anda sendiri', 'info'); return; }
+      if (presensiState.masuk) { toast('Sudah check-in — QR hanya untuk check-in', 'warn'); return; }
+      presensiState.status = 'Kerja Gabungan';
+      el('btnKerjaGabungan')?.classList.add('active');
+      const note = el('presNote');
+      if (note) note.textContent = 'Mode Kerja Gabungan aktif — tekan tombol HADIR untuk scan & foto.';
+      toast('Mode Kerja Gabungan (QR) aktif', 'success');
+      if (presensiEntryGuard()) openFullscreenDirect();
+    });
 
-    // ============================================================
-    // INIT LOKASI + GEOFENCE + PETA
-    // ============================================================
-    try {
-      const loc = await getLocation();
-      presensiState.lokasi = loc;
-      const locText = `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
-      const locWithAcc = `${locText} (±${Math.round(loc.accuracy)}m)`;
-
-      if (el('camLoc')) el('camLoc').textContent = locText;
-      if (el('geoStatus')) el('geoStatus').textContent = 'Mendeteksi nama lokasi...';
-      if (el('geoSub')) el('geoSub').textContent = locWithAcc;
-      if (el('btnCapture')) el('btnCapture').disabled = false;
-
-      initMiniMap(loc.lat, loc.lng);
-
-      getNamaLokasi(loc.lat, loc.lng).then(nama => {
-        presensiState.lokasiNama = nama;
-        if (el('camFsLoc')) el('camFsLoc').textContent = nama;
-        if (el('geoStatus')) el('geoStatus').textContent = nama;
-        if (el('geoSub')) el('geoSub').textContent = locWithAcc;
-        if (el('fsReviewLoc')) el('fsReviewLoc').textContent = nama;
-        updateWatermarkData();
-      });
-
-      const geofence = checkGeofence(loc.lat, loc.lng);
-      presensiState.isInRadius = geofence.ok;
-
-      const badge = el('geofenceBadge');
-      const badgeText = el('geofenceText');
-      const lcIcon = el('lcIcon');
-
-      if (badge && badgeText) {
-        if (geofence.ok) {
-          badge.classList.remove('warn');
-          badge.classList.add('ok');
-          badgeText.textContent = geofence.message;
-        } else {
-          badge.classList.remove('ok');
-          badge.classList.add('warn');
-          badgeText.textContent = 'Di luar radius';
-        }
-      }
-
-      if (lcIcon && !geofence.ok) lcIcon.classList.add('warn');
-      console.log('Location:', loc, 'Geofence:', geofence);
-    } catch (err) {
-      if (el('camLoc')) el('camLoc').textContent = 'Gagal deteksi';
-      if (el('geoStatus')) el('geoStatus').textContent = err.message;
-      console.error(err);
-    }
-
-    // ============================================================
-    // PASANG HANDLER
-    // ============================================================
-    attachCaptureHandler(el('btnCapture'));
+    // ---- REVIEW / SUBMIT / RETAKE ----
     attachRetakeHandler(el('btnRetake'));
     attachSubmitHandler(el('btnSubmit'), session, pegawai);
     attachFullscreenHandlers();
@@ -763,53 +537,40 @@ async function initPresensi() {
     if (window.__wmInterval) clearInterval(window.__wmInterval);
     window.__wmInterval = setInterval(updateWatermarkData, 1000);
 
-    // ============================================================
-    // ★ v19: HERO POPOUT + MINIBAR + PENGAJUAN
-    // ============================================================
     initHeroUI(pegawai, session);
     if (typeof window.initPengajuan === 'function') {
-      try { await window.initPengajuan(session); }
-      catch (e) { console.warn('initPengajuan gagal:', e); }
+      try { await window.initPengajuan(session); } catch (e) { console.warn('initPengajuan gagal:', e); }
     }
 
     if (window.refreshIcons) window.refreshIcons();
     console.log('=== Presensi loaded ===');
-
   } catch (err) {
     console.error('Presensi error:', err);
   }
 }
 
-// ============================================================
-// WATERMARK UPDATE
-// ============================================================
+// ---------- WATERMARK ----------
 function updateWatermarkData() {
   const el = id => document.getElementById(id);
   const session = getSession();
   const pegawai = session?.pegawai || {};
-
   if (el('wmName')) el('wmName').textContent = pegawai.nama || session?.nama_lengkap || 'Pegawai';
   if (el('wmJabatan')) el('wmJabatan').textContent = pegawai.jabatan || session?.role || '-';
-
   if (el('wmStatus')) {
-    const badge = el('wmStatus');
-    const text = badge.querySelector('.sb-text');
+    const badge = el('wmStatus'), text = badge.querySelector('.sb-text');
     const status = presensiState.status;
     if (text) text.textContent = status;
-
     badge.classList.remove('izin','sakit','dinas','qr');
     if (status === 'Izin') badge.classList.add('izin');
     else if (status === 'Sakit') badge.classList.add('sakit');
     else if (status === 'Dinas Luar') badge.classList.add('dinas');
     else if (status === 'Kerja Gabungan') badge.classList.add('qr');
   }
-
   if (presensiState.lokasi) {
     if (el('wmLocName')) el('wmLocName').textContent = presensiState.lokasiNama || 'Mendeteksi...';
     if (el('wmCoords')) el('wmCoords').textContent =
       `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
   }
-
   if (el('wmTime')) {
     const d = getServerNow();
     const jam = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
@@ -818,146 +579,71 @@ function updateWatermarkData() {
   }
 }
 
-// ============================================================
-// HANDLER TOMBOL "BUKA KAMERA"
-// ★ PATCH v19: guard dipusatkan di presensiEntryGuard()
-// ============================================================
-function attachCaptureHandler(btn) {
-  if (!btn) return;
-  const newBtn = btn.cloneNode(true);
-  btn.parentNode.replaceChild(newBtn, btn);
-
-  newBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (presensiEntryGuard()) openFullscreenDirect();
-  });
-}
-
+// ---------- RETAKE ----------
 function attachRetakeHandler(btn) {
   if (!btn) return;
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
-
   newBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+    e.preventDefault(); e.stopPropagation();
     presensiState.fotoBase64 = null;
     const el = id => document.getElementById(id);
-
-    if (el('camPreview')) { el('camPreview').hidden = true; el('camPreview').style.display = 'none'; }
-    if (el('camWrap')) { el('camWrap').hidden = false; el('camWrap').style.display = 'flex'; }
-    if (el('btnRetake')) { el('btnRetake').hidden = true; el('btnRetake').style.display = 'none'; }
-    if (el('btnSubmit')) { el('btnSubmit').hidden = true; el('btnSubmit').style.display = 'none'; }
-    if (el('infoAfter')) { el('infoAfter').hidden = true; el('infoAfter').style.display = 'none'; }
+    if (el('reviewCard')) el('reviewCard').hidden = true;
   });
 }
 
-// ============================================================
-// OPEN FULLSCREEN
-// ============================================================
+// ---------- FULLSCREEN OPEN ----------
 function openFullscreenDirect() {
-  console.log('=== openFullscreenDirect ===');
   const el = id => document.getElementById(id);
-
   const modal = el('camFullscreen');
-  if (!modal) {
-    console.error('Modal camFullscreen TIDAK ADA!');
-    toast('Camera modal tidak tersedia', 'error');
-    return;
-  }
-
+  if (!modal) { toast('Camera modal tidak tersedia', 'error'); return; }
   modal.classList.add('open');
-
-  const fsLiveMode = el('fsLiveMode');
-  const fsReviewMode = el('fsReviewMode');
-  const fsDockLive = el('fsDockLive');
-  const fsDockReview = el('fsDockReview');
-  if (fsLiveMode) fsLiveMode.hidden = false;
-  if (fsReviewMode) fsReviewMode.hidden = true;
-  if (fsDockLive) fsDockLive.hidden = false;
-  if (fsDockReview) fsDockReview.hidden = true;
-
+  if (el('fsLiveMode')) el('fsLiveMode').hidden = false;
+  if (el('fsReviewMode')) el('fsReviewMode').hidden = true;
+  if (el('fsDockLive')) el('fsDockLive').hidden = false;
+  if (el('fsDockReview')) el('fsDockReview').hidden = true;
   presensiState.fotoBase64 = null;
   updateWatermarkData();
 
   setTimeout(async () => {
     const videoFs = el('videoFullscreen');
-    if (!videoFs) {
-      console.error('VideoFullscreen TIDAK ADA!');
-      toast('Video element tidak ditemukan', 'error');
-      return;
-    }
-
+    if (!videoFs) { toast('Video element tidak ditemukan', 'error'); return; }
     try {
       if (window.cameraStream && window.cameraStream.active) {
         videoFs.srcObject = window.cameraStream;
         await videoFs.play();
-        console.log('Stream attached');
       } else {
         const ok = await startCamera(videoFs, presensiState.facingMode);
-        if (!ok) {
-          toast('Gagal buka kamera', 'error');
-          return;
-        }
+        if (!ok) { toast('Gagal buka kamera', 'error'); return; }
       }
-    } catch (e) {
-      console.error('Video stream error:', e);
-      toast('Gagal memuat kamera', 'error');
-      return;
-    }
+    } catch (e) { console.error(e); toast('Gagal memuat kamera', 'error'); return; }
 
     if (presensiState.lokasi) {
       getNamaLokasi(presensiState.lokasi.lat, presensiState.lokasi.lng).then(nama => {
         if (el('camFsLoc')) el('camFsLoc').textContent = nama;
       });
     }
-
-    try {
-      initFaceDetection(videoFs);
-    } catch (e) {
-      console.warn('Face detection error:', e);
-    }
-
+    try { initFaceDetection(videoFs); } catch (e) { console.warn(e); }
     if (window.refreshIcons) window.refreshIcons();
-    console.log('=== Fullscreen ready ===');
   }, 200);
 }
 
-// ============================================================
-// FACE DETECTION
-// ============================================================
-let faceDetector = null;
-let faceDetectInterval = null;
-let faceDetectionReady = false;
-
+// ---------- FACE DETECTION (tidak berubah) ----------
+let faceDetector = null, faceDetectInterval = null, faceDetectionReady = false;
 async function initFaceDetection(videoEl) {
-  if (faceDetectionReady) {
-    console.log('MediaPipe sudah siap');
-    return true;
-  }
-
+  if (faceDetectionReady) return true;
   try {
-    console.log('Loading MediaPipe...');
     const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
-
     const filesetResolver = await vision.FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
-    );
-
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
     faceDetector = await vision.FaceDetector.createFromOptions(filesetResolver, {
       baseOptions: {
         modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
         delegate: "GPU"
       },
-      runningMode: "VIDEO",
-      minDetectionConfidence: 0.5
+      runningMode: "VIDEO", minDetectionConfidence: 0.5
     });
-
     faceDetectionReady = true;
-    console.log('MediaPipe aktif');
-
     if (faceDetectInterval) clearInterval(faceDetectInterval);
     faceDetectInterval = setInterval(() => {
       if (!videoEl || videoEl.readyState < 2 || !faceDetector) return;
@@ -968,144 +654,93 @@ async function initFaceDetection(videoEl) {
         handleAutoCapture(detected);
       } catch (e) {}
     }, 200);
-
     return true;
-  } catch (e) {
-    console.warn('MediaPipe init gagal:', e);
-    return false;
-  }
+  } catch (e) { console.warn('MediaPipe init gagal:', e); return false; }
 }
-
 function updateFaceUI(detected) {
   const guide = document.getElementById('faceGuide');
   const label = document.querySelector('#faceStatus .face-label');
-  if (detected) {
-    guide?.classList.add('detected');
-    if (label) label.textContent = 'Wajah terdeteksi ✓';
-  } else {
-    guide?.classList.remove('detected');
-    if (label) label.textContent = 'Posisikan wajah Anda di dalam oval';
-  }
+  if (detected) { guide?.classList.add('detected'); if (label) label.textContent = 'Wajah terdeteksi ✓'; }
+  else { guide?.classList.remove('detected'); if (label) label.textContent = 'Posisikan wajah Anda di dalam oval'; }
 }
-
 function handleAutoCapture(detected) {
   if (presensiState.fotoBase64) return;
-
   const ring = document.getElementById('autoCaptureRing');
   const progress = document.getElementById('acrProgress');
   const text = document.getElementById('acrText');
-
   if (detected) {
-    if (!presensiState.faceStableStart) {
-      presensiState.faceStableStart = Date.now();
-    }
-
+    if (!presensiState.faceStableStart) presensiState.faceStableStart = Date.now();
     const elapsed = Date.now() - presensiState.faceStableStart;
     const remaining = Math.max(0, 1500 - elapsed);
-
     if (ring) ring.hidden = false;
     if (text) text.textContent = (remaining / 1000).toFixed(1);
-    if (progress) {
-      const circumference = 276.46;
-      const offset = circumference * (remaining / 1500);
-      progress.style.strokeDashoffset = offset;
-    }
-
+    if (progress) progress.style.strokeDashoffset = 276.46 * (remaining / 1500);
     if (elapsed >= 1500) {
-      console.log('Auto-capture triggered');
       presensiState.faceStableStart = null;
       if (ring) ring.hidden = true;
-      const shutter = document.getElementById('btnFsCapture');
-      if (shutter) shutter.click();
+      document.getElementById('btnFsCapture')?.click();
     }
   } else {
     presensiState.faceStableStart = null;
     if (ring) ring.hidden = true;
   }
 }
-
 function stopFaceDetection() {
   if (faceDetectInterval) { clearInterval(faceDetectInterval); faceDetectInterval = null; }
   if (faceDetector) { try { faceDetector.close(); } catch (e) {} faceDetector = null; }
   faceDetectionReady = false;
   presensiState.faceStableStart = null;
-  const guide = document.getElementById('faceGuide');
+  document.getElementById('faceGuide')?.classList.remove('detected');
   const ring = document.getElementById('autoCaptureRing');
-  guide?.classList.remove('detected');
   if (ring) ring.hidden = true;
 }
 
-// ============================================================
-// FULLSCREEN HANDLERS
-// ============================================================
+// ---------- FULLSCREEN HANDLERS ----------
 function attachFullscreenHandlers() {
   const el = id => document.getElementById(id);
 
   const btnClose = el('btnFsClose');
   if (btnClose) {
-    const newBtn = btnClose.cloneNode(true);
-    btnClose.parentNode.replaceChild(newBtn, btnClose);
-    newBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const n = btnClose.cloneNode(true); btnClose.parentNode.replaceChild(n, btnClose);
+    n.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
       if (typeof stopCamera === 'function') stopCamera();
-      const v = el('videoFullscreen');
-      if (v) v.srcObject = null;
+      const v = el('videoFullscreen'); if (v) v.srcObject = null;
     });
   }
 
   const btnCapFs = el('btnFsCapture');
   if (btnCapFs) {
-    const newBtn = btnCapFs.cloneNode(true);
-    btnCapFs.parentNode.replaceChild(newBtn, btnCapFs);
-    newBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      await captureFromFullscreen();
-    });
+    const n = btnCapFs.cloneNode(true); btnCapFs.parentNode.replaceChild(n, btnCapFs);
+    n.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); await captureFromFullscreen(); });
   }
 
   const btnSwitch = el('btnFsSwitch');
   if (btnSwitch) {
-    const newBtn = btnSwitch.cloneNode(true);
-    btnSwitch.parentNode.replaceChild(newBtn, btnSwitch);
-    newBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const n = btnSwitch.cloneNode(true); btnSwitch.parentNode.replaceChild(n, btnSwitch);
+    n.addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation();
       presensiState.facingMode = presensiState.facingMode === 'user' ? 'environment' : 'user';
       const videoFs = el('videoFullscreen');
-      if (videoFs) {
-        await startCamera(videoFs, presensiState.facingMode);
-        stopFaceDetection();
-        initFaceDetection(videoFs);
-      }
+      if (videoFs) { await startCamera(videoFs, presensiState.facingMode); stopFaceDetection(); initFaceDetection(videoFs); }
       toast('Kamera: ' + (presensiState.facingMode === 'user' ? 'Depan' : 'Belakang'), 'info');
     });
   }
 
   const btnReviewRetake = el('btnReviewRetake');
   if (btnReviewRetake) {
-    const newBtn = btnReviewRetake.cloneNode(true);
-    btnReviewRetake.parentNode.replaceChild(newBtn, btnReviewRetake);
-    newBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const n = btnReviewRetake.cloneNode(true); btnReviewRetake.parentNode.replaceChild(n, btnReviewRetake);
+    n.addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation();
       presensiState.fotoBase64 = null;
-      el('fsLiveMode').hidden = false;
-      el('fsReviewMode').hidden = true;
-      el('fsDockLive').hidden = false;
-      el('fsDockReview').hidden = true;
-
+      el('fsLiveMode').hidden = false; el('fsReviewMode').hidden = true;
+      el('fsDockLive').hidden = false; el('fsDockReview').hidden = true;
       const videoFs = el('videoFullscreen');
       if (videoFs) {
-        if (window.cameraStream && window.cameraStream.active) {
-          videoFs.srcObject = window.cameraStream;
-          videoFs.play();
-        } else {
-          await startCamera(videoFs, presensiState.facingMode);
-        }
+        if (window.cameraStream && window.cameraStream.active) { videoFs.srcObject = window.cameraStream; videoFs.play(); }
+        else await startCamera(videoFs, presensiState.facingMode);
         initFaceDetection(videoFs);
       }
     });
@@ -1113,90 +748,57 @@ function attachFullscreenHandlers() {
 
   const btnReviewUse = el('btnReviewUse');
   if (btnReviewUse) {
-    const newBtn = btnReviewUse.cloneNode(true);
-    btnReviewUse.parentNode.replaceChild(newBtn, btnReviewUse);
-    newBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
+    const n = btnReviewUse.cloneNode(true); btnReviewUse.parentNode.replaceChild(n, btnReviewUse);
+    n.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
       el('camFullscreen')?.classList.remove('open');
       stopFaceDetection();
       if (typeof stopCamera === 'function') stopCamera();
-      const vFs = el('videoFullscreen');
-      if (vFs) vFs.srcObject = null;
+      const vFs = el('videoFullscreen'); if (vFs) vFs.srcObject = null;
 
-      const previewImg = el('previewImg');
-      const camPreview = el('camPreview');
-      const camWrap = el('camWrap');
-      const btnRetake = el('btnRetake');
-      const btnSubmit = el('btnSubmit');
-      const infoAfter = el('infoAfter');
-
+      // ★ v20: tampilkan REVIEW CARD baru
+      const previewImg = el('previewImg'), reviewCard = el('reviewCard');
       if (previewImg) previewImg.src = presensiState.fotoBase64;
-      if (camPreview) { camPreview.hidden = false; camPreview.style.display = 'block'; }
-      if (camWrap) { camWrap.hidden = true; camWrap.style.display = 'none'; }
-      if (btnRetake) { btnRetake.hidden = false; btnRetake.style.display = 'flex'; }
-      if (btnSubmit) { btnSubmit.hidden = false; btnSubmit.style.display = 'flex'; }
-      if (infoAfter) { infoAfter.hidden = false; infoAfter.style.display = 'flex'; }
-
+      if (reviewCard) {
+        reviewCard.hidden = false;
+        reviewCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       toast('Foto siap dikirim', 'success');
     });
   }
 }
 
-// ============================================================
-// CAPTURE + FREEZE FRAME
-// ============================================================
+// ---------- CAPTURE ----------
 async function captureFromFullscreen() {
   const el = id => document.getElementById(id);
   const videoFs = el('videoFullscreen');
-
   if (!videoFs) { toast('Video tidak ditemukan', 'error'); return; }
   if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
-
   try {
     const base64 = await captureWithWatermark(videoFs, presensiState.lokasi, 'Presensi');
     const compressed = await compressImage(base64, CONFIG.FOTO_MAX_WIDTH, CONFIG.FOTO_QUALITY);
     presensiState.fotoBase64 = compressed;
-
     stopFaceDetection();
-
-    el('fsLiveMode').hidden = true;
-    el('fsReviewMode').hidden = false;
-    el('fsDockLive').hidden = true;
-    el('fsDockReview').hidden = false;
-
+    el('fsLiveMode').hidden = true; el('fsReviewMode').hidden = false;
+    el('fsDockLive').hidden = true; el('fsDockReview').hidden = false;
     const reviewImg = el('fsReviewImg');
     if (reviewImg) reviewImg.src = compressed;
-
-    if (el('fsReviewLoc')) {
-      el('fsReviewLoc').textContent = presensiState.lokasiNama ||
-        `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
-    }
-
+    if (el('fsReviewLoc')) el('fsReviewLoc').textContent = presensiState.lokasiNama ||
+      `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
     const d = getServerNow();
     const hms = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
     if (el('fsReviewTime')) el('fsReviewTime').textContent = hms + ' WIB';
-
     if (navigator.vibrate) navigator.vibrate(50);
-    console.log('Masuk mode review');
-  } catch (err) {
-    console.error('Capture error:', err);
-    toast('Gagal ambil foto: ' + err.message, 'error');
-  }
+  } catch (err) { console.error(err); toast('Gagal ambil foto: ' + err.message, 'error'); }
 }
 
-// ============================================================
-// SUBMIT
-// ============================================================
+// ---------- SUBMIT ----------
 function attachSubmitHandler(btn, session, pegawai) {
   if (!btn) return;
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
-
   newBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     await submitPresensi(newBtn, session, pegawai);
   });
 }
@@ -1204,18 +806,10 @@ function attachSubmitHandler(btn, session, pegawai) {
 async function submitPresensi(btn, session, pegawai) {
   const el = id => document.getElementById(id);
   const status = presensiState.status;
-  const ketEl = el('presKet');
-  const ket = ketEl ? ketEl.value.trim() : '';
 
-  // Guard presensi selesai (double protection)
-  if (presensiState.masuk && presensiState.keluar) {
-    toast('Presensi hari ini sudah selesai', 'warn');
-    return;
-  }
-
+  if (presensiState.masuk && presensiState.keluar) { toast('Presensi hari ini sudah selesai', 'warn'); return; }
   if (!presensiState.fotoBase64) { toast('Foto wajib diambil', 'warn'); return; }
   if (!presensiState.lokasi) { toast('Lokasi belum terdeteksi', 'warn'); return; }
-
   if (status === 'Hadir' && !presensiState.isInRadius) {
     if (!confirm('Anda berada di luar radius kantor. Tetap lanjutkan presensi Hadir?')) return;
   }
@@ -1223,7 +817,6 @@ async function submitPresensi(btn, session, pegawai) {
   const now = getServerNow();
   const jam = [String(now.getHours()).padStart(2,'0'), String(now.getMinutes()).padStart(2,'0'), String(now.getSeconds()).padStart(2,'0')].join(':');
   const tipe = !presensiState.masuk ? 'masuk' : 'keluar';
-
   const statusInfo = getPresensiStatus(jam, tipe);
   const poin = statusInfo.poin;
 
@@ -1233,21 +826,17 @@ async function submitPresensi(btn, session, pegawai) {
   try {
     const today = localDateStr(now);
     const timestamp = now.toISOString().replace(/[:.]/g, '-');
-
     let fotoUrl = null;
-    let suratUrl = null;
 
     if (presensiState.fotoBase64) {
       const namaFile = `presensi_${session.username}_${today}_${tipe}_${timestamp}.jpg`;
       const folderPath = `Presensi/${today.slice(0, 7)}/DI-${pegawai.id_di || 'X'}`;
-      const uploadResult = await uploadFoto(presensiState.fotoBase64, namaFile, folderPath);
-      if (!uploadResult.success) throw new Error(uploadResult.error || 'Upload foto gagal');
-      fotoUrl = uploadResult.linkLh3;
+      const up = await uploadFoto(presensiState.fotoBase64, namaFile, folderPath);
+      if (!up.success) throw new Error(up.error || 'Upload foto gagal');
+      fotoUrl = up.linkLh3;
     }
 
-    const lokasiStr = presensiState.lokasi
-      ? `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`
-      : null;
+    const lokasiStr = `${presensiState.lokasi.lat.toFixed(6)}, ${presensiState.lokasi.lng.toFixed(6)}`;
 
     if (tipe === 'masuk') {
       await dbInsert('presensi', {
@@ -1256,79 +845,51 @@ async function submitPresensi(btn, session, pegawai) {
         jam_masuk: jam,
         lokasi_masuk: lokasiStr,
         foto_masuk: fotoUrl,
-        surat: suratUrl,
         status: status,
-        keterangan: ket || null,
-        poin: poin,
-        status_kehadiran: statusInfo.status,
-        catatan_kehadiran: statusInfo.label
+        poin: poin,                                  // ★ v20 poin tier
+        status_kehadiran: statusInfo.status,         // domain tetap: tepat_waktu/toleransi/terlambat
+        catatan_kehadiran: statusInfo.label          // ★ v20 "Terlambat Berat (75m)"
       });
       presensiState.masuk = now;
     } else {
-      // Checkout WAJIB berfilter tanggal — jangan pernah hapus filter ini
       await dbUpdate('presensi', 'id_pegawai', session.id_pegawai, {
-        jam_keluar: jam,
-        lokasi_keluar: lokasiStr,
-        foto_keluar: fotoUrl,
-        poin_keluar: poin,
-        status_kehadiran_keluar: statusInfo.status
+        jam_keluar: jam, lokasi_keluar: lokasiStr, foto_keluar: fotoUrl,
+        poin_keluar: poin, status_kehadiran_keluar: statusInfo.status
       }, { tanggal: today });
       presensiState.keluar = now;
     }
 
     hideLoading();
-
     showSuksesModal({
-      tipe: tipe,
-      status: status,
-      jam: jam.slice(0, 5),
+      tipe, status, jam: jam.slice(0, 5),
       tanggal: now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-      lokasi: lokasiStr || 'Lokasi tidak tersedia',
-      lokasiNama: presensiState.lokasiNama || 'Lokasi tidak diketahui',
-      keterangan: ket,
-      statusInfo: statusInfo
+      lokasi: lokasiStr, lokasiNama: presensiState.lokasiNama || 'Lokasi tidak diketahui',
+      keterangan: '', statusInfo: { label: statusInfo.label, warna: statusInfo.cls === 't-ok' ? 'hijau' : statusInfo.cls === 't-bad' ? 'merah' : 'kuning' }
     });
 
     resetPresensiForm();
-    renderPresensi();
-    updateTimelineProgress();
-
+    updateActionButtons();
   } catch (err) {
     hideLoading();
     console.error('Submit error:', err);
     toast('Gagal: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-  }
+  } finally { btn.disabled = false; }
 }
 
-// ============================================================
-// RESET FORM
-// ============================================================
 function resetPresensiForm() {
   const el = id => document.getElementById(id);
-
   presensiState.fotoBase64 = null;
-  if (el('camPreview')) { el('camPreview').hidden = true; el('camPreview').style.display = 'none'; }
-  if (el('camWrap')) { el('camWrap').hidden = false; el('camWrap').style.display = 'flex'; }
-  if (el('btnRetake')) { el('btnRetake').hidden = true; el('btnRetake').style.display = 'none'; }
-  if (el('btnSubmit')) { el('btnSubmit').hidden = true; el('btnSubmit').style.display = 'none'; }
-  if (el('infoAfter')) { el('infoAfter').hidden = true; el('infoAfter').style.display = 'none'; }
-
+  if (el('reviewCard')) el('reviewCard').hidden = true;
   presensiState.suratBase64 = null;
-
-  if (el('presKet')) el('presKet').value = '';
+  el('btnKerjaGabungan')?.classList.remove('active');
+  if (presensiState.status === 'Kerja Gabungan') presensiState.status = 'Hadir';
 }
 
-// ============================================================
-// MODAL SUKSES
-// ============================================================
+// ---------- MODAL SUKSES / LOADING (tetap) ----------
 function showSuksesModal(data) {
   const modal = document.getElementById('suksesModal');
   if (!modal) return;
-
   const el = id => document.getElementById(id);
-
   if (el('suksesTitle')) el('suksesTitle').textContent = data.tipe === 'masuk' ? 'Check-in Berhasil!' : 'Check-out Berhasil!';
   if (el('suksesMsg')) el('suksesMsg').textContent = `Presensi ${data.tipe} Anda telah tercatat pada sistem e-kehadiran.`;
   if (el('succDate')) el('succDate').textContent = data.tanggal || '—';
@@ -1337,98 +898,33 @@ function showSuksesModal(data) {
   if (el('succStatus')) el('succStatus').textContent = data.status || '—';
   if (el('succLocName')) el('succLocName').textContent = data.lokasiNama || '—';
   if (el('succLocCoords')) el('succLocCoords').textContent = data.lokasi || '—';
-
   if (data.statusInfo) {
-    const statusRow = el('succStatusRow');
-    if (statusRow) {
-      statusRow.style.display = 'flex';
-      const statusVal = el('succStatusKehadiran');
-      if (statusVal) {
-        statusVal.textContent = data.statusInfo.label;
-        statusVal.style.color = data.statusInfo.warna === 'hijau' ? '#34C759'
-                              : data.statusInfo.warna === 'kuning' ? '#FF9500'
-                              : data.statusInfo.warna === 'merah' ? '#FF3B30'
-                              : '#FF9500';
+    const row = el('succStatusRow');
+    if (row) {
+      row.style.display = 'flex';
+      const v = el('succStatusKehadiran');
+      if (v) {
+        v.textContent = data.statusInfo.label;
+        v.style.color = data.statusInfo.warna === 'hijau' ? '#34C759'
+                      : data.statusInfo.warna === 'merah' ? '#FF3B30' : '#FF9500';
       }
     }
   }
-
-  const ketRow = el('succKetRow');
-  const ket = el('succKet');
-  if (data.keterangan && ketRow && ket) {
-    ketRow.style.display = 'flex';
-    ket.textContent = data.keterangan;
-  } else if (ketRow) {
-    ketRow.style.display = 'none';
-  }
-
+  const ketRow = el('succKetRow'), ket = el('succKet');
+  if (data.keterangan && ketRow && ket) { ketRow.style.display = 'flex'; ket.textContent = data.keterangan; }
+  else if (ketRow) ketRow.style.display = 'none';
   modal.classList.add('open');
-  if (window.refreshIcons) window.refreshIcons();
 }
-
-function closeSuksesModal() {
-  document.getElementById('suksesModal')?.classList.remove('open');
-}
-
-// ============================================================
-// LOADING
-// ============================================================
+function closeSuksesModal() { document.getElementById('suksesModal')?.classList.remove('open'); }
 function showLoading(text = 'Memproses...') {
-  const overlay = document.getElementById('loadingOverlay');
-  const txt = document.getElementById('loadingText');
-  if (txt) txt.textContent = text;
-  if (overlay) overlay.classList.add('open');
+  const o = document.getElementById('loadingOverlay'), t = document.getElementById('loadingText');
+  if (t) t.textContent = text;
+  if (o) o.classList.add('open');
 }
+function hideLoading() { document.getElementById('loadingOverlay')?.classList.remove('open'); }
 
-function hideLoading() {
-  const overlay = document.getElementById('loadingOverlay');
-  if (overlay) overlay.classList.remove('open');
-}
-
-// ============================================================
-// RENDER PRESENSI
-// ============================================================
-function renderPresensi() {
-  const fmt = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '—';
-  const el = id => document.getElementById(id);
-
-  if (el('ptMasukTime')) el('ptMasukTime').textContent = fmt(presensiState.masuk);
-  if (el('ptKeluarTime')) el('ptKeluarTime').textContent = fmt(presensiState.keluar);
-  if (el('ptMasuk')) el('ptMasuk').classList.toggle('done', !!presensiState.masuk);
-  if (el('ptKeluar')) el('ptKeluar').classList.toggle('done', !!presensiState.keluar);
-  if (el('ptl')) el('ptl').classList.toggle('on', !!presensiState.masuk);
-
-  const p = presensiState.pengaturan;
-  const rule = isCheckoutAllowed();
-
-  if (el('compStd')) el('compStd').textContent = `${p.jam_masuk} – ${p.jam_pulang}`;
-  if (el('compTelat')) el('compTelat').textContent = rule.telat > 0 ? `+${rule.telat} mnt` : '0 mnt';
-  if (el('compWajib')) el('compWajib').textContent =
-    presensiState.masuk ? `${rule.pulangWajibJam} WIB` : '—';
-
-  let note;
-  if (!presensiState.masuk) {
-    note = `Silakan check-in. Jam masuk ${p.jam_masuk} WIB (toleransi ${p.toleransi_terlambat} mnt). Terlambat dikompensasi di jam pulang.`;
-  } else if (!presensiState.keluar) {
-    if (!rule.allowed) {
-      note = `Check-in ${fmt(presensiState.masuk)}. Pulang wajib ${rule.pulangWajibJam} WIB${rule.telat > 0 ? ` (kompensasi +${rule.telat} mnt)` : ''}.`;
-    } else {
-      note = `Check-in ${fmt(presensiState.masuk)}. Jangan lupa check-out.`;
-    }
-  } else {
-    note = `Presensi selesai. Masuk ${fmt(presensiState.masuk)}, keluar ${fmt(presensiState.keluar)}.`;
-  }
-
-  if (el('presNote')) el('presNote').textContent = note;
-
-  updateTimelineProgress();
-}
-
-// ============================================================
-// EXPOSE GLOBAL
-// ============================================================
+// ---------- EXPOSE ----------
 window.initPresensi = initPresensi;
-window.renderPresensi = renderPresensi;
 window.closeSuksesModal = closeSuksesModal;
 window.initFaceDetection = initFaceDetection;
 window.stopFaceDetection = stopFaceDetection;
@@ -1441,11 +937,10 @@ window.getPresensiStatus = getPresensiStatus;
 window.isCheckoutAllowed = isCheckoutAllowed;
 window.isHariKerja = isHariKerja;
 window.updateWatermarkData = updateWatermarkData;
-window.updateTimelineProgress = updateTimelineProgress;
 window.initHeroUI = initHeroUI;
 window.presensiState = presensiState;
-// ★ BARU v19
 window.presensiEntryGuard = presensiEntryGuard;
 window.gdDirect = gdDirect;
 window.hEsc = hEsc;
 window.heroState = heroState;
+window.getTelatTier = getTelatTier;
