@@ -1,12 +1,14 @@
 // ============================================================
-// PENGAJUAN.JS v2.1 — Sakit / Izin / Dinas Luar / Lupa Absen
-// PATCH v2.1:
-//  • status = 'Menunggu' (selaras verifikasi.js — bukan 'pending')
-//  • kolom tanggal_mulai (selaras verifikasi.js)
-//  • init bisa dipanggil ulang tiap navigasi SPA: binding elemen
-//    diulang, delegasi document hanya sekali (__pjDocBound)
-//  • setelah submit → refreshPengajuanAktif (halaman presensi
-//    langsung sadar pengajuan pending)
+// PENGAJUAN.JS v2.3 — Sakit / Izin / Dinas Luar / Lupa Absen
+// PATCH v2.3:
+//  • Delegasi klik [data-pengajuan] dipasang SAAT FILE LOAD
+//    (tidak tergantung initPresensi — tombol selalu hidup)
+//  • Binding elemen modal SEKALI saja (modal di luar section,
+//    tidak dirender ulang SPA → flag __pjElBound anti-numpuk)
+//  • openPengajuan: null-guard + toast diagnosis bila markup hilang
+//  • Judul modal dinamis: "Pengajuan {jenis}"
+//  • Status 'Menunggu/Disetujui' + kolom tanggal_mulai
+//    (selaras verifikasi.js v2.1)
 // Butuh helper: dbInsert, uploadFoto, compressImage, toast,
 //               getSession, localDateStr, CONFIG
 // ============================================================
@@ -22,36 +24,53 @@ const pjState = { jenis:null, session:null, foto:null, surat:null, terpakai:0, b
 
 function pjEl(id){ return document.getElementById(id); }
 
+// ============================================================
+// ★ v2.3: DELEGASI KLIK GLOBAL — dipasang saat file dimuat.
+// Dokumen selalu ada; tombol boleh muncul belakangan (SPA).
+// ============================================================
+if (!window.__pjDocBound) {
+  window.__pjDocBound = true;
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pengajuan]');
+    if (!b) return;
+    e.preventDefault();
+    openPengajuan(b.dataset.pengajuan);
+  });
+  console.log('[pengajuan] delegasi klik aktif');
+}
+
+// ============================================================
+// INIT — dipanggil initPresensi; aman dipanggil berulang.
+// ★ v2.3: modal berada DI LUAR section (persisten), jadi binding
+// elemennya cukup SEKALI — flag di elemen modal anti-numpuk.
+// ============================================================
 async function initPengajuan(session) {
   pjState.session = session;
 
-  // ★ Delegasi document cukup sekali seumur app (tahan re-render SPA)
-  if (!window.__pjDocBound) {
-    window.__pjDocBound = true;
-    document.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-pengajuan]');
-      if (b) openPengajuan(b.dataset.pengajuan);
-    });
+  const modal = pjEl('pjModal');
+  if (modal && !modal.dataset.pjElBound) {
+    modal.dataset.pjElBound = '1';
+
+    pjEl('pjBtnClose')?.addEventListener('click', closePengajuan);
+    modal.addEventListener('click', e => { if (e.target === modal) closePengajuan(); });
+
+    pjEl('pjTanggal')?.addEventListener('change', updateDurasi);
+    pjEl('pjTanggalSelesai')?.addEventListener('change', updateDurasi);
+
+    pjEl('pjBtnFotoCam')?.addEventListener('click', () => pjEl('pjFotoCamInput')?.click());
+    pjEl('pjBtnFotoGal')?.addEventListener('click', () => pjEl('pjFotoGalInput')?.click());
+    pjEl('pjBtnSurat')?.addEventListener('click', () => pjEl('pjSuratInput')?.click());
+    pjEl('pjFotoRemove')?.addEventListener('click', clearPjFoto);
+    pjEl('pjSuratRemove')?.addEventListener('click', clearPjSurat);
+
+    bindPjFileInput('pjFotoCamInput', setPjFoto);
+    bindPjFileInput('pjFotoGalInput', setPjFoto);
+    bindPjFileInput('pjSuratInput',  setPjSurat);
+
+    pjEl('pjBtnSubmit')?.addEventListener('click', submitPengajuan);
+
+    console.log('[pengajuan] elemen modal ter-bound');
   }
-
-  // ★ Binding elemen diulang SETIAP init (DOM baru hasil render SPA)
-  pjEl('pjBtnClose')?.addEventListener('click', closePengajuan);
-  pjEl('pjModal')?.addEventListener('click', e => { if (e.target === pjEl('pjModal')) closePengajuan(); });
-
-  pjEl('pjTanggal')?.addEventListener('change', updateDurasi);
-  pjEl('pjTanggalSelesai')?.addEventListener('change', updateDurasi);
-
-  pjEl('pjBtnFotoCam')?.addEventListener('click', () => pjEl('pjFotoCamInput')?.click());
-  pjEl('pjBtnFotoGal')?.addEventListener('click', () => pjEl('pjFotoGalInput')?.click());
-  pjEl('pjBtnSurat')?.addEventListener('click', () => pjEl('pjSuratInput')?.click());
-  pjEl('pjFotoRemove')?.addEventListener('click', clearPjFoto);
-  pjEl('pjSuratRemove')?.addEventListener('click', clearPjSurat);
-
-  bindPjFileInput('pjFotoCamInput', setPjFoto);
-  bindPjFileInput('pjFotoGalInput', setPjFoto);
-  bindPjFileInput('pjSuratInput',  setPjSurat);
-
-  pjEl('pjBtnSubmit')?.addEventListener('click', submitPengajuan);
 
   await refreshQuota();
 }
@@ -59,25 +78,38 @@ async function initPengajuan(session) {
 async function refreshQuota() {
   try {
     const s = pjState.session || getSession();
+    if (!s) return;
     const n = new Date();
     const awal = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`;
     const { data } = await supabaseClient.from('pengajuan')
       .select('id').eq('id_pegawai', s.id_pegawai)
-      .in('status', ['Menunggu','Disetujui'])          // ★ v2.1
-      .gte('tanggal_mulai', awal);                     // ★ v2.1
+      .in('status', ['Menunggu','Disetujui'])
+      .gte('tanggal_mulai', awal);
     pjState.terpakai = (data || []).length;
     const q = pjEl('pjQuotaModal');
     if (q) q.textContent = `${pjState.terpakai}/${PJ_KUOTA} terpakai bulan ini`;
-  } catch (e) { console.warn('Pengajuan quota:', e); }
+  } catch (e) { console.warn('[pengajuan] quota:', e); }
 }
 
 function openPengajuan(jenis) {
-  const cfg = PJ_JENIS[jenis]; if (!cfg) return;
+  const cfg = PJ_JENIS[jenis];
+  if (!cfg) { toast('Jenis pengajuan tidak dikenal: ' + jenis, 'error'); return; }
+
+  // ★ v2.3: markup hilang → pesan jelas, bukan crash senyap
+  if (!pjEl('pjModal') || !pjEl('pjJenisBadge')) {
+    console.error('[pengajuan] pjModal / pjJenisBadge tidak ditemukan di DOM!');
+    toast('Form pengajuan tidak tersedia — markup pjModal hilang', 'error');
+    return;
+  }
+
   pjState.jenis = jenis; pjState.foto = null; pjState.surat = null;
 
   pjEl('pjJenisBadge').textContent = jenis;
+  // ★ v2.3: judul dinamis
+  const t = pjEl('pjTitle'); if (t) t.textContent = 'Pengajuan ' + jenis;
+
   pjEl('pjAlasan').value = '';
-  pjEl('pjNoSurat').value = '';
+  const noSurat = pjEl('pjNoSurat'); if (noSurat) noSurat.value = '';
   const today = localDateStr();
   pjEl('pjTanggal').value = today;
   pjEl('pjTanggalSelesai').value = today;
@@ -95,6 +127,7 @@ function openPengajuan(jenis) {
   refreshQuota();
   pjEl('pjModal').classList.add('open');
   if (window.refreshIcons) window.refreshIcons();
+  console.log('[pengajuan] modal dibuka:', jenis);
 }
 
 function closePengajuan() { pjEl('pjModal')?.classList.remove('open'); }
@@ -186,7 +219,7 @@ async function submitPengajuan() {
     await dbInsert('pengajuan', {
       id_pegawai: s.id_pegawai,
       jenis,
-      tanggal_mulai: tgl,          // ★ v2.1 selaras verifikasi.js
+      tanggal_mulai: tgl,
       tanggal_selesai: tglS,
       durasi,
       jam_hadir: pjEl('pjJamHadir').value || null,
@@ -195,13 +228,13 @@ async function submitPengajuan() {
       alasan,
       foto: fotoUrl,
       surat: suratUrl,
-      status: 'Menunggu'           // ★ v2.1 selaras verifikasi.js
+      status: 'Menunggu'
     });
 
     closePengajuan();
     toast('Pengajuan terkirim — menunggu verifikasi', 'success');
     await refreshQuota();
-    // ★ Halaman presensi langsung sadar ada pengajuan pending hari ini
+    // Halaman presensi langsung sadar ada pengajuan pending hari ini
     if (typeof window.refreshPengajuanAktif === 'function') {
       try { await window.refreshPengajuanAktif(); } catch (e) {}
     }
@@ -215,4 +248,5 @@ async function submitPengajuan() {
 
 window.initPengajuan = initPengajuan;
 window.closePengajuan = closePengajuan;
+window.openPengajuan = openPengajuan;
 window.refreshPengajuanQuota = refreshQuota;
