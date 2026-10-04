@@ -97,67 +97,74 @@
       </button>
     </div>
 
-    <div class="pj-body">
-      <div class="pj-badges">
-        <span class="pj-badge" id="pjJenisBadge">—</span>
-        <span class="pj-quota-sm" id="pjQuotaModal">—</span>
-      </div>
+<div class="pj-body">
+  <div class="pj-badges">
+    <span class="pj-badge" id="pjJenisBadge">—</span>
+    <span class="pj-quota-sm" id="pjQuotaModal">—</span>
+  </div>
 
-      <div class="pj-field">
-        <label>Tanggal</label>
-        <input type="date" id="pjTanggal">
-      </div>
+  <div class="pj-field">
+    <label>Keterangan <span style="color:#FF3B30">*</span></label>
+    <textarea id="pjAlasan" rows="3" maxlength="500" placeholder="Tuliskan keterangan (min. 10 karakter)..."></textarea>
+  </div>
 
-      <div class="pj-field" id="pjSelesaiWrap">
-        <label>Sampai Tanggal</label>
-        <input type="date" id="pjTanggalSelesai">
-      </div>
+  <div class="pj-field">
+    <label>Tanggal Mulai <span style="color:#FF3B30">*</span></label>
+    <input type="date" id="pjTanggal">
+  </div>
 
-      <div id="pjJamWrap" hidden>
-        <div class="pj-field">
-          <label>Jam Hadir <small>(isi jika lupa absen masuk)</small></label>
-          <input type="time" id="pjJamHadir">
-        </div>
-        <div class="pj-field">
-          <label>Jam Pulang <small>(isi jika lupa absen pulang)</small></label>
-          <input type="time" id="pjJamPulang">
-        </div>
-      </div>
+  <div class="pj-field" id="pjSelesaiWrap">
+    <label>Tanggal Akhir</label>
+    <input type="date" id="pjTanggalSelesai">
+  </div>
 
-      <div class="pj-field">
-        <label>Alasan <span style="color:#FF3B30">*</span></label>
-        <textarea id="pjAlasan" rows="3" maxlength="500" placeholder="Tuliskan alasan pengajuan (min. 10 karakter)..."></textarea>
-      </div>
+  <div class="pj-field">
+    <label>Durasi <small>(otomatis)</small></label>
+    <input type="text" id="pjDurasi" readonly value="1 hari">
+  </div>
 
-      <div class="pj-field" id="pjFotoWrap" style="display:none">
-        <label>Foto <span id="pjFotoReq" style="color:#FF3B30;display:none">*</span></label>
-        <div class="pj-btn-row" id="pjFotoBtns">
-          <button type="button" class="pj-up-btn" id="pjBtnFotoCam">
-            <i data-lucide="camera"></i>Kamera</button>
-          <button type="button" class="pj-up-btn ghost" id="pjBtnFotoGal">
-            <i data-lucide="image"></i>Galeri</button>
-        </div>
-        <div class="pj-preview" id="pjFotoPreview" hidden>
-          <img id="pjFotoPreviewImg" alt="Foto">
-          <button type="button" class="pj-remove" id="pjFotoRemove">✕</button>
-        </div>
-        <input type="file" id="pjFotoCamInput" accept="image/*" capture="environment" hidden>
-        <input type="file" id="pjFotoGalInput" accept="image/*" hidden>
-      </div>
+  <div class="pj-field" id="pjNoSuratWrap" style="display:none">
+    <label>No. Surat <span style="color:#FF3B30">*</span></label>
+    <input type="text" id="pjNoSurat" placeholder="UM xxx / ND-...">
+  </div>
 
-      <div class="pj-field" id="pjSuratWrap" style="display:none">
-        <label>Surat Pendukung <span id="pjSuratReq" style="color:#FF3B30;display:none">*</span></label>
-        <div class="pj-btn-row" id="pjSuratBtns">
-          <button type="button" class="pj-up-btn ghost" id="pjBtnSurat">
-            <i data-lucide="file-text"></i>Pilih dari Galeri</button>
-        </div>
-        <div class="pj-preview" id="pjSuratPreview" hidden>
-          <img id="pjSuratPreviewImg" alt="Surat">
-          <button type="button" class="pj-remove" id="pjSuratRemove">✕</button>
-        </div>
-        <input type="file" id="pjSuratInput" accept="image/*" hidden>
-      </div>
+  <div id="pjJamWrap" hidden>
+    <div class="pj-field">
+      <label>Jam Hadir <small>(jika lupa absen masuk)</small></label>
+      <input type="time" id="pjJamHadir">
     </div>
+    <div class="pj-field">
+      <label>Jam Pulang <small>(jika lupa absen pulang)</small></label>
+      <input type="time" id="pjJamPulang">
+    </div>
+  </div>
+
+  <div class="pj-field" id="pjFotoWrap">
+    <label>Foto Dokumen Pendukung <span id="pjFotoReq" style="color:#FF3B30;display:none">*</span></label>
+    <div class="pj-btn-row">
+      <button type="button" class="pj-up-btn" id="pjBtnFotoCam"><i data-lucide="camera"></i>Kamera</button>
+      <button type="button" class="pj-up-btn ghost" id="pjBtnFotoGal"><i data-lucide="image"></i>Galeri</button>
+    </div>
+    <div class="pj-preview" id="pjFotoPreview" hidden>
+      <img id="pjFotoPreviewImg" alt="Foto">
+      <button type="button" class="pj-remove" id="pjFotoRemove">✕</button>
+    </div>
+    <input type="file" id="pjFotoCamInput" accept="image/*" capture="environment" hidden>
+    <input type="file" id="pjFotoGalInput" accept="image/*" hidden>
+  </div>
+
+  <div class="pj-field" id="pjSuratWrap" style="display:none">
+    <label>Surat Pendukung</label>
+    <div class="pj-btn-row">
+      <button type="button" class="pj-up-btn ghost" id="pjBtnSurat"><i data-lucide="file-text"></i>Pilih dari Galeri</button>
+    </div>
+    <div class="pj-preview" id="pjSuratPreview" hidden>
+      <img id="pjSuratPreviewImg" alt="Surat">
+      <button type="button" class="pj-remove" id="pjSuratRemove">✕</button>
+    </div>
+    <input type="file" id="pjSuratInput" accept="image/*" hidden>
+  </div>
+</div>
 
     <div class="pj-foot">
       <button type="button" class="btn-ios-primary" id="pjBtnSubmit" style="margin-top:0">
