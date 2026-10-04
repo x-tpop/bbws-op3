@@ -421,17 +421,19 @@ function updateActionButtons() {
   }
 
   // ===== CHECK-IN =====
+    const libur = !isHariKerja();
   if (!masuk) {
-    bH.disabled = false;
-    bH.classList.add('on'); bH.classList.remove('off');
-    lH.textContent = 'CHECK-IN';
-    sH.textContent = presensiState.status === 'Kerja Gabungan'
-      ? 'Mode Kerja Gabungan' : 'Presensi Masuk';
-  } else {
-    bH.disabled = true;
-    bH.classList.remove('on'); bH.classList.add('off');
-    lH.textContent = 'CHECK-IN';
-    sH.textContent = '✓ ' + fmtT(masuk);
+    if (libur) {
+      bH.disabled = true; bH.classList.remove('on'); bH.classList.add('off');
+      lH.textContent = 'CHECK-IN';
+      sH.textContent = 'Hari libur';
+    } else {
+      bH.disabled = false;
+      bH.classList.add('on'); bH.classList.remove('off');
+      lH.textContent = 'CHECK-IN';
+      sH.textContent = presensiState.status === 'Kerja Gabungan'
+        ? 'Mode Kerja Gabungan' : 'Presensi Masuk';
+    }
   }
 
   // ===== CHECK-OUT =====
@@ -464,36 +466,40 @@ function updateActionButtons() {
     if (!alertPending) {
       alert.hidden = false;
 
-      if (!isHariKerja()) {
+      if (libur) {
         alert.className = 'px-alert t-warn';
         lb.textContent = 'Bukan hari kerja';
         pn.textContent = 'Presensi dinonaktifkan hari ini';
-        return;
-      }
-
-      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
-      // ★ deteksi: menit telat dari jam masuk (jika sudah check-in)
-      // atau dari waktu sekarang (jika belum check-in)
-      const ref = masuk || getServerNow();
-      const menitTelat = Math.max(0, (ref.getHours() * 60 + ref.getMinutes()) - (jh * 60 + jm));
-      const tier = getTelatTier(menitTelat);
-
-      alert.className = 'px-alert ' + tier.cls;
-
-      if (!masuk && menitTelat <= 0) {
-        // ★ belum presensi & belum terlambat
-        lb.textContent = 'Anda belum Presensi hari ini';
-        pn.textContent = `Poin: ${tier.poin} jika check-in sekarang`;
-      } else if (menitTelat > 0) {
-        // ★ ganti "Terlambat Berat" → format sederhana
-        lb.textContent = `Anda Terlambat ${menitTelat} menit`;
-        pn.textContent = masuk
-          ? `Poin: ${tier.poin}`
-          : `Poin: ${tier.poin} jika check-in sekarang`;
       } else {
-        // sudah check-in & tepat waktu
-        lb.textContent = 'Presensi hari ini tercatat ✓';
-        pn.textContent = `Poin: ${tier.poin}`;
+        const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+        // referensi telat: jam check-in (jika sudah) atau waktu sekarang (belum)
+        const ref = masuk || getServerNow();
+        const menitTelat = Math.max(0, (ref.getHours() * 60 + ref.getMinutes()) - (jh * 60 + jm));
+        const tier = getTelatTier(menitTelat);
+
+        alert.className = 'px-alert ' + tier.cls;
+
+        // ★ SATU rantai if — tidak ada timpa-menimpa
+        if (masuk && keluar) {
+          // State C: siklus selesai — rekap hijau
+          alert.className = 'px-alert t-ok';
+          lb.textContent = 'Presensi hari ini selesai ✓';
+          pn.textContent = `Masuk ${fmtT(masuk)} · Keluar ${fmtT(keluar)}`;
+        } else if (!masuk && menitTelat <= 0) {
+          // belum presensi & belum jam masuk
+          lb.textContent = 'Anda belum Presensi hari ini';
+          pn.textContent = `Poin: ${tier.poin} jika check-in sekarang`;
+        } else if (menitTelat > 0) {
+          // telat (baik belum maupun sudah check-in)
+          lb.textContent = `Anda Terlambat ${menitTelat} menit`;
+          pn.textContent = masuk
+            ? `Poin: ${tier.poin}`
+            : `Poin: ${tier.poin} jika check-in sekarang`;
+        } else {
+          // sudah check-in & tepat waktu (belum keluar)
+          lb.textContent = 'Presensi hari ini tercatat ✓';
+          pn.textContent = `Poin: ${tier.poin}`;
+        }
       }
     }
   }
@@ -616,6 +622,9 @@ async function initPresensi() {
     });
 
     // ---- ACCORDION STATUS KHUSUS ----
+        // ★ default terbuka — kartu pengajuan langsung terlihat (sesuai mockup)
+    el('accKhusus')?.classList.add('open');
+    if (el('accBody')) el('accBody').hidden = false;
     el('accHead')?.addEventListener('click', () => {
       const acc = el('accKhusus'), body = el('accBody');
       const open = acc.classList.toggle('open');
