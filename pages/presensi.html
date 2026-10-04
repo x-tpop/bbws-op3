@@ -1,0 +1,691 @@
+<section class="page active" data-page="presensi">
+  <div class="pres-minibar" id="presMiniBar">
+    <img id="miniAvatar" src="assets/img/logo-symbol.png" alt="">
+    <div class="mb-id"><b id="miniNama">—</b><small>E-Kehadiran</small></div>
+    <span class="mb-clock" id="miniClock">--:--</span>
+  </div>
+
+  <!-- HEADER COMPACT -->
+  <div class="px-head" id="presHero">
+    <img class="px-cut" id="heroCutout" alt="">
+    <div class="px-meta">
+      <div class="px-nrow">
+        <button type="button" class="px-arrow" id="phPrev" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <h2 id="phNama">—</h2>
+        <button type="button" class="px-arrow" id="phNext" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="px-line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <span id="phJabatan">—</span>
+        <span class="px-sep">|</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="phWilayah">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN: search + chips (hanya admin/staf) -->
+  <div class="px-admin" id="phAdmin" hidden>
+    <div class="px-search"><input id="phSearchInput" type="text" placeholder="Cari Nama Petugas..." autocomplete="off"></div>
+    <div class="px-chips" id="phChips"></div>
+  </div>
+
+  <!-- MAP + GPS OVERLAY -->
+  <div class="px-card px-map">
+    <div id="miniMap"></div>
+    <div class="gps-float" id="gpsBar">
+      <span class="gps-ic" id="gpsIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </span>
+      <div class="gps-txt">
+        <b id="gpsLoc">Mendeteksi lokasi…</b>
+        <span class="gps-chip" id="gpsText">GPS: —</span>
+      </div>
+      <button type="button" id="btnRefreshGps" title="Deteksi ulang lokasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERT STATUS -->
+  <div class="px-alert t-bad" id="lateAlert" hidden>
+    <span class="al-ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </span>
+    <b id="lateLabel">—</b><span class="al-sep">•</span><span id="latePoin">—</span>
+  </div>
+
+  <!-- CHECK-IN / CHECK-OUT -->
+  <div class="px-actions">
+    <button type="button" class="px-act a-in on" id="btnHadir">
+      <span class="pxa-ic sun">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </span>
+      <b id="hadirLabel">CHECK-IN</b><small id="hadirSub">Presensi Masuk</small>
+    </button>
+    <button type="button" class="px-act a-out" id="btnPulang" disabled>
+      <span class="pxa-ic moon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </span>
+      <b id="pulangLabel">CHECK-OUT</b><small id="pulangSub">Belum Waktunya</small>
+    </button>
+  </div>
+
+  <!-- STATUS KHUSUS -->
+  <p class="px-kicker">Status Khusus</p>
+  <div class="px-acc" id="accKhusus">
+    <button type="button" class="acc-head" id="accHead">
+      <span class="ah-ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </span>
+      <b>Pengajuan & Konfirmasi</b>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="acc-body" id="accBody" hidden>
+      <div class="px-qgrid">
+        <button type="button" class="px-q q-sakit" data-pengajuan="Sakit"><i data-lucide="thermometer"></i>Sakit</button>
+        <button type="button" class="px-q q-izin" data-pengajuan="Izin"><i data-lucide="clipboard-list"></i>Izin</button>
+        <button type="button" class="px-q q-dinas" data-pengajuan="Dinas Luar"><i data-lucide="briefcase"></i>Dinas</button>
+        <button type="button" class="px-q q-lupa" data-pengajuan="Lupa Absen"><i data-lucide="alarm-clock"></i>Lupa</button>
+      </div>
+      <button type="button" class="px-q qr" id="btnKerjaGabungan"><i data-lucide="qr-code"></i>Kerja Gabungan (QR)</button>
+      <div class="px-note" id="presNote">Memuat…</div>
+    </div>
+  </div>
+
+  <!-- REVIEW CARD (muncul setelah foto diambil) -->
+  <div class="px-card px-review" id="reviewCard" hidden>
+    <img id="previewImg" alt="Preview">
+    <div class="rv-btns">
+      <button type="button" id="btnRetake"><i data-lucide="rotate-ccw"></i> Ulangi</button>
+      <button type="button" id="btnSubmit" class="primary"><i data-lucide="check"></i> Kirim Presensi</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODAL PENGAJUAN ============ -->
+<div id="pjModal" class="ios-modal-backdrop pj-backdrop">
+  <div class="pj-card">
+    <div class="rp-modal-head" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #F2F2F7">
+      <h3 id="pjTitle" style="font:700 16px -apple-system,sans-serif;margin:0">Pengajuan</h3>
+      <button type="button" class="rp-modal-close" id="pjBtnClose" style="border:0;background:#F2F2F7;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;cursor:pointer">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+<div class="pj-body">
+  <div class="pj-badges">
+    <span class="pj-badge" id="pjJenisBadge">—</span>
+    <span class="pj-quota-sm" id="pjQuotaModal">—</span>
+  </div>
+
+  <div class="pj-field">
+    <label>Keterangan <span style="color:#FF3B30">*</span></label>
+    <textarea id="pjAlasan" rows="3" maxlength="500" placeholder="Tuliskan keterangan (min. 10 karakter)..."></textarea>
+  </div>
+
+  <div class="pj-field">
+    <label>Tanggal Mulai <span style="color:#FF3B30">*</span></label>
+    <input type="date" id="pjTanggal">
+  </div>
+
+  <div class="pj-field" id="pjSelesaiWrap">
+    <label>Tanggal Akhir</label>
+    <input type="date" id="pjTanggalSelesai">
+  </div>
+
+  <div class="pj-field">
+    <label>Durasi <small>(otomatis)</small></label>
+    <input type="text" id="pjDurasi" readonly value="1 hari">
+  </div>
+
+  <div class="pj-field" id="pjNoSuratWrap" style="display:none">
+    <label>No. Surat <span style="color:#FF3B30">*</span></label>
+    <input type="text" id="pjNoSurat" placeholder="UM xxx / ND-...">
+  </div>
+
+  <div id="pjJamWrap" hidden>
+    <div class="pj-field">
+      <label>Jam Hadir <small>(jika lupa absen masuk)</small></label>
+      <input type="time" id="pjJamHadir">
+    </div>
+    <div class="pj-field">
+      <label>Jam Pulang <small>(jika lupa absen pulang)</small></label>
+      <input type="time" id="pjJamPulang">
+    </div>
+  </div>
+
+  <div class="pj-field" id="pjFotoWrap">
+    <label>Foto Dokumen Pendukung <span id="pjFotoReq" style="color:#FF3B30;display:none">*</span></label>
+    <div class="pj-btn-row">
+      <button type="button" class="pj-up-btn" id="pjBtnFotoCam"><i data-lucide="camera"></i>Kamera</button>
+      <button type="button" class="pj-up-btn ghost" id="pjBtnFotoGal"><i data-lucide="image"></i>Galeri</button>
+    </div>
+    <div class="pj-preview" id="pjFotoPreview" hidden>
+      <img id="pjFotoPreviewImg" alt="Foto">
+      <button type="button" class="pj-remove" id="pjFotoRemove">✕</button>
+    </div>
+    <input type="file" id="pjFotoCamInput" accept="image/*" capture="environment" hidden>
+    <input type="file" id="pjFotoGalInput" accept="image/*" hidden>
+  </div>
+
+  <div class="pj-field" id="pjSuratWrap" style="display:none">
+    <label>Surat Pendukung</label>
+    <div class="pj-btn-row">
+      <button type="button" class="pj-up-btn ghost" id="pjBtnSurat"><i data-lucide="file-text"></i>Pilih dari Galeri</button>
+    </div>
+    <div class="pj-preview" id="pjSuratPreview" hidden>
+      <img id="pjSuratPreviewImg" alt="Surat">
+      <button type="button" class="pj-remove" id="pjSuratRemove">✕</button>
+    </div>
+    <input type="file" id="pjSuratInput" accept="image/*" hidden>
+  </div>
+</div>
+
+    <div class="pj-foot">
+      <button type="button" class="btn-ios-primary" id="pjBtnSubmit" style="margin-top:0">
+        <span id="pjLoading" hidden style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span>
+        <i data-lucide="send"></i>Ajukan untuk Verifikasi
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FULLSCREEN KAMERA (tidak berubah) ============ -->
+<div id="camFullscreen" class="cam-fullscreen">
+  <video id="videoFullscreen" autoplay playsinline muted></video>
+
+  <div class="ios-wm-card" id="iosWmCard">
+    <div class="ios-wm-brand">
+      <div class="pupr-logo-circle" id="puprLogoCircle">
+        <img src="assets/img/logo-symbol.png" alt=""
+             onerror="this.classList.add('hide');this.parentElement.classList.add('no-img')">
+        <svg viewBox="0 0 100 100" class="pupr-svg pupr-fallback">
+          <circle cx="50" cy="50" r="48" fill="#FDB813"/>
+          <path d="M50 15 L80 35 L80 65 L50 85 L20 65 L20 35 Z" fill="#003366"/>
+          <circle cx="50" cy="50" r="18" fill="#FDB813"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">BBWS BRANTAS</span>
+        <span class="brand-sub">Kementerian PUPR</span>
+      </div>
+    </div>
+    <div class="ios-wm-divider"></div>
+    <div class="ios-wm-info">
+      <div class="info-row identity">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="identity-group"><b id="wmName">—</b><small id="wmJabatan">—</small></div>
+      </div>
+      <div class="info-row location">
+        <span class="status-badge" id="wmStatus"><span class="sb-dot"></span><span class="sb-text">Hadir</span></span>
+        <div class="loc-group"><b id="wmLocName">Mendeteksi...</b><small id="wmCoords">—</small></div>
+      </div>
+      <div class="info-row time">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="wmTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cam-top">
+    <div class="cam-pill">
+      <div class="pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="camFsTime">—</span>
+      </div>
+      <div class="pill-divider"></div>
+      <div class="pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="camFsLoc">Mendeteksi...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cam-viewport" id="fsLiveMode">
+    <div class="cam-oval-guide" id="faceGuide">
+      <div class="cam-scan-line"></div>
+      <div class="cam-face-status" id="faceStatus">
+        <div class="face-dot"></div>
+        <span class="face-label">Posisikan wajah Anda di dalam oval</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cam-review" id="fsReviewMode" hidden>
+    <img id="fsReviewImg" alt="Review">
+    <div class="cam-review-info">
+      <div class="cri-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="fsReviewLoc">—</span>
+      </div>
+      <div class="cri-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="fsReviewTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cam-dock-wrap" id="fsDockLive">
+    <div class="cam-dock">
+      <button type="button" class="cam-dock-btn" id="btnFsClose" title="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button type="button" class="cam-shutter" id="btnFsCapture" title="Ambil Foto">
+        <span class="shutter-ring"></span><span class="shutter-inner"></span>
+      </button>
+      <button type="button" class="cam-dock-btn" id="btnFsSwitch" title="Ganti Kamera">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 8.5a8.5 8.5 0 0 0-14.5-2"/><polyline points="5.5 6.5 5.5 2.5 9.5 2.5"/><path d="M4 15.5a8.5 8.5 0 0 0 14.5 2"/><polyline points="18.5 17.5 18.5 21.5 14.5 21.5"/></svg>
+      </button>
+    </div>
+    <div class="cam-home-bar"></div>
+  </div>
+
+  <div class="cam-dock-wrap" id="fsDockReview" hidden>
+    <div class="cam-dock cam-dock-review">
+      <button type="button" class="cam-review-btn secondary" id="btnReviewRetake">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Foto Ulang</span>
+      </button>
+      <button type="button" class="cam-review-btn primary" id="btnReviewUse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Gunakan Foto</span>
+      </button>
+    </div>
+    <div class="cam-home-bar"></div>
+  </div>
+
+  <div class="auto-capture-ring" id="autoCaptureRing" hidden>
+    <svg viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="44" class="acr-track"/>
+      <circle cx="50" cy="50" r="44" class="acr-progress" id="acrProgress"/>
+    </svg>
+    <span class="acr-text" id="acrText">1.5</span>
+  </div>
+</div>
+
+<!-- LOADING + SUKSES (tidak berubah) -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-card">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Mengirim presensi...</div>
+  </div>
+</div>
+
+<div id="suksesModal" class="ios-modal-backdrop">
+  <div class="ios-modal-card">
+    <div class="ios-success-badge">
+      <div class="ios-success-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="ios-modal-header">
+      <h3 class="ios-modal-title" id="suksesTitle">Check-in Berhasil!</h3>
+      <p class="ios-modal-sub" id="suksesMsg">Presensi masuk Anda telah tercatat.</p>
+    </div>
+    <div class="ios-inset-group">
+      <div class="ios-inset-row"><span class="row-label">Tanggal</span><span class="row-value" id="succDate">—</span></div>
+      <div class="ios-inset-row"><span class="row-label" id="succTimeLabel">Jam Masuk</span><span class="row-value highlight" id="succTime">—</span></div>
+      <div class="ios-inset-row"><span class="row-label">Status</span><span class="row-badge green" id="succStatus">—</span></div>
+      <div class="ios-inset-row" id="succStatusRow" style="display:none"><span class="row-label">Keterangan Waktu</span><span class="row-value" id="succStatusKehadiran">—</span></div>
+      <div class="ios-inset-row"><span class="row-label">Lokasi</span><div class="row-value-group"><span class="row-value-main" id="succLocName">—</span><small class="row-value-sub" id="succLocCoords">—</small></div></div>
+      <div class="ios-inset-row" id="succKetRow" style="display:none"><span class="row-label">Keterangan</span><span class="row-value" id="succKet">—</span></div>
+    </div>
+    <div class="ios-modal-actions">
+      <button type="button" class="ios-btn-done" onclick="closeSuksesModal()">Selesai</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ============================================================
+   PRESENSI v20.1 — PANEL DARK (lengkap & bersih)
+   ============================================================ */
+section[data-page="presensi"]{background:#0B1026;border-radius:20px;padding:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+/* ---------- MINIBAR (sticky) ---------- */
+.pres-minibar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;
+  background:rgba(17,25,69,.92);backdrop-filter:blur(20px) saturate(180%);
+  border:1.5px solid #232E63;border-radius:14px;padding:8px 12px;margin:0 0 10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+  transform:translateY(-130%);opacity:0;transition:.35s cubic-bezier(.32,.72,0,1);pointer-events:none}
+.pres-minibar.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.pres-minibar img{width:36px;height:36px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,.3);background:#0A0F33}
+.mb-id{flex:1;min-width:0}
+.mb-id b{display:block;font:700 13px -apple-system,sans-serif;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-id small{font:600 10px -apple-system,sans-serif;color:#8FA0D8;letter-spacing:.06em;text-transform:uppercase}
+.mb-clock{font:700 15px 'Space Grotesk',monospace;color:#37E0C8}
+
+/* ---------- HEADER COMPACT ---------- */
+.px-head{display:flex;gap:12px;align-items:flex-end;margin:4px 2px 14px}
+.px-cut{height:128px;width:auto;max-width:38vw;object-fit:contain;flex:none;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}
+section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-radius:50%;
+  object-fit:cover;border:3px solid rgba(255,255,255,.25);background:#141B3D;filter:none}
+.px-meta{flex:1;min-width:0;padding-bottom:6px}
+.px-nrow{display:flex;align-items:center;gap:6px}
+.px-nrow h2{flex:1;margin:0;font:800 clamp(17px,5vw,22px)/1.15 var(--font);color:#fff;letter-spacing:.02em}
+.px-head.mgr .px-nrow h2{cursor:pointer}
+.px-arrow{width:30px;height:30px;flex:none;border-radius:50%;border:1.5px solid #2A3572;
+  background:rgba(255,255,255,.06);color:#C7D2F5;display:grid;place-items:center;cursor:pointer}
+.px-arrow svg{width:14px;height:14px}
+.px-line{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;
+  font:700 12px -apple-system,sans-serif;color:#37E0C8}
+.px-line svg{width:14px;height:14px;flex:none}
+.px-line .px-sep{color:#3D4A85;font-weight:400}
+
+/* ---------- ADMIN: SEARCH + CHIPS ---------- */
+.px-admin{margin:0 2px 12px;display:flex;flex-direction:column;gap:8px}
+.px-search{display:flex;background:#0A0F33;border:1.5px solid #2A3572;border-radius:12px;padding:0 12px}
+.px-search input{flex:1;min-width:0;background:transparent;border:0;color:#fff;
+  font:500 13px -apple-system,sans-serif;padding:10px 0;outline:0}
+.px-search input::placeholder{color:#5A659B}
+.px-chips{display:flex;flex-wrap:wrap;gap:6px}
+.px-chip{border:1.5px solid #2A3572;background:transparent;color:#8FA0D8;font:700 10px var(--font);
+  letter-spacing:.06em;padding:6px 12px;border-radius:99px;cursor:pointer;transition:.15s}
+.px-chip.active{background:#F7931A;border-color:#F7931A;color:#fff;box-shadow:0 4px 12px rgba(247,147,26,.4)}
+
+/* ---------- KARTU GENERIK + MAP SATELIT ---------- */
+.px-card{position:relative;background:#111945;border:1.5px solid #232E63;border-radius:16px;overflow:hidden}
+.px-map{height:230px;margin-bottom:10px}
+.px-map #miniMap{width:100%;height:100%;background:#0A0F33;z-index:1}
+.pin-biru{filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.leaflet-control-attribution{font-size:8.5px !important;
+  background:rgba(10,15,51,.7) !important;color:#8FA0D8 !important}
+.leaflet-control-attribution a{color:#8FA0D8 !important}
+
+/* ---------- GPS BAR ---------- */
+.px-gps{display:flex;align-items:center;gap:10px;background:#111945;border:1.5px solid #232E63;
+  border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.gps-ic{width:22px;height:22px;flex:none;display:grid;place-items:center;color:#2DD4BF}
+.gps-ic svg{width:20px;height:20px}
+.gps-ic.bad{color:#F87171}
+.px-gps b{flex:1;font:700 13px 'Space Grotesk',monospace;color:#fff;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.px-gps button{width:34px;height:34px;flex:none;border:0;border-radius:50%;
+  background:rgba(255,255,255,.07);color:#C7D2F5;display:grid;place-items:center;cursor:pointer}
+.px-gps button svg{width:16px;height:16px}
+.px-gps button.spun svg{animation:spin 1s linear infinite}
+
+/* ---------- TOMBOL HADIR / PULANG ---------- */
+.px-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.px-act{border:0;border-radius:18px;padding:20px 12px 16px;display:flex;flex-direction:column;
+  align-items:center;gap:8px;cursor:pointer;transition:.2s;font-family:var(--font)}
+.px-act svg{width:26px;height:26px}
+.px-act b{font:800 15px var(--font);letter-spacing:.06em;color:#fff}
+.px-act small{font:600 11px 'Space Grotesk',monospace;min-height:14px}
+.px-act.on{background:linear-gradient(150deg,#FF6B6B,#E5484D);box-shadow:0 10px 24px rgba(229,72,77,.35)}
+.px-act.on:active{transform:scale(.97)}
+.px-act.off{background:#131C4A;border:1.5px solid #232E63;cursor:not-allowed}
+.px-act.off b{color:#5A659B}
+.px-act.off svg{color:#3D4A85}
+.px-act.off small{color:#8FA0D8}
+
+/* ---------- ALERT STATUS ---------- */
+.px-alert{display:flex;align-items:center;gap:12px;border-radius:14px;padding:12px 14px;
+  margin-bottom:10px;border:1.5px solid}
+.al-ic{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center}
+.al-ic svg{width:18px;height:18px}
+.al-txt b{display:block;font:700 14px var(--font)}
+.al-txt span{font:600 12px -apple-system,sans-serif;color:#E7EAFB;opacity:.85}
+.px-alert.t-ok  {background:rgba(45,212,191,.08);border-color:rgba(45,212,191,.4)}
+.px-alert.t-ok  .al-ic,.px-alert.t-ok  b{color:#2DD4BF}
+.px-alert.t-warn{background:rgba(255,149,0,.08);border-color:rgba(255,149,0,.4)}
+.px-alert.t-warn .al-ic,.px-alert.t-warn b{color:#FFB340}
+.px-alert.t-bad {background:rgba(229,72,77,.08);border-color:rgba(229,72,77,.45)}
+.px-alert.t-bad .al-ic,.px-alert.t-bad b{color:#FF6B6B}
+
+/* ---------- ACCORDION STATUS KHUSUS ---------- */
+.px-acc{background:#111945;border:1.5px solid #232E63;border-radius:14px;overflow:hidden;margin-bottom:10px}
+.acc-head{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;
+  padding:14px;cursor:pointer;color:#fff;font-family:var(--font)}
+.ah-ic{width:30px;height:30px;border-radius:8px;background:rgba(45,212,191,.12);color:#2DD4BF;
+  display:grid;place-items:center;flex:none}
+.ah-ic svg{width:16px;height:16px}
+.acc-head b{flex:1;text-align:left;font:700 13.5px var(--font)}
+.acc-head .chev{width:18px;height:18px;color:#8FA0D8;transition:transform .25s}
+.px-acc.open .chev{transform:rotate(180deg)}
+.acc-body{padding:2px 12px 12px}
+.px-qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.px-q{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;border-radius:12px;
+  padding:12px 4px;cursor:pointer;color:#fff;font:700 10px -apple-system,sans-serif;transition:.15s}
+.px-q:active{transform:scale(.95)}
+.px-q svg{width:18px;height:18px}
+.q-sakit{background:linear-gradient(145deg,#FF6482,#FF3B30)}
+.q-izin{background:linear-gradient(145deg,#FFB340,#FF9500)}
+.q-dinas{background:linear-gradient(145deg,#64B5FF,#007AFF)}
+.q-lupa{background:linear-gradient(145deg,#C77DFF,#AF52DE)}
+.px-q.qr{width:100%;flex-direction:row;justify-content:center;gap:8px;
+  background:rgba(175,82,222,.12);border:1.5px solid rgba(175,82,222,.5);color:#C77DFF;
+  padding:11px;font:700 12px var(--font)}
+.px-q.qr.active{background:#AF52DE;color:#fff}
+
+/* ---------- NOTE + REVIEW CARD ---------- */
+.px-note{background:#0A0F33;border-radius:10px;padding:9px 12px;
+  font:500 12px/1.5 -apple-system,sans-serif;color:#8FA0D8}
+.px-review{padding:10px;margin-bottom:10px}
+.px-review img{width:100%;border-radius:12px;display:block}
+.rv-btns{display:flex;gap:8px;margin-top:10px}
+.rv-btns button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:0;
+  border-radius:12px;padding:12px;font:700 13px var(--font);cursor:pointer;transition:.15s}
+.rv-btns button:active{transform:scale(.97)}
+.rv-btns svg{width:15px;height:15px}
+.rv-btns #btnRetake{background:rgba(255,255,255,.08);color:#C7D2F5}
+.rv-btns .primary{background:linear-gradient(150deg,#FF6B6B,#E5484D);color:#fff;
+  box-shadow:0 6px 16px rgba(229,72,77,.35)}
+
+/* ---------- MODAL PENGAJUAN ---------- */
+.pj-backdrop{z-index:10050}
+.pj-card{width:100%;max-width:420px;max-height:88vh;background:#fff;border-radius:20px;
+  display:flex;flex-direction:column;overflow:hidden;transform:scale(.92);
+  transition:.25s cubic-bezier(.32,.72,0,1)}
+.pj-backdrop.open .pj-card{transform:scale(1)}
+.pj-body{padding:14px 16px;overflow-y:auto;flex:1}
+.pj-badges{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pj-badge{font:800 11px -apple-system,sans-serif;padding:5px 12px;border-radius:99px;color:#fff;
+  background:linear-gradient(135deg,#1E3A8A,#2563EB)}
+.pj-quota-sm{font:600 11px -apple-system,sans-serif;color:#8E8E93}
+.pj-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.pj-field label{font:700 10px var(--font);letter-spacing:.08em;text-transform:uppercase;color:#8E8E93}
+.pj-field label small{text-transform:none;letter-spacing:0;font-weight:500;color:#8E8E93}
+.pj-field input,.pj-field textarea{border:0;background:#F2F2F7;border-radius:10px;
+  padding:10px 12px;font:500 15px -apple-system,sans-serif;color:#000;width:100%}
+.pj-field textarea{resize:vertical}
+.pj-field input:focus,.pj-field textarea:focus{outline:0;background:#E5E5EA;
+  box-shadow:0 0 0 3px rgba(0,122,255,.15)}
+.pj-btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.pj-up-btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;
+  background:#007AFF;color:#fff;font:600 12.5px -apple-system,sans-serif;padding:9px 14px;cursor:pointer}
+.pj-up-btn.ghost{background:#F2F2F7;color:#007AFF}
+.pj-up-btn svg{width:15px;height:15px}
+.pj-preview{position:relative;border-radius:10px;overflow:hidden}
+.pj-preview img{width:100%;display:block}
+.pj-remove{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;
+  background:rgba(0,0,0,.6);border:0;color:#fff;display:grid;place-items:center;cursor:pointer}
+.pj-foot{padding:12px 16px;border-top:1px solid #F2F2F7}
+.btn-ios-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:#007AFF;color:#fff;border:0;border-radius:12px;padding:11px 16px;
+  font:600 14.5px -apple-system,sans-serif;cursor:pointer;transition:.2s}
+.btn-ios-primary svg{width:16px;height:16px}
+
+/* ---------- WATERMARK KAMERA ---------- */
+.ios-wm-card{position:absolute;bottom:140px;left:12px;right:12px;z-index:20;
+  background:rgba(20,20,24,.62);backdrop-filter:blur(24px) saturate(180%);
+  border:.5px solid rgba(255,255,255,.25);border-radius:18px;padding:10px 14px;
+  display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;pointer-events:none}
+.ios-wm-brand{display:flex;align-items:center;gap:8px;flex:none}
+.pupr-logo-circle{width:36px;height:36px;border-radius:10px;background:#FFF;padding:2px;
+  display:grid;place-items:center;overflow:hidden}
+.pupr-logo-circle img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+.pupr-logo-circle img.hide{display:none}
+.pupr-logo-circle .pupr-fallback{display:none}
+.pupr-logo-circle.no-img .pupr-fallback{display:block;width:100%;height:100%}
+.pupr-svg{width:100%;height:100%}
+.brand-text{display:flex;flex-direction:column}
+.brand-title{font-size:11px;font-weight:800;letter-spacing:.4px;color:#FDB813}
+.brand-sub{font-size:9px;font-weight:500;color:rgba(255,255,255,.75)}
+.ios-wm-divider{width:1px;height:56px;background:rgba(255,255,255,.2);flex:none}
+.ios-wm-info{display:flex;flex-direction:column;gap:4px;flex:1;overflow:hidden;min-width:0}
+.info-row{display:flex;align-items:center;gap:6px;min-width:0}
+.info-row svg{width:12px;height:12px;flex:none}
+.info-row.identity svg{stroke:#FDB813}
+.info-row.location svg{stroke:#34C759}
+.info-row.time svg{stroke:#007AFF}
+.identity-group{display:flex;align-items:baseline;gap:6px;min-width:0;overflow:hidden}
+.identity-group b{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.identity-group small{font-size:9.5px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loc-group{display:flex;align-items:baseline;gap:6px;overflow:hidden;min-width:0}
+.loc-group b{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.loc-group small{font-size:9.5px;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;
+  background:rgba(52,199,89,.25);border:.5px solid rgba(52,199,89,.4);font-size:9.5px;font-weight:700;
+  color:#4ADE80;white-space:nowrap;flex:none}
+.sb-dot{width:4px;height:4px;border-radius:50%;background:#34C759;animation:sbPulse 2s infinite}
+@keyframes sbPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-badge .sb-dot{width:5px;height:5px;background:#4ADE80}
+.status-badge.qr{background:rgba(175,82,222,.25);border-color:rgba(175,82,222,.4);color:#C77DFF}
+.status-badge.qr .sb-dot{background:#C77DFF}
+.info-row.time{font-size:10.5px;font-weight:500;color:rgba(255,255,255,.85)}
+
+/* ---------- KAMERA FULLSCREEN ---------- */
+.cam-fullscreen{position:fixed;inset:0;background:#000;z-index:9999;display:none;
+  flex-direction:column;justify-content:space-between;overflow:hidden}
+.cam-fullscreen.open{display:flex}
+.cam-fullscreen video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.cam-top{position:relative;z-index:10;width:100%;display:flex;justify-content:center;
+  padding-top:max(52px, env(safe-area-inset-top));padding-bottom:12px}
+.cam-pill{background:rgba(20,20,22,.65);backdrop-filter:blur(25px) saturate(180%);
+  border:.5px solid rgba(255,255,255,.18);border-radius:99px;padding:8px 16px;
+  display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px)}
+.pill-item{display:flex;align-items:center;gap:6px;color:#fff;font:600 12.5px -apple-system,sans-serif;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill-item svg{width:14px;height:14px;stroke:rgba(255,255,255,.85);flex:none}
+.pill-divider{width:1px;height:12px;background:rgba(255,255,255,.2);flex:none}
+.cam-viewport{position:relative;z-index:5;flex:1;display:flex;align-items:center;justify-content:center;padding-bottom:60px}
+.cam-oval-guide{position:relative;width:min(72vw,280px);height:min(100vw,390px);border-radius:50%;
+  border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 9999px rgba(0,0,0,.55);
+  transition:border-color .4s,box-shadow .4s;overflow:visible}
+.cam-oval-guide.detected{border-color:#34C759;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.55),0 0 20px rgba(52,199,89,.4)}
+.cam-scan-line{position:absolute;left:12%;right:12%;height:2px;top:15%;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.3) 15%,rgba(255,255,255,.9) 50%,rgba(255,255,255,.3) 85%,transparent 100%);
+  border-radius:99px;animation:scanMove 2.8s ease-in-out infinite;pointer-events:none;z-index:3}
+.cam-oval-guide.detected .cam-scan-line{background:linear-gradient(90deg,transparent 0%,rgba(52,199,89,.3) 15%,rgba(52,199,89,.95) 50%,rgba(52,199,89,.3) 85%,transparent 100%)}
+@keyframes scanMove{0%,100%{top:12%;opacity:.7}50%{top:80%;opacity:1}}
+.cam-face-status{position:absolute;bottom:-76px;left:50%;transform:translateX(-50%);
+  background:rgba(28,28,30,.85);backdrop-filter:blur(20px);border:.5px solid rgba(255,255,255,.15);
+  border-radius:99px;padding:9px 18px;display:flex;align-items:center;gap:9px;color:#fff;
+  font:500 12.5px -apple-system,sans-serif;white-space:nowrap;z-index:4}
+.cam-oval-guide.detected .cam-face-status{background:rgba(52,199,89,.92)}
+.face-dot{width:8px;height:8px;border-radius:50%;background:#FFCC00;position:relative;flex:none}
+.face-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:1.5px solid rgba(255,204,0,.5);animation:facePulse 1.8s ease-in-out infinite}
+.cam-oval-guide.detected .face-dot{background:#34C759}
+.cam-oval-guide.detected .face-dot::before{border-color:rgba(52,199,89,.6)}
+@keyframes facePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:0}}
+.cam-review{position:relative;z-index:5;flex:1;display:flex;align-items:center;justify-content:center;
+  padding:0 20px 20px;flex-direction:column;gap:14px}
+.cam-review img{max-width:100%;max-height:65vh;border-radius:20px;display:block}
+.cam-review-info{display:flex;flex-direction:column;gap:8px;background:rgba(28,28,30,.75);
+  backdrop-filter:blur(20px);border:.5px solid rgba(255,255,255,.15);border-radius:16px;padding:12px 16px}
+.cri-item{display:flex;align-items:center;gap:8px;color:#fff;font:600 12px -apple-system,'SF Mono',monospace}
+.cri-item svg{width:14px;height:14px;flex:none;color:#FFCC00}
+.cam-dock-wrap{position:relative;z-index:10;width:100%;display:flex;flex-direction:column;align-items:center;
+  padding-bottom:max(34px, env(safe-area-inset-bottom));padding-top:12px;gap:10px}
+.cam-dock{background:rgba(255,255,255,.18);backdrop-filter:blur(30px) saturate(180%);
+  border:.5px solid rgba(255,255,255,.28);border-radius:44px;padding:10px 24px;
+  display:flex;align-items:center;gap:32px}
+.cam-dock-review{gap:14px;padding:12px 16px;width:calc(100% - 32px);max-width:400px}
+.cam-dock-btn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);
+  border:.5px solid rgba(255,255,255,.25);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.cam-dock-btn:active{transform:scale(.92)}
+.cam-dock-btn svg{width:20px;height:20px}
+.cam-shutter{position:relative;width:68px;height:68px;background:transparent;border:none;cursor:pointer;
+  display:grid;place-items:center;padding:0;flex:none}
+.shutter-ring{position:absolute;inset:0;border-radius:50%;border:4px solid #fff}
+.shutter-inner{width:52px;height:52px;border-radius:50%;background:#fff}
+.cam-shutter:active .shutter-inner{transform:scale(.88);background:#E5E5EA}
+.cam-review-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 16px;border-radius:14px;border:0;font:600 13.5px -apple-system,sans-serif;cursor:pointer}
+.cam-review-btn svg{width:16px;height:16px}
+.cam-review-btn.secondary{background:rgba(255,255,255,.15);color:#fff;border:.5px solid rgba(255,255,255,.25)}
+.cam-review-btn.primary{background:#007AFF;color:#fff}
+.cam-home-bar{width:134px;height:5px;background:rgba(255,255,255,.85);border-radius:10px;margin-top:2px}
+.auto-capture-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:120px;height:120px;z-index:8;display:grid;place-items:center;pointer-events:none}
+.auto-capture-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.acr-track{fill:none;stroke:rgba(52,199,89,.2);stroke-width:4}
+.acr-progress{fill:none;stroke:#34C759;stroke-width:4;stroke-linecap:round;
+  stroke-dasharray:276.46;stroke-dashoffset:276.46}
+.acr-text{font:700 32px -apple-system,sans-serif;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);z-index:2}
+
+/* ---------- LOADING + MODAL SUKSES ---------- */
+.loading-overlay{position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.5);
+  backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:.25s}
+.loading-overlay.open{opacity:1;visibility:visible}
+.loading-card{background:rgba(255,255,255,.95);border-radius:20px;padding:24px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.loading-spinner{width:36px;height:36px;border:3px solid #E5E5EA;border-top-color:#007AFF;
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font:600 14px -apple-system,sans-serif;color:#1C1C1E}
+.ios-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);
+  backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;visibility:hidden;transition:all .25s cubic-bezier(.32,.72,0,1)}
+.ios-modal-backdrop.open{opacity:1;visibility:visible}
+.ios-modal-card{width:100%;max-width:340px;background:rgba(255,255,255,.94);backdrop-filter:blur(30px);
+  border-radius:28px;padding:24px 20px 20px;transform:scale(.88);
+  transition:transform .25s cubic-bezier(.32,.72,0,1);text-align:center}
+.ios-modal-backdrop.open .ios-modal-card{transform:scale(1)}
+.ios-success-badge{display:flex;justify-content:center;margin-bottom:14px}
+.ios-success-circle{width:58px;height:58px;border-radius:50%;background:#34C759;color:#fff;
+  display:grid;place-items:center;animation:iosPop .4s cubic-bezier(.175,.885,.32,1.275)}
+.ios-success-circle svg{width:30px;height:30px}
+@keyframes iosPop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+.ios-modal-title{font-size:20px;font-weight:700;color:#1C1C1E;margin:0 0 6px}
+.ios-modal-sub{font-size:13px;color:#8E8E93;margin:0 0 18px;line-height:1.4}
+.ios-inset-group{background:#F2F2F7;border-radius:16px;padding:4px 14px;margin-bottom:20px;text-align:left}
+.ios-inset-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;
+  border-bottom:.5px solid #E5E5EA;font-size:13.5px}
+.ios-inset-row:last-child{border-bottom:none}
+.row-label{color:#8E8E93;font-weight:500}
+.row-value{color:#1C1C1E;font-weight:600}
+.row-value.highlight{color:#007AFF;font-weight:700}
+.row-badge.green{background:rgba(52,199,89,.15);color:#248A3D;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px}
+.row-value-group{display:flex;flex-direction:column;align-items:flex-end}
+.row-value-main{color:#1C1C1E;font-weight:600;font-size:13.5px}
+.row-value-sub{color:#8E8E93;font-size:10.5px}
+.ios-modal-actions{width:100%}
+.ios-btn-done{width:100%;height:48px;background:#007AFF;color:#fff;border:none;border-radius:14px;
+  font-size:16px;font-weight:600;cursor:pointer}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:560px){
+  section[data-page="presensi"]{padding:10px;border-radius:14px}
+  .px-cut{height:110px}
+  .px-map{height:200px}
+  .px-qgrid{gap:6px}
+  .btn-ios-primary{padding:10px 14px;font-size:14px}
+  .cam-oval-guide{width:min(78vw,260px);height:min(110vw,360px)}
+  .cam-dock{padding:10px 18px;gap:24px}
+  .cam-dock-btn{width:40px;height:40px}
+  .cam-shutter{width:62px;height:62px}
+  .shutter-inner{width:46px;height:46px}
+  .ios-modal-card{max-width:320px}
+  .ios-wm-card{bottom:130px;left:8px;right:8px;padding:8px 10px;gap:8px;border-radius:14px}
+  .pupr-logo-circle{width:30px;height:30px}
+}
+@media (max-width:380px){
+  .px-cut{height:100px}
+  .px-map{height:185px}
+}
+@media (max-width:920px){
+  body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+  .page{padding-bottom:12px}
+}
+</style>
