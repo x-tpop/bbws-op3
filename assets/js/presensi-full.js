@@ -542,10 +542,13 @@ async function initPresensi() {
     await syncServerTime();
 
     // JAM LIVE + COUNTDOWN
+    // ★ v21.2: jam tampil juga di chip header (pxClock) — terlihat
+    // tanpa perlu scroll (minibar baru muncul setelah scroll 240px)
     function tickPres() {
       const d = getServerNow();
       const hm = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
       if (el('miniClock')) el('miniClock').textContent = hm;
+      if (el('pxClock')) el('pxClock').textContent = hm + ' WIB';
       updateActionButtons();
     }
     tickPres();
