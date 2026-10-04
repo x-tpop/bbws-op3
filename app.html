@@ -2,12 +2,10 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<!-- ★ PATCH: viewport-fit=cover — agar env(safe-area-inset-*) di UI
-     kamera berfungsi benar di iOS standalone/PWA -->
+<!-- viewport-fit=cover — agar env(safe-area-inset-*) di UI kamera berfungsi benar -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1E3A8A">
 <title>Portal Pegawai — BBWS Brantas</title>
-<!-- ★ TAMBAHAN: favicon logo resmi -->
 <link rel="icon" type="image/png" href="assets/img/logo-symbol.png">
 <link rel="apple-touch-icon" href="assets/img/logo-symbol.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,18 +16,34 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
 <style>
-/* ★ TAMBAHAN: tombol keluar di topbar — hanya tampil di layar HP
-   (sidebar tersembunyi di mobile, sehingga logout tidak terjangkau) */
-.tb-out{
-  display:none;width:36px;height:36px;border-radius:50%;
-  border:0;background:#FEECEB;color:#C41E18;
-  place-items:center;cursor:pointer;flex:none;
-}
-.tb-out svg{width:17px;height:17px}
-.tb-out:active{background:#FBD9D7}
-@media (max-width:920px){
-  .tb-out{display:grid}
-}
+/* CATATAN: CSS .tb-out dihapus — logout kini via action sheet profil */
+
+/* ============================================================
+   ★ ACTION SHEET PROFIL (iOS bottom sheet)
+   ============================================================ */
+.me-sheet-backdrop{position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.4);
+  backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;visibility:hidden;transition:.25s}
+.me-sheet-backdrop.open{opacity:1;visibility:visible}
+.me-sheet{width:100%;max-width:420px;background:#F2F2F7;border-radius:22px 22px 0 0;
+  padding:8px 10px calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:.3s cubic-bezier(.32,.72,0,1)}
+.me-sheet-backdrop.open .me-sheet{transform:translateY(0)}
+.me-sheet-grip{width:40px;height:5px;border-radius:99px;background:#C7C7CC;margin:4px auto 10px}
+.me-sheet-head{display:flex;align-items:center;gap:10px;padding:8px 10px 12px}
+.me-sheet-head img{width:44px;height:44px;border-radius:50%;object-fit:cover;
+  box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.me-sheet-head b{display:block;font:700 14.5px -apple-system,sans-serif;color:#000}
+.me-sheet-head small{font:600 11px -apple-system,sans-serif;color:#8E8E93;text-transform:capitalize}
+.me-sheet-btn{width:100%;display:flex;align-items:center;gap:10px;background:#fff;border:0;
+  border-radius:14px;padding:14px;margin-bottom:8px;font:600 15px -apple-system,sans-serif;
+  color:#000;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:.15s}
+.me-sheet-btn:active{background:#E5E5EA}
+.me-sheet-btn svg{width:19px;height:19px;color:#1E3A8A}
+.me-sheet-btn.danger{color:#C41E18}
+.me-sheet-btn.danger svg{color:#C41E18}
+.me-sheet-cancel{width:100%;border:0;background:#fff;border-radius:14px;padding:14px;
+  font:700 15px -apple-system,sans-serif;color:#007AFF;cursor:pointer}
 </style>
 </head>
 <body>
@@ -37,7 +51,6 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="brand">
-    <!-- ★ LOGO RESMI: simbol PUPR (logo 3) — fallback SVG bila file gagal -->
     <img src="assets/img/logo-symbol.png" alt="Logo PUPR" width="40" height="40"
          style="border-radius:10px;object-fit:cover"
          onerror="this.style.display='none';document.getElementById('brandSvgSide').style.display=''">
@@ -56,17 +69,18 @@
     <button class="nav-btn" data-page="monitoring" id="navMonitoring"><i data-lucide="eye"></i>Monitoring</button>
     <button class="nav-btn" data-page="koordinasi" id="navKoordinasi"><i data-lucide="handshake"></i>Koordinasi</button>
     <button class="nav-btn" data-page="laporan"><i data-lucide="file-text"></i>Laporan</button>
-    <!-- ★ TAMBAHAN: menu Raport -->
     <button class="nav-btn" data-page="raport"><i data-lucide="award"></i>Raport</button>
     <button class="nav-btn" data-page="biodata"><i data-lucide="user-round"></i>Biodata</button>
     <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none"><i data-lucide="settings"></i>Admin</button>
   </nav>
   <div class="side-foot">
-    <button class="side-user" data-page="biodata">
+    <!-- ★ user = pemicu action sheet (tanpa data-page) -->
+    <button class="side-user" id="meChipSide" type="button">
       <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
       <div><b class="js-nama">Loading...</b><small class="js-role">—</small></div>
     </button>
-    <button class="side-out" id="btnLogout"><i data-lucide="log-out"></i>Keluar</button>
+    <!-- trigger logout tersembunyi (dipakai fallback action sheet) -->
+    <button class="side-out" id="btnLogout" style="display:none"><i data-lucide="log-out"></i>Keluar</button>
   </div>
 </aside>
 
@@ -75,7 +89,6 @@
   <header class="topbar">
     <div class="tb-in">
       <div class="tb-brand-m">
-        <!-- ★ LOGO RESMI: simbol PUPR (logo 3) — fallback SVG bila file gagal -->
         <img src="assets/img/logo-symbol.png" alt="Logo PUPR" width="34" height="34"
              style="border-radius:9px;object-fit:cover"
              onerror="this.style.display='none';document.getElementById('brandSvgTop').style.display=''">
@@ -91,13 +104,10 @@
       </div>
       <div class="tb-right">
         <span class="tb-time" id="tbTime">—</span>
-        <button class="me-chip" data-page="biodata">
+        <!-- ★ chip profil = pemicu action sheet (tanpa data-page) -->
+        <button class="me-chip" id="meChipTop" type="button">
           <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
           <span class="js-nama">Loading...</span>
-        </button>
-        <!-- ★ TAMBAHAN: logout untuk mode mobile -->
-        <button class="tb-out" id="btnLogoutMobile" aria-label="Keluar" title="Keluar">
-          <i data-lucide="log-out"></i>
         </button>
       </div>
     </div>
@@ -116,9 +126,7 @@
   </div>
 </div>
 
-<!-- BOTTOM NAV — ★ CATATAN: markup di bawah hanya fallback awal.
-     Isi sebenarnya dibangun dinamis oleh buildBnav() di app.js
-     sesuai role (pegawai / manajemen). -->
+<!-- BOTTOM NAV (isi asli dibangun dinamis oleh buildBnav() di app.js) -->
 <nav id="bnav" aria-label="Navigasi utama">
   <button class="bnav-item" data-page="dashboard">
     <span class="bnav-ic"><i data-lucide="layout-dashboard"></i></span>
@@ -128,12 +136,9 @@
     <span class="bnav-ic"><i data-lucide="eye"></i></span>
     <span>Monitoring</span>
   </button>
-
-  <!-- FAB PRESENSI -->
   <button class="bnav-fab" data-page="presensi" aria-label="Presensi">
     <i data-lucide="fingerprint"></i>
   </button>
-
   <button class="bnav-item" data-page="verifikasi">
     <span class="bnav-ic"><i data-lucide="clipboard-check"></i></span>
     <span>Verifikasi</span>
@@ -145,6 +150,24 @@
 </nav>
 
 <div id="toasts"></div>
+
+<!-- ★ ACTION SHEET PROFIL — Lihat Profil / Logout -->
+<div id="meSheet" class="me-sheet-backdrop">
+  <div class="me-sheet">
+    <div class="me-sheet-grip"></div>
+    <div class="me-sheet-head">
+      <img class="js-avatar" src="https://img.icons8.com/3d-fluency/256/user-male-circle.png" alt="">
+      <div><b class="js-nama">—</b><small class="js-role">—</small></div>
+    </div>
+    <button type="button" class="me-sheet-btn" id="meBtnProfil">
+      <i data-lucide="user-round"></i> Lihat Profil
+    </button>
+    <button type="button" class="me-sheet-btn danger" id="meBtnLogout">
+      <i data-lucide="log-out"></i> Logout
+    </button>
+    <button type="button" class="me-sheet-cancel" id="meBtnCancel">Batal</button>
+  </div>
+</div>
 
 <!-- MODAL FOTO GLOBAL -->
 <div id="fotoModal">
@@ -163,8 +186,6 @@
 <!-- SCRIPTS -->
 <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Leaflet JS (★ PATCH: duplikat di bawah sudah dihapus, cukup satu) -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script src="assets/js/config.js"></script>
@@ -175,12 +196,47 @@
 <script src="assets/js/presensi-full.js"></script>
 <script src="assets/js/verifikasi.js"></script>
 <script src="assets/js/monitoring.js"></script>
-<!-- ★ TAMBAHAN: raport.js (wajib — tanpa ini halaman Raport blank) -->
 <script src="assets/js/pengajuan.js"></script>
 <script src="assets/js/raport.js"></script>
 <script src="assets/js/koordinasi.js"></script>
 <script src="assets/js/laporan.js"></script>
 <script src="assets/js/admin.js"></script>
+
+<!-- ★ ACTION SHEET PROFIL — harus SEBELUM app.js agar delegasi ini jalan duluan -->
+<script>
+(function(){
+  function openMeSheet(){ document.getElementById('meSheet')?.classList.add('open'); }
+  function closeMeSheet(){ document.getElementById('meSheet')?.classList.remove('open'); }
+
+  document.addEventListener('click', function(e){
+    // 1) klik chip profil (topbar / sidebar) → buka sheet, BLOK router app.js
+    if (e.target.closest('#meChipTop, #meChipSide')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openMeSheet();
+      return;
+    }
+    // 2) tutup: klik backdrop / grip / Batal
+    if (e.target.id === 'meSheet' || e.target.closest('.me-sheet-grip') ||
+        e.target.closest('#meBtnCancel')) { closeMeSheet(); return; }
+    // 3) Lihat Profil
+    if (e.target.closest('#meBtnProfil')) {
+      closeMeSheet();
+      document.querySelector('.nav-btn[data-page="biodata"]')?.click()
+        || document.querySelector('.bnav-item[data-page="biodata"]')?.click();
+      return;
+    }
+    // 4) Logout → pakai window.logout() bila ada, else klik trigger tersembunyi
+    if (e.target.closest('#meBtnLogout')) {
+      closeMeSheet();
+      if (typeof window.logout === 'function') window.logout();
+      else document.getElementById('btnLogout')?.click();
+    }
+  });
+  console.log('[me-sheet] action sheet profil aktif');
+})();
+</script>
+
 <script src="assets/js/app.js"></script>
 </body>
 </html>
