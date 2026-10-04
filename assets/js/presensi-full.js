@@ -1,5 +1,11 @@
 // ============================================================
-// PRESENSI-FULL.JS v20 — Panel dark (Hadir/Pulang + GPS + tier telat)
+// PRESENSI-FULL.JS v20.2 — Panel dark (Hadir/Pulang + GPS + tier telat)
+// PATCH v20.2 (selaras pengajuan.js v2.1 & verifikasi.js v2.1):
+//  • presensiState.pengajuanAktif + refreshPengajuanAktif()
+//  • State D: pengajuan Sakit/Izin Disetujui → presensi terkunci
+//  • State E: pengajuan Menunggu → alert kuning, presensi tetap aktif
+//  • Kolom: tanggal_mulai/tanggal_selesai · Status: Menunggu/Disetujui
+//  • FIX: statusInfo.warna (bukan .cls) di submitPresensi
 // File: assets/js/presensi-full.js
 // ============================================================
 
@@ -9,6 +15,7 @@ const presensiState = {
   serverOffset: 0, isInRadius: false,
   kantorLat: null, kantorLng: null, kantorRadius: 500,
   faceStableStart: null,
+  pengajuanAktif: null,                       // ★ v20.2 State D/E
   pengaturan: {
     jam_masuk: '07:30', jam_pulang: '16:30', toleransi_terlambat: 15,
     batas_checkout_awal: 30, hari_kerja: '1,2,3,4,5',
@@ -18,7 +25,7 @@ const presensiState = {
   }
 };
 
-// ---------- HELPERS v19/v20 ----------
+// ---------- HELPERS ----------
 function gdDirect(url, sz = 600) {
   if (!url) return null;
   if (url.includes('drive.google.com') && !url.includes('thumbnail')) {
@@ -105,7 +112,6 @@ async function loadAppSettings() {
     if (s.poin_terlambat) P.poin_terlambat = parseInt(s.poin_terlambat);
     if (s.poin_pulang_cepat) P.poin_pulang_cepat = parseInt(s.poin_pulang_cepat);
     if (s.poin_tidak_checkout) P.poin_tidak_checkout = parseInt(s.poin_tidak_checkout);
-    // ★ v20 tier telat (opsional di tabel pengaturan)
     if (s.telat_sedang_menit) P.telat_sedang_menit = parseInt(s.telat_sedang_menit);
     if (s.telat_berat_menit) P.telat_berat_menit = parseInt(s.telat_berat_menit);
     if (s.poin_telat_ringan) P.poin_telat_ringan = parseInt(s.poin_telat_ringan);
@@ -122,7 +128,7 @@ async function loadAppSettings() {
   }
 }
 
-// ---------- ★ v20 TIER KETERLAMBATAN ----------
+// ---------- TIER KETERLAMBATAN ----------
 function getTelatTier(menitTelat) {
   const P = presensiState.pengaturan;
   if (menitTelat <= 0)
@@ -144,8 +150,7 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
   if (tipe === 'masuk') {
     const [jh, jm] = p.jam_masuk.split(':').map(Number);
     const tier = getTelatTier(menit - (jh * 60 + jm));
-    // ★ FIX A: petakan tier → bentuk {status,label,poin,warna}
-    // agar status_kehadiran TERSIMPAN di DB (raport tidak rusak)
+    // FIX A: petakan tier → {status,label,poin,warna} agar status_kehadiran tersimpan di DB
     return {
       status: tier.st,        // tepat_waktu | toleransi | terlambat
       label: tier.label,
@@ -217,7 +222,7 @@ async function getNamaLokasi(lat, lng) {
   } catch (e) { return `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
 }
 
-// ---------- ★ v20 MAP SATELIT + PIN BIRU ----------
+// ---------- MAP SATELIT + PIN BIRU ----------
 let miniMap = null, userMarker = null;
 function initMiniMap(lat, lng) {
   if (!window.L) return;
@@ -245,13 +250,13 @@ function initMiniMap(lat, lng) {
   setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 600);
 }
 
-// ---------- ★ v20 HERO COMPACT + ADMIN ----------
+// ---------- HERO COMPACT + ADMIN (hanya role admin) ----------
 const heroState = { list: [], self: null, pool: [], idx: 0, q: '', di: 'ALL', isManager: false, viewingOther: false };
 
 async function initHeroUI(pegawai, session) {
   const el = id => document.getElementById(id);
   const role = session.role || '';
-  heroState.isManager = role === 'admin';
+  heroState.isManager = role === 'admin';       // ★ staf_pengamat = tampilan sederhana
   heroState.idx = 0; heroState.q = ''; heroState.di = 'ALL'; heroState.viewingOther = false;
 
   heroState.self = {
@@ -278,10 +283,9 @@ async function initHeroUI(pegawai, session) {
       const diNama = {};
       (dw.data || []).forEach(d => { diNama[d.id_di] = d.nama_di; });
       let list = (pw.data || []).map(p => ({ ...p, diNama: diNama[p.id_di] || '—' }));
-      if (role === 'staf_pengamat' && session.pegawai?.id_di)
-        list = list.filter(p => p.id_di === session.pegawai.id_di);
       list.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id'));
-            // ★ FIX B: akun sendiri (admin/staf juga pegawai) selalu ada di pool
+
+      // FIX B: akun sendiri (admin juga pegawai) selalu ada di pool
       // → tampilan default = diri sendiri, dan bisa presensi sendiri
       if (session.id_pegawai &&
           !list.some(x => String(x.id_pegawai) === String(session.id_pegawai))) {
@@ -295,8 +299,8 @@ async function initHeroUI(pegawai, session) {
           diNama: diNama[session.pegawai?.id_di] || '—'
         });
       }
-      heroState.list = list;
-      heroState.list = list;
+      heroState.list = list;                    // ★ duplikasi dihapus
+
       const dis = [...new Set(list.map(p => p.id_di).filter(Boolean))];
       if (el('phChips')) el('phChips').innerHTML =
         `<button class="px-chip active" data-di="ALL">ALL</button>` +
@@ -371,7 +375,7 @@ async function initHeroUI(pegawai, session) {
   }
 }
 
-// ---------- ★ v20 TOMBOL HADIR/PULANG + COUNTDOWN + ALERT ----------
+// ---------- TOMBOL HADIR/PULANG + COUNTDOWN + ALERT ----------
 function fmtCountdown(menit) {
   if (menit <= 0) return null;
   const h = Math.floor(menit / 60), m = menit % 60;
@@ -387,8 +391,52 @@ function updateActionButtons() {
   const rule = isCheckoutAllowed();
   const fmtT = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '';
 
-  // HADIR
+  // Semua elemen dideklarasikan DI AWAL (aman dari urutan referensi)
   const lH = el('hadirLabel'), sH = el('hadirSub');
+  const sP = el('pulangSub');
+  const alert = el('lateAlert'), lb = el('lateLabel'), pn = el('latePoin');
+
+  // ============================================================
+  // ★ v20.2 STATE D & E — pengajuan yang mencakup hari ini
+  // ============================================================
+  const pa = presensiState.pengajuanAktif;
+  if (pa && !masuk) {
+    const rentangTxt = (pa.tanggal_selesai && pa.tanggal_selesai !== pa.tanggal_mulai)
+      ? `${pa.tanggal_mulai} s/d ${pa.tanggal_selesai}` : (pa.tanggal_mulai || '');
+
+    // ---- STATE D: Sakit/Izin Disetujui → presensi terkunci ----
+    if (pa.status === 'Disetujui' && ['Sakit', 'Izin'].includes(pa.jenis)) {
+      bH.disabled = true; bH.classList.remove('on'); bH.classList.add('off');
+      lH.textContent = pa.jenis.toUpperCase();
+      sH.textContent = 'disetujui ✓';
+
+      bP.disabled = true; bP.classList.remove('on'); bP.classList.add('off');
+      sP.textContent = '—';
+
+      if (alert && lb && pn) {
+        alert.hidden = false;
+        alert.className = 'px-alert t-ok';
+        lb.textContent = `${pa.jenis} (disetujui)`;
+        pn.textContent = rentangTxt;
+      }
+      return; // selesai — jangan jalankan logic normal
+    }
+
+    // ---- STATE E: Menunggu → alert kuning, presensi TETAP aktif ----
+    if (pa.status === 'Menunggu' && alert && lb && pn) {
+      alert.hidden = false;
+      alert.className = 'px-alert t-warn';
+      lb.textContent = `Pengajuan ${pa.jenis} menunggu verifikasi`;
+      pn.textContent = 'Tetap lakukan presensi sampai disetujui';
+    }
+    // TIDAK return — lanjut ke logic normal
+  }
+
+  // ============================================================
+  // LOGIC NORMAL (State A/B/C)
+  // ============================================================
+
+  // ---- HADIR ----
   if (!masuk) {
     bH.disabled = false;
     bH.classList.add('on'); bH.classList.remove('off');
@@ -401,8 +449,7 @@ function updateActionButtons() {
     sH.textContent = '✓ ' + fmtT(masuk);
   }
 
-  // PULANG
-  const sP = el('pulangSub');
+  // ---- PULANG ----
   if (!masuk) {
     bP.disabled = true;
     bP.classList.remove('on'); bP.classList.add('off');
@@ -423,34 +470,59 @@ function updateActionButtons() {
     sP.textContent = '✓ ' + fmtT(keluar);
   }
 
-  // ALERT TELAT / POIN
-  const alert = el('lateAlert'), lb = el('lateLabel'), pn = el('latePoin');
+  // ---- ALERT TELAT / POIN ----
   if (alert && lb && pn) {
-    alert.hidden = false;
-    if (!isHariKerja()) {
-      alert.className = 'px-alert t-warn';
-      lb.textContent = 'Bukan hari kerja';
-      pn.textContent = 'Presensi dinonaktifkan hari ini';
-    } else if (masuk) {
-      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
-      const tier = getTelatTier(Math.max(0, (masuk.getHours() * 60 + masuk.getMinutes()) - (jh * 60 + jm)));
-      alert.className = 'px-alert ' + tier.cls;
-      lb.textContent = tier.label;
-      pn.textContent = `Poin: ${tier.poin}`;
-    } else {
-      const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
-      const now = getServerNow();
-      const tier = getTelatTier(Math.max(0, (now.getHours() * 60 + now.getMinutes()) - (jh * 60 + jm)));
-      alert.className = 'px-alert ' + tier.cls;
-      lb.textContent = tier.label;
-      pn.textContent = `Poin: ${tier.poin} · jika check-in sekarang`;
+    // Jangan timpa alert "Menunggu" yang baru dipasang (State E)
+    const alertPengajuanPending = pa && !masuk && pa.status === 'Menunggu';
+    if (!alertPengajuanPending) {
+      alert.hidden = false;
+      if (!isHariKerja()) {
+        alert.className = 'px-alert t-warn';
+        lb.textContent = 'Bukan hari kerja';
+        pn.textContent = 'Presensi dinonaktifkan hari ini';
+      } else if (masuk) {
+        const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+        const tier = getTelatTier(Math.max(0, (masuk.getHours() * 60 + masuk.getMinutes()) - (jh * 60 + jm)));
+        alert.className = 'px-alert ' + tier.cls;
+        lb.textContent = tier.label;
+        pn.textContent = `Poin: ${tier.poin}`;
+      } else {
+        const [jh, jm] = presensiState.pengaturan.jam_masuk.split(':').map(Number);
+        const now = getServerNow();
+        const tier = getTelatTier(Math.max(0, (now.getHours() * 60 + now.getMinutes()) - (jh * 60 + jm)));
+        alert.className = 'px-alert ' + tier.cls;
+        lb.textContent = tier.label;
+        pn.textContent = `Poin: ${tier.poin} · jika check-in sekarang`;
+      }
     }
   }
 }
 
+// ---------- ★ v20.2 REFRESH PENGAJUAN AKTIF ----------
+// Dipanggil saat init & setelah submit pengajuan (dari pengajuan.js)
+async function refreshPengajuanAktif(sessionOverride) {
+  const session = sessionOverride || getSession();
+  if (!session) return;
+  const today = localDateStr(getServerNow());
+  try {
+    const { data: pgs } = await supabaseClient.from('pengajuan')
+      .select('jenis,status,tanggal_mulai,tanggal_selesai')   // selaras verifikasi.js v2.1
+      .eq('id_pegawai', session.id_pegawai)
+      .in('status', ['Menunggu', 'Disetujui'])                // selaras verifikasi.js v2.1
+      .gte('tanggal_selesai', today);
+    presensiState.pengajuanAktif =
+      (pgs || []).find(p => (p.tanggal_mulai || '') <= today &&
+                           today <= (p.tanggal_selesai || p.tanggal_mulai)) || null;
+  } catch (e) {
+    console.warn('cek pengajuan:', e);
+    presensiState.pengajuanAktif = null;
+  }
+  updateActionButtons();
+}
+
 // ---------- INIT UTAMA ----------
 async function initPresensi() {
-  console.log('=== Init Presensi (Full v20) ===');
+  console.log('=== Init Presensi (Full v20.2) ===');
   if (window.__presensiInit) return;
   window.__presensiInit = true;
 
@@ -487,6 +559,10 @@ async function initPresensi() {
           ['Hadir', 'Kerja Gabungan'].includes(data.status) ? data.status : 'Hadir';
       }
     } catch (e) { console.error(e); }
+
+    // ★ v20.2: muat pengajuan aktif SEBELUM render tombol pertama
+    await refreshPengajuanAktif(session);
+
     updateActionButtons();
 
     // ---- LOKASI (dipisah agar bisa di-refresh) ----
@@ -654,7 +730,7 @@ function openFullscreenDirect() {
   }, 200);
 }
 
-// ---------- FACE DETECTION (tidak berubah) ----------
+// ---------- FACE DETECTION ----------
 let faceDetector = null, faceDetectInterval = null, faceDetectionReady = false;
 async function initFaceDetection(videoEl) {
   if (faceDetectionReady) return true;
@@ -782,7 +858,6 @@ function attachFullscreenHandlers() {
       if (typeof stopCamera === 'function') stopCamera();
       const vFs = el('videoFullscreen'); if (vFs) vFs.srcObject = null;
 
-      // ★ v20: tampilkan REVIEW CARD baru
       const previewImg = el('previewImg'), reviewCard = el('reviewCard');
       if (previewImg) previewImg.src = presensiState.fotoBase64;
       if (reviewCard) {
@@ -872,9 +947,9 @@ async function submitPresensi(btn, session, pegawai) {
         lokasi_masuk: lokasiStr,
         foto_masuk: fotoUrl,
         status: status,
-        poin: poin,                                  // ★ v20 poin tier
-        status_kehadiran: statusInfo.status,         // domain tetap: tepat_waktu/toleransi/terlambat
-        catatan_kehadiran: statusInfo.label          // ★ v20 "Terlambat Berat (75m)"
+        poin: poin,
+        status_kehadiran: statusInfo.status,
+        catatan_kehadiran: statusInfo.label
       });
       presensiState.masuk = now;
     } else {
@@ -890,7 +965,10 @@ async function submitPresensi(btn, session, pegawai) {
       tipe, status, jam: jam.slice(0, 5),
       tanggal: now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
       lokasi: lokasiStr, lokasiNama: presensiState.lokasiNama || 'Lokasi tidak diketahui',
-      keterangan: '', statusInfo: { label: statusInfo.label, warna: statusInfo.cls === 't-ok' ? 'hijau' : statusInfo.cls === 't-bad' ? 'merah' : 'kuning' }
+      keterangan: '',
+      // ★ FIX: getPresensiStatus sudah mengembalikan `warna`
+      // ('hijau' | 'kuning' | 'merah' | 'oranye') — pakai langsung
+      statusInfo: { label: statusInfo.label, warna: statusInfo.warna }
     });
 
     resetPresensiForm();
@@ -911,7 +989,7 @@ function resetPresensiForm() {
   if (presensiState.status === 'Kerja Gabungan') presensiState.status = 'Hadir';
 }
 
-// ---------- MODAL SUKSES / LOADING (tetap) ----------
+// ---------- MODAL SUKSES / LOADING ----------
 function showSuksesModal(data) {
   const modal = document.getElementById('suksesModal');
   if (!modal) return;
@@ -970,3 +1048,5 @@ window.gdDirect = gdDirect;
 window.hEsc = hEsc;
 window.heroState = heroState;
 window.getTelatTier = getTelatTier;
+// ★ v20.2 — dipanggil dari pengajuan.js setelah submit
+window.refreshPengajuanAktif = refreshPengajuanAktif;
