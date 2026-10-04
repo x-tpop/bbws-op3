@@ -1,6 +1,12 @@
 // ============================================================
-// PENGAJUAN.JS v2 — Sakit / Izin / Dinas Luar / Lupa Absen
-// Kuota 4×/bulan · durasi otomatis · lampiran kamera/galeri
+// PENGAJUAN.JS v2.1 — Sakit / Izin / Dinas Luar / Lupa Absen
+// PATCH v2.1:
+//  • status = 'Menunggu' (selaras verifikasi.js — bukan 'pending')
+//  • kolom tanggal_mulai (selaras verifikasi.js)
+//  • init bisa dipanggil ulang tiap navigasi SPA: binding elemen
+//    diulang, delegasi document hanya sekali (__pjDocBound)
+//  • setelah submit → refreshPengajuanAktif (halaman presensi
+//    langsung sadar pengajuan pending)
 // Butuh helper: dbInsert, uploadFoto, compressImage, toast,
 //               getSession, localDateStr, CONFIG
 // ============================================================
@@ -17,16 +23,18 @@ const pjState = { jenis:null, session:null, foto:null, surat:null, terpakai:0, b
 function pjEl(id){ return document.getElementById(id); }
 
 async function initPengajuan(session) {
-  if (window.__pjInit) return;
-  window.__pjInit = true;
   pjState.session = session;
 
-  // Delegasi: semua tombol [data-pengajuan] (aman dari re-render)
-  document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-pengajuan]');
-    if (b) openPengajuan(b.dataset.pengajuan);
-  });
+  // ★ Delegasi document cukup sekali seumur app (tahan re-render SPA)
+  if (!window.__pjDocBound) {
+    window.__pjDocBound = true;
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pengajuan]');
+      if (b) openPengajuan(b.dataset.pengajuan);
+    });
+  }
 
+  // ★ Binding elemen diulang SETIAP init (DOM baru hasil render SPA)
   pjEl('pjBtnClose')?.addEventListener('click', closePengajuan);
   pjEl('pjModal')?.addEventListener('click', e => { if (e.target === pjEl('pjModal')) closePengajuan(); });
 
@@ -55,7 +63,8 @@ async function refreshQuota() {
     const awal = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`;
     const { data } = await supabaseClient.from('pengajuan')
       .select('id').eq('id_pegawai', s.id_pegawai)
-      .in('status', ['pending','approved']).gte('tanggal', awal);
+      .in('status', ['Menunggu','Disetujui'])          // ★ v2.1
+      .gte('tanggal_mulai', awal);                     // ★ v2.1
     pjState.terpakai = (data || []).length;
     const q = pjEl('pjQuotaModal');
     if (q) q.textContent = `${pjState.terpakai}/${PJ_KUOTA} terpakai bulan ini`;
@@ -93,6 +102,7 @@ function closePengajuan() { pjEl('pjModal')?.classList.remove('open'); }
 function updateDurasi() {
   const cfg = PJ_JENIS[pjState.jenis] || {};
   const d = pjEl('pjDurasi');
+  if (!d) return;
   if (!cfg.rentang) { d.value = '1 hari'; return; }
   const a = pjEl('pjTanggal').value, b = pjEl('pjTanggalSelesai').value;
   if (!a || !b) { d.value = '—'; return; }
@@ -119,15 +129,16 @@ function fileToBase64(file) {
     r.readAsDataURL(file);
   });
 }
-function setPjFoto(b64)  { pjState.foto = b64;  pjEl('pjFotoPreviewImg').src = b64;  pjEl('pjFotoPreview').hidden = false; }
+function setPjFoto(b64)  { pjState.foto = b64;  const i = pjEl('pjFotoPreviewImg');  if (i) i.src = b64;  pjEl('pjFotoPreview').hidden = false; }
 function clearPjFoto()   { pjState.foto = null; pjEl('pjFotoPreview').hidden = true; }
-function setPjSurat(b64) { pjState.surat = b64; pjEl('pjSuratPreviewImg').src = b64; pjEl('pjSuratPreview').hidden = false; }
+function setPjSurat(b64) { pjState.surat = b64; const i = pjEl('pjSuratPreviewImg'); if (i) i.src = b64; pjEl('pjSuratPreview').hidden = false; }
 function clearPjSurat()  { pjState.surat = null; pjEl('pjSuratPreview').hidden = true; }
 
 async function submitPengajuan() {
   if (pjState.busy) return;
   const s = pjState.session || getSession();
-  const cfg = PJ_JENIS[pjState.jenis]; if (!cfg) return;
+  const cfg = PJ_JENIS[pjState.jenis];
+  if (!cfg) return;
   const jenis = pjState.jenis;
 
   const alasan = pjEl('pjAlasan').value.trim();
@@ -175,7 +186,7 @@ async function submitPengajuan() {
     await dbInsert('pengajuan', {
       id_pegawai: s.id_pegawai,
       jenis,
-      tanggal: tgl,
+      tanggal_mulai: tgl,          // ★ v2.1 selaras verifikasi.js
       tanggal_selesai: tglS,
       durasi,
       jam_hadir: pjEl('pjJamHadir').value || null,
@@ -184,12 +195,16 @@ async function submitPengajuan() {
       alasan,
       foto: fotoUrl,
       surat: suratUrl,
-      status: 'pending'
+      status: 'Menunggu'           // ★ v2.1 selaras verifikasi.js
     });
 
     closePengajuan();
     toast('Pengajuan terkirim — menunggu verifikasi', 'success');
     await refreshQuota();
+    // ★ Halaman presensi langsung sadar ada pengajuan pending hari ini
+    if (typeof window.refreshPengajuanAktif === 'function') {
+      try { await window.refreshPengajuanAktif(); } catch (e) {}
+    }
   } catch (err) {
     toast('Gagal: ' + err.message, 'error');
   } finally {
@@ -200,3 +215,4 @@ async function submitPengajuan() {
 
 window.initPengajuan = initPengajuan;
 window.closePengajuan = closePengajuan;
+window.refreshPengajuanQuota = refreshQuota;
