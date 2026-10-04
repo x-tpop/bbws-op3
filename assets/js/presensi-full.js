@@ -1,10 +1,11 @@
 // ============================================================
-// PRESENSI-FULL.JS v21 — PANEL LIGHT (senada tema PUPR)
-// • Tombol CHECK-IN / CHECK-OUT (mockup light)
+// PRESENSI-FULL.JS v21.3 — PANEL LIGHT iOS · TEMA PUPR
+// • CHECK-IN / CHECK-OUT flat navy + countdown live
 // • Map OSM light + GPS pill melayang (nama lokasi + koordinat)
+// • Tier telat ("Anda Terlambat X jam Y menit")
 // • State D/E pengajuan (Disetujui→kunci · Menunggu→alert kuning)
+// • Footnote jam kerja (ganti "Memuat...")
 // • Kolom tanggal_mulai/tanggal_selesai · Status Menunggu/Disetujui
-// • FIX A: statusInfo.warna · FIX B: akun sendiri di pool
 // File: assets/js/presensi-full.js
 // ============================================================
 
@@ -14,7 +15,7 @@ const presensiState = {
   serverOffset: 0, isInRadius: false,
   kantorLat: null, kantorLng: null, kantorRadius: 500,
   faceStableStart: null,
-  pengajuanAktif: null,                       // State D/E
+  pengajuanAktif: null,
   pengaturan: {
     jam_masuk: '07:30', jam_pulang: '16:30', toleransi_terlambat: 15,
     batas_checkout_awal: 30, hari_kerja: '1,2,3,4,5',
@@ -147,9 +148,9 @@ function getPresensiStatus(jamStr, tipe = 'masuk') {
   if (tipe === 'masuk') {
     const [jh, jm] = p.jam_masuk.split(':').map(Number);
     const tier = getTelatTier(menit - (jh * 60 + jm));
-    // FIX A: petakan tier → {status,label,poin,warna} agar status_kehadiran tersimpan di DB
+    // FIX A: tier → {status,label,poin,warna} agar status_kehadiran tersimpan di DB
     return {
-      status: tier.st,        // tepat_waktu | toleransi | terlambat
+      status: tier.st,
       label: tier.label,
       poin: tier.poin,
       warna: tier.cls === 't-ok' ? 'hijau' : tier.cls === 't-bad' ? 'merah' : 'kuning'
@@ -219,7 +220,7 @@ async function getNamaLokasi(lat, lng) {
   } catch (e) { return `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
 }
 
-// ---------- ★ v21 MAP LIGHT (OSM) + PIN BIRU ----------
+// ---------- MAP LIGHT (OSM) + PIN NAVY ----------
 let miniMap = null, userMarker = null;
 function initMiniMap(lat, lng) {
   if (!window.L) return;
@@ -229,7 +230,6 @@ function initMiniMap(lat, lng) {
       doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false,
       attributionControl: true
     }).setView([lat, lng], 16);
-    // ★ v21: tile light senada tema (sebelumnya satelit Esri)
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(miniMap);
@@ -372,13 +372,19 @@ async function initHeroUI(pegawai, session) {
   }
 }
 
-// ---------- ★ v21 CHECK-IN / CHECK-OUT + COUNTDOWN + ALERT ----------
+// ---------- COUNTDOWN + FORMAT TELAT ----------
 function fmtCountdown(menit) {
   if (menit <= 0) return null;
   const h = Math.floor(menit / 60), m = menit % 60;
   return h > 0 ? `${h}j ${m}m lagi` : `${m}m lagi`;
 }
+// ★ v21.3: 705 menit → "11 jam 45 menit"
+function fmtTelat(menit) {
+  if (menit < 60) return `${menit} menit`;
+  return `${Math.floor(menit / 60)} jam ${menit % 60} menit`;
+}
 
+// ---------- CHECK-IN/CHECK-OUT + ALERT ----------
 function updateActionButtons() {
   const el = id => document.getElementById(id);
   const bH = el('btnHadir'), bP = el('btnPulang');
@@ -386,6 +392,7 @@ function updateActionButtons() {
 
   const masuk = presensiState.masuk, keluar = presensiState.keluar;
   const rule = isCheckoutAllowed();
+  const libur = !isHariKerja();
   const fmtT = d => d ? [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':') : '';
 
   const lH = el('hadirLabel'), sH = el('hadirSub');
@@ -421,7 +428,6 @@ function updateActionButtons() {
   }
 
   // ===== CHECK-IN =====
-    const libur = !isHariKerja();
   if (!masuk) {
     if (libur) {
       bH.disabled = true; bH.classList.remove('on'); bH.classList.add('off');
@@ -434,6 +440,11 @@ function updateActionButtons() {
       sH.textContent = presensiState.status === 'Kerja Gabungan'
         ? 'Mode Kerja Gabungan' : 'Presensi Masuk';
     }
+  } else {
+    bH.disabled = true;
+    bH.classList.remove('on'); bH.classList.add('off');
+    lH.textContent = 'CHECK-IN';
+    sH.textContent = '✓ ' + fmtT(masuk);
   }
 
   // ===== CHECK-OUT =====
@@ -441,7 +452,7 @@ function updateActionButtons() {
     bP.disabled = true;
     bP.classList.remove('on'); bP.classList.add('off');
     lP.textContent = 'CHECK-OUT';
-    sP.textContent = 'Belum Waktunya';
+    sP.textContent = libur ? 'Hari libur' : 'Belum Waktunya';
   } else if (!keluar) {
     lP.textContent = 'CHECK-OUT';
     if (rule.allowed) {
@@ -460,7 +471,7 @@ function updateActionButtons() {
     sP.textContent = '✓ ' + fmtT(keluar);
   }
 
-  // ===== ALERT: deteksi belum presensi / keterlambatan =====
+  // ===== ALERT — SATU rantai if (tidak ada timpa-menimpa) =====
   if (alert && lb && pn) {
     const alertPending = pa && !masuk && pa.status === 'Menunggu';
     if (!alertPending) {
@@ -479,7 +490,6 @@ function updateActionButtons() {
 
         alert.className = 'px-alert ' + tier.cls;
 
-        // ★ SATU rantai if — tidak ada timpa-menimpa
         if (masuk && keluar) {
           // State C: siklus selesai — rekap hijau
           alert.className = 'px-alert t-ok';
@@ -490,8 +500,8 @@ function updateActionButtons() {
           lb.textContent = 'Anda belum Presensi hari ini';
           pn.textContent = `Poin: ${tier.poin} jika check-in sekarang`;
         } else if (menitTelat > 0) {
-          // telat (baik belum maupun sudah check-in)
-          lb.textContent = `Anda Terlambat ${menitTelat} menit`;
+          // telat (belum maupun sudah check-in)
+          lb.textContent = `Anda Terlambat ${fmtTelat(menitTelat)}`;
           pn.textContent = masuk
             ? `Poin: ${tier.poin}`
             : `Poin: ${tier.poin} jika check-in sekarang`;
@@ -528,7 +538,7 @@ async function refreshPengajuanAktif(sessionOverride) {
 
 // ---------- INIT UTAMA ----------
 async function initPresensi() {
-  console.log('=== Init Presensi (Full v21) ===');
+  console.log('=== Init Presensi (Full v21.3) ===');
   if (window.__presensiInit) return;
   window.__presensiInit = true;
 
@@ -541,9 +551,15 @@ async function initPresensi() {
     await loadAppSettings();
     await syncServerTime();
 
+    // ★ v21.3: footnote jam kerja (ganti "Memuat...")
+    const note = el('presNote');
+    if (note) {
+      const P = presensiState.pengaturan;
+      note.textContent = `Jam kerja ${P.jam_masuk}–${P.jam_pulang} WIB · Toleransi ${P.toleransi_terlambat} mnt · Telat dikompensasi di jam pulang.`;
+    }
+
     // JAM LIVE + COUNTDOWN
-    // ★ v21.2: jam tampil juga di chip header (pxClock) — terlihat
-    // tanpa perlu scroll (minibar baru muncul setelah scroll 240px)
+    // ★ v21.3: jam juga di chip header (pxClock) — terlihat tanpa scroll
     function tickPres() {
       const d = getServerNow();
       const hm = [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
@@ -573,8 +589,7 @@ async function initPresensi() {
 
     updateActionButtons();
 
-    // ---- LOKASI (dipisah agar bisa di-refresh) ----
-    // ★ v21: nama lokasi (gpsLoc) + koordinat chip (gpsText) di pill melayang
+    // ---- LOKASI (bisa di-refresh) ----
     async function locateMe() {
       const btnG = el('btnRefreshGps');
       if (btnG) btnG.classList.add('spun');
@@ -625,14 +640,14 @@ async function initPresensi() {
     });
 
     // ---- ACCORDION STATUS KHUSUS ----
-        // ★ default terbuka — kartu pengajuan langsung terlihat (sesuai mockup)
-    el('accKhusus')?.classList.add('open');
-    if (el('accBody')) el('accBody').hidden = false;
     el('accHead')?.addEventListener('click', () => {
       const acc = el('accKhusus'), body = el('accBody');
       const open = acc.classList.toggle('open');
       if (body) body.hidden = !open;
     });
+    // ★ default terbuka — kartu pengajuan langsung terlihat
+    el('accKhusus')?.classList.add('open');
+    if (el('accBody')) el('accBody').hidden = false;
 
     // ---- QR / KERJA GABUNGAN ----
     el('btnKerjaGabungan')?.addEventListener('click', () => {
@@ -640,8 +655,8 @@ async function initPresensi() {
       if (presensiState.masuk) { toast('Sudah check-in — QR hanya untuk check-in', 'warn'); return; }
       presensiState.status = 'Kerja Gabungan';
       el('btnKerjaGabungan')?.classList.add('active');
-      const note = el('presNote');
-      if (note) note.textContent = 'Mode Kerja Gabungan aktif — tekan CHECK-IN untuk scan & foto.';
+      const note2 = el('presNote');
+      if (note2) note2.textContent = 'Mode Kerja Gabungan aktif — tekan CHECK-IN untuk scan & foto.';
       toast('Mode Kerja Gabungan (QR) aktif', 'success');
       if (presensiEntryGuard()) openFullscreenDirect();
     });
@@ -1001,7 +1016,15 @@ function resetPresensiForm() {
   if (el('reviewCard')) el('reviewCard').hidden = true;
   presensiState.suratBase64 = null;
   el('btnKerjaGabungan')?.classList.remove('active');
-  if (presensiState.status === 'Kerja Gabungan') presensiState.status = 'Hadir';
+  if (presensiState.status === 'Kerja Gabungan') {
+    presensiState.status = 'Hadir';
+    // kembalikan footnote normal
+    const note = el('presNote');
+    if (note) {
+      const P = presensiState.pengaturan;
+      note.textContent = `Jam kerja ${P.jam_masuk}–${P.jam_pulang} WIB · Toleransi ${P.toleransi_terlambat} mnt · Telat dikompensasi di jam pulang.`;
+    }
+  }
 }
 
 // ---------- MODAL SUKSES / LOADING ----------
@@ -1063,5 +1086,4 @@ window.gdDirect = gdDirect;
 window.hEsc = hEsc;
 window.heroState = heroState;
 window.getTelatTier = getTelatTier;
-// dipanggil dari pengajuan.js setelah submit
 window.refreshPengajuanAktif = refreshPengajuanAktif;
