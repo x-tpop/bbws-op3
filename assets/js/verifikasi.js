@@ -1,43 +1,53 @@
 // ============================================================
-// VERIFIKASI.JS — Verifikasi Presensi + Pengajuan (v2)
-// Tab 1: Presensi harian (Layak / Tidak Layak)
-// Tab 2: Pengajuan (Sakit/Izin/Dinas/Lupa Absen) —
-//        Setujui / Revisi / Tolak; saat disetujui otomatis
-//        menulis/melengkapi tabel presensi.
+// VERIFIKASI.JS — Verifikasi Presensi + Pengajuan (v2.1)
+// PATCH v2.1:
+//  • Kolom pengajuan diselaraskan: tanggal_mulai/tanggal_selesai
+//  • Status Indonesia: Menunggu/Disetujui/Revisi/Ditolak
+//  • "Layak" TIDAK menimpa poin tier; "Tidak Layak" = poin -2
+//  • Approve Sakit/Izin/Dinas: skip hari libur & hari yang sudah
+//    ada check-in asli (anti-timpa)
+//  • Escape atribut onclick (nama dengan apostrof aman)
 // File: assets/js/verifikasi.js
 // ============================================================
 
 let verifikasiState = {
-  // ★ PATCH: localDateStr() — toISOString() = UTC, jam 00:00–06:59
-  // WIB menampilkan presensi KEMARIN
   tanggal: localDateStr(),
   statusFilter: 'belum',
   list: [],
   pegawaiMap: {},
   diMap: {},
-  // ★ BARU: tab pengajuan
+  pengaturan: {},          // ★ v2.1: utk hari kerja saat approve rentang
   tab: 'presensi',
   pjStatusFilter: 'menunggu',
   pjList: []
 };
 
+// ---------- helper kecil ----------
+function vrfAttr(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
 // ============================================================
 // LOAD MASTER DATA
 // ============================================================
 async function loadMasterVerifikasi() {
-  const [pegawaiList, diList] = await Promise.all([
+  const [pegawaiList, diList, setRes] = await Promise.all([
     dbSelect('pegawai', { select: 'id_pegawai,nomor_identitas,nama,jabatan,id_di,krosda' }),
-    dbSelect('di', { select: 'id_di,nama_di' })
+    dbSelect('di', { select: 'id_di,nama_di' }),
+    supabaseClient.from('pengaturan').select('kunci,nilai')
   ]);
 
   verifikasiState.pegawaiMap = {};
-  pegawaiList.forEach(p => { verifikasiState.pegawaiMap[p.id_pegawai] = p; });
+  (pegawaiList || []).forEach(p => { verifikasiState.pegawaiMap[p.id_pegawai] = p; });
 
   verifikasiState.diMap = {};
-  diList.forEach(d => { verifikasiState.diMap[d.id_di] = d.nama_di; });
+  (diList || []).forEach(d => { verifikasiState.diMap[d.id_di] = d.nama_di; });
+
+  verifikasiState.pengaturan = {};
+  ((setRes && setRes.data) || []).forEach(r => { verifikasiState.pengaturan[r.kunci] = r.nilai; });
 }
 
-// ★ Helper: staf_pengamat hanya melihat pegawai DI-nya
+// Helper: staf_pengamat hanya melihat pegawai DI-nya
 function vrfScopeIds() {
   const session = getSession();
   if (session?.role === 'staf_pengamat' && session.pegawai?.id_di) {
@@ -84,7 +94,7 @@ async function loadPresensiVerifikasi() {
 }
 
 // ============================================================
-// ★ BARU v2: LOAD PENGAJUAN (Tab 2)
+// LOAD PENGAJUAN (Tab 2)
 // ============================================================
 async function loadPengajuanVerifikasi() {
   let query = supabaseClient
@@ -140,24 +150,25 @@ function renderVerifikasiList() {
 
     const jamMasuk = p.jam_masuk ? p.jam_masuk.slice(0, 5) : '-';
     const jamKeluar = p.jam_keluar ? p.jam_keluar.slice(0, 5) : '-';
+    const namaAman = vrfAttr(pegawai.nama || '-');
 
     return `
       <tr>
         <td>
-          <div style="font-weight:700">${pegawai.nama || '-'}</div>
-          <div style="font-size:12px;color:var(--muted)">${pegawai.nomor_identitas || '-'}</div>
+          <div style="font-weight:700">${vrfAttr(pegawai.nama || '-')}</div>
+          <div style="font-size:12px;color:var(--muted)">${vrfAttr(pegawai.nomor_identitas || '-')}</div>
         </td>
         <td>
-          <div>${pegawai.jabatan || '-'}</div>
-          <div style="font-size:12px;color:var(--muted)">${diNama}</div>
+          <div>${vrfAttr(pegawai.jabatan || '-')}</div>
+          <div style="font-size:12px;color:var(--muted)">${vrfAttr(diNama)}</div>
         </td>
         <td>
           <div><b>Masuk:</b> ${jamMasuk}</div>
           <div><b>Keluar:</b> ${jamKeluar}</div>
-          <div style="font-size:11px;color:var(--muted)">${p.status || '-'}</div>
+          <div style="font-size:11px;color:var(--muted)">${vrfAttr(p.status || '-')}</div>
         </td>
         <td>
-          ${p.foto_masuk ? `<img src="${p.foto_masuk}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openFotoModal('${p.foto_masuk}', '${pegawai.nama}')">` : '<span style="color:var(--muted)">-</span>'}
+          ${p.foto_masuk ? `<img src="${vrfAttr(p.foto_masuk)}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openFotoModal('${vrfAttr(p.foto_masuk)}', '${namaAman}')">` : '<span style="color:var(--muted)">-</span>'}
         </td>
         <td>${statusBadge}</td>
         <td>
@@ -174,7 +185,7 @@ function renderVerifikasiList() {
 }
 
 // ============================================================
-// ★ BARU v2: RENDER TAB 2 — PENGAJUAN
+// RENDER TAB 2 — PENGAJUAN
 // ============================================================
 function renderPengajuanList() {
   const tbody = document.getElementById('pjTbody');
@@ -201,18 +212,21 @@ function renderPengajuanList() {
   tbody.innerHTML = list.map(pj => {
     const pegawai = verifikasiState.pegawaiMap[pj.id_pegawai] || {};
     const diNama = verifikasiState.diMap[pegawai.id_di] || '-';
+    const namaAman = vrfAttr(pegawai.nama || '-');
 
+    // ★ v2.1: kolom tanggal_mulai
     const tanggal = pj.tanggal_selesai && pj.tanggal_selesai !== pj.tanggal_mulai
       ? `${pj.tanggal_mulai} → ${pj.tanggal_selesai}`
-      : pj.tanggal_mulai;
+      : (pj.tanggal_mulai || '-');
+    const durasiTxt = pj.durasi && pj.durasi > 1 ? ` <span class="badge b-wait">${pj.durasi} hari</span>` : '';
 
     const jamInfo = pj.jenis === 'Lupa Absen'
       ? `<div style="font-size:11.5px">Hadir: <b>${pj.jam_hadir || '-'}</b> · Pulang: <b>${pj.jam_pulang || '-'}</b></div>`
       : '';
 
     const lampiran = [
-      pj.foto ? `<img src="${pj.foto}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openFotoModal('${pj.foto}', '${pegawai.nama}')">` : '',
-      pj.surat ? `<img src="${pj.surat}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer;margin-left:4px" onclick="openFotoModal('${pj.surat}', 'Surat ${pegawai.nama}')">` : ''
+      pj.foto ? `<img src="${vrfAttr(pj.foto)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openFotoModal('${vrfAttr(pj.foto)}', '${namaAman}')">` : '',
+      pj.surat ? `<img src="${vrfAttr(pj.surat)}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-left:4px;cursor:pointer" onclick="openFotoModal('${vrfAttr(pj.surat)}', 'Surat ${namaAman}')">` : ''
     ].join('') || '<span style="color:var(--muted)">-</span>';
 
     const aksi = pj.status === 'Menunggu' ? `
@@ -220,20 +234,20 @@ function renderPengajuanList() {
       <button class="btn btn-orange sm" onclick="verifikasiPengajuan('${pj.id}', 'Revisi')" style="margin-left:4px"><i data-lucide="pencil"></i>Revisi</button>
       <button class="btn btn-red sm" onclick="verifikasiPengajuan('${pj.id}', 'Ditolak')" style="margin-left:4px"><i data-lucide="x"></i>Tolak</button>
     ` : (pj.catatan_verifikasi
-      ? `<div style="font-size:11.5px;color:var(--muted);max-width:160px">"${pj.catatan_verifikasi}"</div>`
+      ? `<div style="font-size:11.5px;color:var(--muted);max-width:160px">"${vrfAttr(pj.catatan_verifikasi)}"</div>`
       : '<span style="font-size:12px;color:var(--muted)">Selesai</span>');
 
     return `
       <tr>
         <td>
-          <div style="font-weight:700">${pegawai.nama || '-'}</div>
-          <div style="font-size:12px;color:var(--muted)">${diNama}</div>
+          <div style="font-weight:700">${vrfAttr(pegawai.nama || '-')}</div>
+          <div style="font-size:12px;color:var(--muted)">${vrfAttr(diNama)}</div>
         </td>
-        <td><span class="chip-o">${pj.jenis}</span></td>
+        <td><span class="chip-o">${vrfAttr(pj.jenis)}</span></td>
         <td>
-          <div style="font-weight:600">${tanggal}</div>
+          <div style="font-weight:600">${tanggal}${durasiTxt}</div>
           ${jamInfo}
-          <div style="font-size:11.5px;color:var(--muted);max-width:200px">${(pj.alasan || '').slice(0, 80)}${(pj.alasan || '').length > 80 ? '…' : ''}</div>
+          <div style="font-size:11.5px;color:var(--muted);max-width:200px">${vrfAttr((pj.alasan || '').slice(0, 80))}${(pj.alasan || '').length > 80 ? '…' : ''}</div>
         </td>
         <td>${lampiran}</td>
         <td>${badgeFor(pj.status)}</td>
@@ -246,7 +260,9 @@ function renderPengajuanList() {
 }
 
 // ============================================================
-// AKSI VERIFIKASI — PRESENSI (Tab 1, tidak berubah)
+// AKSI VERIFIKASI — PRESENSI (Tab 1)
+// ★ v2.1: "Layak" TIDAK menimpa poin (poin tier dari submit
+//   tetap utuh — mis. Terlambat Berat = 25). "Tidak Layak" = -2.
 // ============================================================
 async function verifikasiPresensi(idPresensi, status) {
   let catatan = '';
@@ -262,12 +278,14 @@ async function verifikasiPresensi(idPresensi, status) {
   try {
     const session = getSession();
 
-    await dbUpdate('presensi', 'id_presensi', idPresensi, {
+    const payload = {
       status_verifikasi: status,
       diverifikasi_oleh: session.id_pegawai,
-      catatan_verifikasi: catatan || null,
-      poin: status === 'Layak' ? 1 : -2
-    });
+      catatan_verifikasi: catatan || null
+    };
+    if (status === 'Tidak Layak') payload.poin = -2; // penalti; Layak = biarkan poin tier
+
+    await dbUpdate('presensi', 'id_presensi', idPresensi, payload);
 
     toast(`Presensi berhasil diverifikasi: ${status}`, 'success');
     await loadPresensiVerifikasi();
@@ -279,10 +297,12 @@ async function verifikasiPresensi(idPresensi, status) {
 }
 
 // ============================================================
-// ★ BARU v2: AKSI VERIFIKASI — PENGAJUAN
-// Disetujui → tulis ke tabel presensi:
-//  • Lupa Absen  : lengkapi jam_masuk/jam_keluar pada tanggal tsb
-//  • Sakit/Izin/Dinas Luar : buat/lengkapi record per tanggal (rentang)
+// AKSI VERIFIKASI — PENGAJUAN
+// ★ v2.1:
+//  • kolom tanggal_mulai/tanggal_selesai
+//  • Sakit/Izin/Dinas: hanya hari kerja efektif, skip hari yang
+//    sudah ada jam_masuk asli (anti-timpa)
+//  • Lupa Absen: lengkapi jam tanpa menimpa yang sudah ada
 // ============================================================
 async function verifikasiPengajuan(idPengajuan, status) {
   let catatan = '';
@@ -297,7 +317,6 @@ async function verifikasiPengajuan(idPengajuan, status) {
   try {
     const session = getSession();
 
-    // Ambil data pengajuan
     const { data: pj, error: ePj } = await supabaseClient
       .from('pengajuan').select('*').eq('id', idPengajuan).maybeSingle();
     if (ePj) throw ePj;
@@ -318,33 +337,47 @@ async function verifikasiPengajuan(idPengajuan, status) {
 
     // 2. Disetujui → tulis ke presensi
     if (status === 'Disetujui') {
+      // Rentang tanggal (inklusif)
+      const d0 = new Date((pj.tanggal_mulai || pj.tanggal) + 'T00:00:00');
+      const d1 = new Date((pj.tanggal_selesai || pj.tanggal_mulai || pj.tanggal) + 'T00:00:00');
+
+      // ★ Filter hari kerja utk Sakit/Izin/Dinas (Lupa Absen = 1 tanggal pasti)
+      const hkSet = new Set((verifikasiState.pengaturan.hari_kerja || '1,2,3,4,5').split(','));
       const dates = [];
-      const d0 = new Date(pj.tanggal_mulai + 'T00:00:00');
-      const d1 = new Date((pj.tanggal_selesai || pj.tanggal_mulai) + 'T00:00:00');
       for (let d = new Date(d0); d <= d1; d.setDate(d.getDate() + 1)) {
+        if (pj.jenis !== 'Lupa Absen' && !hkSet.has(String(d.getDay() || 7))) continue; // skip libur
         dates.push(localDateStr(d));
       }
+      if (!dates.length) {
+        toast('Tidak ada hari kerja efektif pada rentang ini', 'warn');
+        await loadPengajuanVerifikasi();
+        return;
+      }
+
+      let ditulis = 0, dilewati = 0;
 
       for (const tgl of dates) {
-        // Cek existing record presensi tanggal tsb
         const { data: exist } = await supabaseClient
-          .from('presensi').select('id_presensi')
+          .from('presensi').select('id_presensi,jam_masuk,status')
           .eq('id_pegawai', pj.id_pegawai)
           .eq('tanggal', tgl).maybeSingle();
 
+        // ★ Anti-timpa: hari yang sudah ada check-in asli tidak disentuh
+        if (pj.jenis !== 'Lupa Absen' && exist && exist.jam_masuk) { dilewati++; continue; }
+
         if (pj.jenis === 'Lupa Absen') {
-          // Lengkapi jam yang lupa — jangan timpa yang sudah ada
           const payload = {
             status_verifikasi: 'Layak',
             diverifikasi_oleh: session.id_pegawai,
             catatan_verifikasi: `Lupa absen disetujui: ${pj.alasan}`.slice(0, 250)
           };
-          if (pj.jam_hadir) {
+          if (pj.jam_hadir && !exist?.jam_masuk) {
             payload.jam_masuk = pj.jam_hadir.length === 5 ? pj.jam_hadir + ':00' : pj.jam_hadir;
+            payload.status = 'Hadir';
             payload.status_kehadiran = 'tepat_waktu';
             payload.catatan_kehadiran = 'Lupa Absen (disetujui)';
           }
-          if (pj.jam_pulang) {
+          if (pj.jam_pulang && !exist?.jam_keluar) {
             payload.jam_keluar = pj.jam_pulang.length === 5 ? pj.jam_pulang + ':00' : pj.jam_pulang;
           }
 
@@ -359,6 +392,7 @@ async function verifikasiPengajuan(idPengajuan, status) {
               ...payload
             });
           }
+          ditulis++;
         } else {
           // Sakit / Izin / Dinas Luar — record per tanggal
           const payload = {
@@ -366,7 +400,7 @@ async function verifikasiPengajuan(idPengajuan, status) {
             keterangan: pj.alasan,
             status_verifikasi: 'Layak',
             diverifikasi_oleh: session.id_pegawai,
-            catatan_verifikasi: `${pj.jenis} disetujui via pengajuan`
+            catatan_verifikasi: `${pj.jenis} disetujui via pengajuan${pj.no_surat ? ' (No. ' + pj.no_surat + ')' : ''}`
           };
           if (pj.surat) payload.surat = pj.surat;
           if (pj.foto) payload.foto_masuk = pj.foto;
@@ -381,11 +415,15 @@ async function verifikasiPengajuan(idPengajuan, status) {
               ...payload
             });
           }
+          ditulis++;
         }
       }
+
+      toast(`Disetujui — ${ditulis} hari ditulis${dilewati ? `, ${dilewati} dilewati (sudah ada presensi)` : ''}`, 'success');
+    } else {
+      toast(`Pengajuan ${status.toLowerCase()}`, status === 'Ditolak' ? 'warn' : 'success');
     }
 
-    toast(`Pengajuan ${status.toLowerCase()}${status === 'Disetujui' ? ' — presensi diperbarui' : ''}`, 'success');
     await loadPengajuanVerifikasi();
 
   } catch (err) {
@@ -434,7 +472,6 @@ async function initVerifikasi() {
 
   document.getElementById('verifRefresh')?.addEventListener('click', loadPresensiVerifikasi);
 
-  // ★ Tab pengajuan
   const pjSelect = document.getElementById('pjFilterStatus');
   if (pjSelect) {
     pjSelect.addEventListener('change', async (e) => {
