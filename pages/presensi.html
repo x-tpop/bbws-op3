@@ -12,6 +12,7 @@
       <div class="px-nrow">
         <button type="button" class="px-arrow" id="phPrev" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <h2 id="phNama">—</h2>
+        <span class="px-clock" id="pxClock">--:--</span>
         <button type="button" class="px-arrow" id="phNext" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
       <div class="px-line">
@@ -24,7 +25,7 @@
     </div>
   </div>
 
-  <!-- ADMIN: search + chips (hanya admin/staf) -->
+  <!-- ADMIN: search + chips (hanya admin) -->
   <div class="px-admin" id="phAdmin" hidden>
     <div class="px-search"><input id="phSearchInput" type="text" placeholder="Cari Nama Petugas..." autocomplete="off"></div>
     <div class="px-chips" id="phChips"></div>
@@ -78,7 +79,7 @@
       <span class="ah-ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </span>
-      <b>Pengajuan & Konfirmasi</b>
+      <b>Pengajuan &amp; Konfirmasi</b>
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
     <div class="acc-body" id="accBody" hidden>
@@ -93,7 +94,7 @@
     </div>
   </div>
 
-  <!-- REVIEW CARD (muncul setelah foto diambil) -->
+  <!-- REVIEW CARD -->
   <div class="px-card px-review" id="reviewCard" hidden>
     <img id="previewImg" alt="Preview">
     <div class="rv-btns">
