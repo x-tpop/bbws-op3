@@ -740,4 +740,34 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
   body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
   .page{padding-bottom:12px}
 }
+/* ============================================================
+   ★ TIGHTENING: minimalkan padding kiri-kanan
+   ============================================================ */
+
+/* --- Halaman Presensi: padding samping 10px → 4px --- */
+section[data-page="presensi"]{padding:8px 4px}
+
+/* Header & kicker: margin samping 6px → 2px */
+.px-head{margin:4px 2px 12px}
+.px-kicker{margin:2px 2px 6px}
+.px-admin{margin:0 2px 10px}
+
+/* Accordion & kartu di dalamnya: body padding samping 12px → 6px */
+.acc-body{padding:2px 6px 8px}
+.px-note{padding:9px 10px}
+
+/* Review card: padding 10px → 6px */
+.px-review{padding:6px;margin-bottom:10px}
+
+/* GPS pill melayang: menempel lebih lebar di dalam map */
+.gps-float{left:6px;right:6px;bottom:6px;padding:9px 10px}
+
+/* --- Modal Pengajuan (pjModal): padding samping 16px → 10px --- */
+.pj-body{padding:12px 10px}
+.pj-foot{padding:10px 10px}
+.rp-modal-head{padding:12px 10px !important}
+
+/* Field & preview di modal: ikut rapat */
+.pj-field{margin-bottom:10px}
+.pj-preview{border-radius:12px}
 </style>
