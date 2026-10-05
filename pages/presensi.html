@@ -25,17 +25,23 @@
     </div>
   </div>
 
-  <!-- ADMIN: search + chips (hanya admin) -->
+  <!-- ADMIN: search + chips (hanya role admin) -->
   <div class="px-admin" id="phAdmin" hidden>
     <div class="px-search"><input id="phSearchInput" type="text" placeholder="Cari Nama Petugas..." autocomplete="off"></div>
     <div class="px-chips" id="phChips"></div>
   </div>
 
-  <!-- MAP + GPS OVERLAY + ZOOM -->
+  <!-- MAP + GPS OVERLAY + ZOOM + BRAND -->
   <div class="px-card px-map">
     <div id="miniMap"></div>
 
-    <!-- GPS pill melayang (tetap lengkap seperti sebelumnya) -->
+    <!-- Badge PUPR (pengganti teks attribution "Leaflet | Esri") -->
+    <div class="map-brand">
+      <img src="assets/img/logo-symbol.png" alt="">
+      <span>BBWS BRANTAS</span>
+    </div>
+
+    <!-- GPS pill melayang -->
     <div class="gps-float" id="gpsBar">
       <span class="gps-ic" id="gpsIcon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -49,7 +55,7 @@
       </button>
     </div>
 
-    <!-- ★ Tombol zoom custom — SAUDARA gps-float, bukan anaknya -->
+    <!-- Tombol zoom (saudara gps-float — TEGAK di atas map miring) -->
     <div class="map-zoom">
       <button type="button" id="btnZoomIn" aria-label="Perbesar">＋</button>
       <button type="button" id="btnZoomOut" aria-label="Perkecil">－</button>
@@ -102,7 +108,7 @@
     </div>
   </div>
 
-  <!-- REVIEW CARD -->
+  <!-- REVIEW CARD (muncul setelah foto diambil) -->
   <div class="px-card px-review" id="reviewCard" hidden>
     <img id="previewImg" alt="Preview">
     <div class="rv-btns">
@@ -112,95 +118,95 @@
   </div>
 </section>
 
-<!-- ============ MODAL PENGAJUAN ============ -->
+<!-- ============ MODAL PENGAJUAN (tanpa inline-style — semua via CSS kelas) ============ -->
 <div id="pjModal" class="ios-modal-backdrop pj-backdrop">
   <div class="pj-card">
-    <div class="rp-modal-head" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #F2F2F7">
-      <h3 id="pjTitle" style="font:700 16px -apple-system,sans-serif;margin:0">Pengajuan</h3>
-      <button type="button" class="rp-modal-close" id="pjBtnClose" style="border:0;background:#F2F2F7;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;cursor:pointer">
+    <div class="rp-modal-head">
+      <h3 id="pjTitle">Pengajuan</h3>
+      <button type="button" class="rp-modal-close" id="pjBtnClose">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
 
-<div class="pj-body">
-  <div class="pj-badges">
-    <span class="pj-badge" id="pjJenisBadge">—</span>
-    <span class="pj-quota-sm" id="pjQuotaModal">—</span>
-  </div>
+    <div class="pj-body">
+      <div class="pj-badges">
+        <span class="pj-badge" id="pjJenisBadge">—</span>
+        <span class="pj-quota-sm" id="pjQuotaModal">—</span>
+      </div>
 
-  <div class="pj-field">
-    <label>Keterangan <span style="color:#FF3B30">*</span></label>
-    <textarea id="pjAlasan" rows="3" maxlength="500" placeholder="Tuliskan keterangan (min. 10 karakter)..."></textarea>
-  </div>
+      <div class="pj-field">
+        <label>Keterangan <span style="color:#FF3B30">*</span></label>
+        <textarea id="pjAlasan" rows="3" maxlength="500" placeholder="Tuliskan keterangan (min. 10 karakter)..."></textarea>
+      </div>
 
-  <div class="pj-field">
-    <label>Tanggal Mulai <span style="color:#FF3B30">*</span></label>
-    <input type="date" id="pjTanggal">
-  </div>
+      <div class="pj-field">
+        <label>Tanggal Mulai <span style="color:#FF3B30">*</span></label>
+        <input type="date" id="pjTanggal">
+      </div>
 
-  <div class="pj-field" id="pjSelesaiWrap">
-    <label>Tanggal Akhir</label>
-    <input type="date" id="pjTanggalSelesai">
-  </div>
+      <div class="pj-field" id="pjSelesaiWrap">
+        <label>Tanggal Akhir</label>
+        <input type="date" id="pjTanggalSelesai">
+      </div>
 
-  <div class="pj-field">
-    <label>Durasi <small>(otomatis)</small></label>
-    <input type="text" id="pjDurasi" readonly value="1 hari">
-  </div>
+      <div class="pj-field">
+        <label>Durasi <small>(otomatis)</small></label>
+        <input type="text" id="pjDurasi" readonly value="1 hari">
+      </div>
 
-  <div class="pj-field" id="pjNoSuratWrap" style="display:none">
-    <label>No. Surat <span style="color:#FF3B30">*</span></label>
-    <input type="text" id="pjNoSurat" placeholder="UM xxx / ND-...">
-  </div>
+      <div class="pj-field" id="pjNoSuratWrap" style="display:none">
+        <label>No. Surat <span style="color:#FF3B30">*</span></label>
+        <input type="text" id="pjNoSurat" placeholder="UM xxx / ND-...">
+      </div>
 
-  <div id="pjJamWrap" hidden>
-    <div class="pj-field">
-      <label>Jam Hadir <small>(jika lupa absen masuk)</small></label>
-      <input type="time" id="pjJamHadir">
+      <div id="pjJamWrap" hidden>
+        <div class="pj-field">
+          <label>Jam Hadir <small>(jika lupa absen masuk)</small></label>
+          <input type="time" id="pjJamHadir">
+        </div>
+        <div class="pj-field">
+          <label>Jam Pulang <small>(jika lupa absen pulang)</small></label>
+          <input type="time" id="pjJamPulang">
+        </div>
+      </div>
+
+      <div class="pj-field" id="pjFotoWrap">
+        <label>Foto Dokumen Pendukung <span id="pjFotoReq" style="color:#FF3B30;display:none">*</span></label>
+        <div class="pj-btn-row">
+          <button type="button" class="pj-up-btn" id="pjBtnFotoCam"><i data-lucide="camera"></i>Kamera</button>
+          <button type="button" class="pj-up-btn ghost" id="pjBtnFotoGal"><i data-lucide="image"></i>Galeri</button>
+        </div>
+        <div class="pj-preview" id="pjFotoPreview" hidden>
+          <img id="pjFotoPreviewImg" alt="Foto">
+          <button type="button" class="pj-remove" id="pjFotoRemove">✕</button>
+        </div>
+        <input type="file" id="pjFotoCamInput" accept="image/*" capture="environment" hidden>
+        <input type="file" id="pjFotoGalInput" accept="image/*" hidden>
+      </div>
+
+      <div class="pj-field" id="pjSuratWrap" style="display:none">
+        <label>Surat Pendukung</label>
+        <div class="pj-btn-row">
+          <button type="button" class="pj-up-btn ghost" id="pjBtnSurat"><i data-lucide="file-text"></i>Pilih dari Galeri</button>
+        </div>
+        <div class="pj-preview" id="pjSuratPreview" hidden>
+          <img id="pjSuratPreviewImg" alt="Surat">
+          <button type="button" class="pj-remove" id="pjSuratRemove">✕</button>
+        </div>
+        <input type="file" id="pjSuratInput" accept="image/*" hidden>
+      </div>
     </div>
-    <div class="pj-field">
-      <label>Jam Pulang <small>(jika lupa absen pulang)</small></label>
-      <input type="time" id="pjJamPulang">
-    </div>
-  </div>
-
-  <div class="pj-field" id="pjFotoWrap">
-    <label>Foto Dokumen Pendukung <span id="pjFotoReq" style="color:#FF3B30;display:none">*</span></label>
-    <div class="pj-btn-row">
-      <button type="button" class="pj-up-btn" id="pjBtnFotoCam"><i data-lucide="camera"></i>Kamera</button>
-      <button type="button" class="pj-up-btn ghost" id="pjBtnFotoGal"><i data-lucide="image"></i>Galeri</button>
-    </div>
-    <div class="pj-preview" id="pjFotoPreview" hidden>
-      <img id="pjFotoPreviewImg" alt="Foto">
-      <button type="button" class="pj-remove" id="pjFotoRemove">✕</button>
-    </div>
-    <input type="file" id="pjFotoCamInput" accept="image/*" capture="environment" hidden>
-    <input type="file" id="pjFotoGalInput" accept="image/*" hidden>
-  </div>
-
-  <div class="pj-field" id="pjSuratWrap" style="display:none">
-    <label>Surat Pendukung</label>
-    <div class="pj-btn-row">
-      <button type="button" class="pj-up-btn ghost" id="pjBtnSurat"><i data-lucide="file-text"></i>Pilih dari Galeri</button>
-    </div>
-    <div class="pj-preview" id="pjSuratPreview" hidden>
-      <img id="pjSuratPreviewImg" alt="Surat">
-      <button type="button" class="pj-remove" id="pjSuratRemove">✕</button>
-    </div>
-    <input type="file" id="pjSuratInput" accept="image/*" hidden>
-  </div>
-</div>
 
     <div class="pj-foot">
-      <button type="button" class="btn-ios-primary" id="pjBtnSubmit" style="margin-top:0">
-        <span id="pjLoading" hidden style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span>
+      <button type="button" class="btn-ios-primary" id="pjBtnSubmit">
+        <span id="pjLoading" hidden></span>
         <i data-lucide="send"></i>Ajukan untuk Verifikasi
       </button>
     </div>
   </div>
 </div>
 
-<!-- ============ FULLSCREEN KAMERA (tidak berubah) ============ -->
+<!-- ============ FULLSCREEN KAMERA ============ -->
 <div id="camFullscreen" class="cam-fullscreen">
   <video id="videoFullscreen" autoplay playsinline muted></video>
 
@@ -313,7 +319,7 @@
   </div>
 </div>
 
-<!-- LOADING + SUKSES (tidak berubah) -->
+<!-- LOADING -->
 <div id="loadingOverlay" class="loading-overlay">
   <div class="loading-card">
     <div class="loading-spinner"></div>
@@ -321,6 +327,7 @@
   </div>
 </div>
 
+<!-- MODAL SUKSES -->
 <div id="suksesModal" class="ios-modal-backdrop">
   <div class="ios-modal-card">
     <div class="ios-success-badge">
@@ -348,9 +355,8 @@
 
 <style>
 /* ============================================================
-   PRESENSI v21.5 — iOS INSET GROUPED · LIGHT · TEMA PUPR
-   Terkonsolidasi: base + tightening + v21.4 (3D/dot) + v21.5
-   (satelit + zoom) — tanpa override berlapis.
+   PRESENSI v21.5c — iOS INSET GROUPED · LIGHT · TEMA PUPR
+   Konsolidasi final: base + tightening + 3D/dot + satelit/zoom
    ============================================================ */
 section[data-page="presensi"]{background:#F2F2F7;border-radius:20px;padding:8px 4px;
   -webkit-tap-highlight-color:transparent}
@@ -391,7 +397,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-line svg{width:14px;height:14px;flex:none}
 .px-line .px-sep{color:#C7C7CC;font-weight:400}
 
-/* ★ Chip jam live (frosted — widget iOS) */
+/* Chip jam live (frosted — widget iOS) */
 .px-clock{flex:none;font:700 12px 'Space Grotesk',monospace;color:#1E3A8A;background:#fff;
   padding:5px 10px;border-radius:99px;white-space:nowrap;
   box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.05);
@@ -413,32 +419,34 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
   box-shadow:0 4px 12px rgba(253,184,19,.4)}
 
 /* ============================================================
-   KARTU MAP + v21.4 MAP 3D + DOT KOORDINAT
+   KARTU MAP · v21.5b — SATELIT PENUH (tanpa strip putih)
+   + DOT PULSE + ZOOM + BADGE PUPR
    ============================================================ */
 .px-card{position:relative;background:#fff;border-radius:18px;overflow:hidden;
   box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
 .px-map{height:260px;margin-bottom:12px}
-.px-map #miniMap{width:100%;height:100%;background:#E8EDF5;z-index:1;
-  transform:perspective(1000px) rotateX(30deg) scale(1.2);
-  transform-origin:50% 85%;
+.px-map #miniMap{position:absolute;inset:0;width:100%;height:100%;background:#E8EDF5;z-index:1;
+  transform:perspective(1000px) rotateX(28deg) scale(1.5);
+  transform-origin:50% 100%;
   will-change:transform}
-.pin-biru{filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
-.leaflet-control-attribution{font-size:8.5px !important;background:rgba(255,255,255,.75) !important}
-/* ★ attribution diangkat di atas GPS pill */
-.px-map .leaflet-bottom.leaflet-right{bottom:72px}
 
-/* ★ v21.4: Dot koordinat berdenyut */
-.geo-dot{position:relative;width:24px;height:24px}
-.geo-dot-core{position:absolute;inset:6px;background:#1E3A8A;
-  border:2.5px solid #fff;border-radius:50%;
-  box-shadow:0 1px 4px rgba(0,0,0,.35)}
-.geo-dot-ring{position:absolute;inset:0;border-radius:50%;
-  background:rgba(30,58,138,.35);
-  animation:geoPulse 2s ease-out infinite}
-@keyframes geoPulse{
-  0%{transform:scale(.5);opacity:1}
-  100%{transform:scale(2.4);opacity:0}
-}
+/* Badge PUPR (pengganti "Leaflet | Esri") */
+.map-brand{position:absolute;right:8px;bottom:68px;z-index:6;
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  border-radius:99px;padding:4px 9px 4px 4px;
+  box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.map-brand img{width:18px;height:18px;border-radius:5px;object-fit:cover}
+.map-brand span{font:800 8.5px var(--font);letter-spacing:.08em;color:#1E3A8A}
+
+/* Tombol zoom — tegak, pojok kanan-atas (SINGLE definition) */
+.map-zoom{position:absolute;right:8px;top:8px;z-index:6;
+  display:flex;flex-direction:column;gap:6px}
+.map-zoom button{width:34px;height:34px;border:0;border-radius:10px;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+  color:#1E3A8A;font:700 18px/1 -apple-system,sans-serif;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer}
+.map-zoom button:active{opacity:.6}
 
 /* ---------- GPS PILL MELAYANG ---------- */
 .gps-float{position:absolute;left:6px;right:6px;bottom:6px;z-index:5;
@@ -462,16 +470,20 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .gps-float button:active{opacity:.6}
 .gps-float button.spun svg{animation:spin 1s linear infinite}
 
-/* ★ v21.5: Tombol zoom custom — tegak di atas map miring */
-.map-zoom{position:absolute;right:8px;top:8px;z-index:6;
-  display:flex;flex-direction:column;gap:6px}
-.map-zoom button{width:34px;height:34px;border:0;border-radius:10px;
-  background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
-  color:#1E3A8A;font:700 18px/1 -apple-system,sans-serif;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer}
-.map-zoom button:active{opacity:.6}
+/* ---------- DOT KOORDINAT BERDENYUT ---------- */
+.geo-dot{position:relative;width:24px;height:24px}
+.geo-dot-core{position:absolute;inset:6px;background:#1E3A8A;
+  border:2.5px solid #fff;border-radius:50%;
+  box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.geo-dot-ring{position:absolute;inset:0;border-radius:50%;
+  background:rgba(30,58,138,.35);
+  animation:geoPulse 2s ease-out infinite}
+@keyframes geoPulse{
+  0%{transform:scale(.5);opacity:1}
+  100%{transform:scale(2.4);opacity:0}
+}
 
-/* ---------- ALERT (pastel + hairline senada) ---------- */
+/* ---------- ALERT (pastel + hairline) ---------- */
 .px-alert{display:flex;align-items:center;gap:8px;border-radius:15px;padding:12px 14px;
   margin-bottom:12px}
 .al-ic{width:22px;height:22px;flex:none;display:grid;place-items:center}
@@ -486,7 +498,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-alert.t-bad {background:#FEECEB;color:#C41E18;
   box-shadow:0 0 0 .5px rgba(196,30,24,.14),0 2px 8px rgba(0,0,0,.03)}
 
-/* ---------- CHECK-IN / CHECK-OUT (flat navy khas iOS) ---------- */
+/* ---------- CHECK-IN / CHECK-OUT (flat navy iOS) ---------- */
 .px-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .px-act{border:0;border-radius:18px;padding:16px 14px 14px;display:flex;flex-direction:column;
   align-items:flex-start;gap:10px;cursor:pointer;transition:.2s;font-family:var(--font);text-align:left}
@@ -548,7 +560,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-q.qr.active{background:#7C4DD8;color:#fff;
   box-shadow:0 6px 16px rgba(124,77,216,.35)}
 
-/* ★ Footnote jam kerja (ganti "Memuat...") — gaya iOS footnote */
+/* Footnote jam kerja (ganti "Memuat...") */
 .px-note{background:transparent;padding:6px 4px 2px;text-align:center;
   font:500 11.5px/1.5 -apple-system,sans-serif;color:#8E8E93}
 
@@ -762,7 +774,7 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
   font-size:16px;font-weight:600;cursor:pointer}
 .ios-btn-done:active{opacity:.75}
 
-/* ---------- RESPONSIVE (digabung, tanpa duplikat) ---------- */
+/* ---------- RESPONSIVE ---------- */
 @media (max-width:560px){
   section[data-page="presensi"]{border-radius:14px}
   .px-cut{height:110px}
