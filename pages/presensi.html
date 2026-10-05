@@ -396,13 +396,31 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-chip.active{background:#FDB813;color:#1E3A8A;
   box-shadow:0 4px 12px rgba(253,184,19,.4)}
 
-/* ---------- KARTU MAP (inset grouped) ---------- */
+/* ============================================================
+   KARTU MAP (inset grouped) + v21.4 MAP 3D + DOT KOORDINAT
+   ============================================================ */
 .px-card{position:relative;background:#fff;border-radius:18px;overflow:hidden;
   box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
-.px-map{height:240px;margin-bottom:12px}
-.px-map #miniMap{width:100%;height:100%;background:#E8EDF5;z-index:1}
+.px-map{height:260px;margin-bottom:12px}          /* ★ 240 → 260 (v21.4) */
+.px-map #miniMap{width:100%;height:100%;background:#E8EDF5;z-index:1;
+  transform:perspective(1000px) rotateX(30deg) scale(1.2);   /* ★ tilt 3D */
+  transform-origin:50% 85%;
+  will-change:transform}
 .pin-biru{filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
 .leaflet-control-attribution{font-size:8.5px !important;background:rgba(255,255,255,.75) !important}
+
+/* ★ v21.4: Dot koordinat berdenyut (gaya iOS/Google Maps) */
+.geo-dot{position:relative;width:24px;height:24px}
+.geo-dot-core{position:absolute;inset:6px;background:#1E3A8A;
+  border:2.5px solid #fff;border-radius:50%;
+  box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.geo-dot-ring{position:absolute;inset:0;border-radius:50%;
+  background:rgba(30,58,138,.35);
+  animation:geoPulse 2s ease-out infinite}
+@keyframes geoPulse{
+  0%{transform:scale(.5);opacity:1}
+  100%{transform:scale(2.4);opacity:0}
+}
 
 /* ★ GPS pill MELAYANG di atas map */
 .gps-float{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;
