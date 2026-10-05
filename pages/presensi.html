@@ -31,9 +31,11 @@
     <div class="px-chips" id="phChips"></div>
   </div>
 
-  <!-- MAP + GPS OVERLAY -->
+  <!-- MAP + GPS OVERLAY + ZOOM -->
   <div class="px-card px-map">
     <div id="miniMap"></div>
+
+    <!-- GPS pill melayang (tetap lengkap seperti sebelumnya) -->
     <div class="gps-float" id="gpsBar">
       <span class="gps-ic" id="gpsIcon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -45,6 +47,12 @@
       <button type="button" id="btnRefreshGps" title="Deteksi ulang lokasi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
+    </div>
+
+    <!-- ★ Tombol zoom custom — SAUDARA gps-float, bukan anaknya -->
+    <div class="map-zoom">
+      <button type="button" id="btnZoomIn" aria-label="Perbesar">＋</button>
+      <button type="button" id="btnZoomOut" aria-label="Perkecil">－</button>
     </div>
   </div>
 
