@@ -220,27 +220,43 @@ async function getNamaLokasi(lat, lng) {
   } catch (e) { return `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
 }
 
-// ---------- MAP LIGHT (OSM) + PIN NAVY ----------
+// ---------- MAP LIGHT (OSM) + DOT KOORDINAT BERDENYUT ----------
 let miniMap = null, userMarker = null;
 function initMiniMap(lat, lng) {
   if (!window.L) return;
+
+  // ★ v21.4 SPA-safe: jika instance lama menempel pada DOM yang sudah
+  // dibuang (pindah halaman), buang instance & marker, buat ulang.
+  if (miniMap) {
+    const cont = miniMap.getContainer();
+    if (!cont || !document.body.contains(cont)) {
+      try { miniMap.remove(); } catch (e) {}
+      miniMap = null; userMarker = null;
+    }
+  }
+
   if (!miniMap) {
     miniMap = L.map('miniMap', {
       zoomControl: false, dragging: false, scrollWheelZoom: false,
       doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false,
+      zoomSnap: 0.25,
       attributionControl: true
-    }).setView([lat, lng], 16);
+    }).setView([lat, lng], 17);   // ★ zoom 17: detail cukup untuk tampilan miring
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '© OpenStreetMap'
     }).addTo(miniMap);
-  } else miniMap.setView([lat, lng], 16);
+  } else {
+    miniMap.setView([lat, lng], 17);
+  }
 
   if (userMarker) userMarker.remove();
+  // ★ v21.4: dot biru berdenyut (gaya iOS/Google Maps) menggantikan pin
   userMarker = L.marker([lat, lng], {
     icon: L.divIcon({
-      className: 'pin-biru',
-      html: `<svg width="34" height="42" viewBox="0 0 34 42"><path d="M17 0C7.6 0 0 7.6 0 17c0 12.8 17 25 17 25s17-12.2 17-25C34 7.6 26.4 0 17 0z" fill="#1E3A8A"/><circle cx="17" cy="17" r="6.5" fill="#fff"/></svg>`,
-      iconSize: [34, 42], iconAnchor: [17, 40]
+      className: '',
+      html: `<div class="geo-dot"><span class="geo-dot-ring"></span><span class="geo-dot-core"></span></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     })
   }).addTo(miniMap);
 
@@ -539,9 +555,7 @@ async function refreshPengajuanAktif(sessionOverride) {
 // ---------- INIT UTAMA ----------
 async function initPresensi() {
   console.log('=== Init Presensi (Full v21.3) ===');
-  if (window.__presensiInit) return;
-  window.__presensiInit = true;
-
+  
   try {
     const session = getSession();
     if (!session) return;
