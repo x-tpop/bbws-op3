@@ -220,13 +220,12 @@ async function getNamaLokasi(lat, lng) {
   } catch (e) { return `${lat.toFixed(4)}, ${lng.toFixed(4)}`; }
 }
 
-// ---------- MAP LIGHT (OSM) + DOT KOORDINAT BERDENYUT ----------
+// ---------- MAP SATELIT + ZOOM + DOT KOORDINAT BERDENYUT ----------
 let miniMap = null, userMarker = null;
 function initMiniMap(lat, lng) {
   if (!window.L) return;
 
-  // ★ v21.4 SPA-safe: jika instance lama menempel pada DOM yang sudah
-  // dibuang (pindah halaman), buang instance & marker, buat ulang.
+  // SPA-safe: buang instance yang menempel pada DOM terbuang
   if (miniMap) {
     const cont = miniMap.getContainer();
     if (!cont || !document.body.contains(cont)) {
@@ -237,26 +236,29 @@ function initMiniMap(lat, lng) {
 
   if (!miniMap) {
     miniMap = L.map('miniMap', {
-      zoomControl: false, dragging: false, scrollWheelZoom: false,
-      doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false,
+      zoomControl: false,        // tombol default Leaflet tidak dipakai (bakal ikut miring)
+      dragging: true,            // ★ boleh geser map
+      scrollWheelZoom: false,    // scroll halaman tidak jadi zoom (UX mobile aman)
+      doubleClickZoom: true,     // ★ dobel-ketuk = zoom in
+      boxZoom: false, keyboard: false, tap: true,
       zoomSnap: 0.25,
       attributionControl: true
-    }).setView([lat, lng], 17);   // ★ zoom 17: detail cukup untuk tampilan miring
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).setView([lat, lng], 17);
+
+    // ★ SATELIT: Esri World Imagery
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19, attribution: 'Esri World Imagery'
     }).addTo(miniMap);
   } else {
     miniMap.setView([lat, lng], 17);
   }
 
   if (userMarker) userMarker.remove();
-  // ★ v21.4: dot biru berdenyut (gaya iOS/Google Maps) menggantikan pin
   userMarker = L.marker([lat, lng], {
     icon: L.divIcon({
       className: '',
       html: `<div class="geo-dot"><span class="geo-dot-ring"></span><span class="geo-dot-core"></span></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      iconSize: [24, 24], iconAnchor: [12, 12]
     })
   }).addTo(miniMap);
 
