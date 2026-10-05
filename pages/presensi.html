@@ -346,18 +346,19 @@
   </div>
 </div>
 
-<style>
 /* ============================================================
-   PRESENSI v21.1 — iOS INSET GROUPED (light PUPR)
-   Section = abu lembut · tiap widget = kartu putih terpisah
+   PRESENSI v21.5 — iOS INSET GROUPED · LIGHT · TEMA PUPR
+   Terkonsolidasi: base + tightening + v21.4 (3D/dot) + v21.5
+   (satelit + zoom) — tanpa override berlapis.
    ============================================================ */
-section[data-page="presensi"]{background:#F2F2F7;border-radius:20px;padding:10px}
+section[data-page="presensi"]{background:#F2F2F7;border-radius:20px;padding:8px 4px;
+  -webkit-tap-highlight-color:transparent}
 
-/* ---------- MINIBAR (kartu putih) ---------- */
+/* ---------- MINIBAR (frosted, hairline bawah) ---------- */
 .pres-minibar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;
   background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);
-  border-radius:16px;padding:8px 12px;margin:0 0 10px;
-  box-shadow:0 2px 6px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05);
+  border-radius:0 0 16px 16px;padding:8px 12px;margin:0 0 10px;
+  box-shadow:0 .5px 0 rgba(0,0,0,.12),0 4px 16px rgba(0,0,0,.05);
   transform:translateY(-130%);opacity:0;transition:.35s cubic-bezier(.32,.72,0,1);pointer-events:none}
 .pres-minibar.show{transform:translateY(0);opacity:1;pointer-events:auto}
 .pres-minibar img{width:36px;height:36px;border-radius:50%;object-fit:cover;
@@ -368,12 +369,10 @@ section[data-page="presensi"]{background:#F2F2F7;border-radius:20px;padding:10px
 .mb-id small{font:600 10px -apple-system,sans-serif;color:#8E8E93;letter-spacing:.06em;text-transform:uppercase}
 .mb-clock{font:700 15px 'Space Grotesk',monospace;color:#1E3A8A}
 
-/* ---------- HEADER PROFIL (bukan kartu — foto popout di atas abu) ---------- */
-.px-head{display:flex;gap:14px;align-items:flex-end;margin:6px 6px 14px}
-/* ★ foto cutout PNG: TANPA border, hanya drop-shadow */
+/* ---------- HEADER PROFIL (foto popout tanpa border) ---------- */
+.px-head{display:flex;gap:14px;align-items:flex-end;margin:4px 2px 12px}
 .px-cut{height:132px;width:auto;max-width:40vw;object-fit:contain;flex:none;
   filter:drop-shadow(0 12px 20px rgba(30,58,138,.28))}
-/* fallback tanpa foto: avatar bulat, shadow (tanpa border) */
 section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-radius:50%;
   object-fit:cover;background:#fff;filter:none;
   box-shadow:0 6px 18px rgba(30,58,138,.18)}
@@ -383,41 +382,51 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .px-head.mgr .px-nrow h2{cursor:pointer}
 .px-arrow{width:30px;height:30px;flex:none;border:0;border-radius:50%;
   background:#fff;color:#1E3A8A;display:grid;place-items:center;cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.05)}
 .px-arrow svg{width:14px;height:14px}
+.px-arrow:active{opacity:.6}
 .px-line{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;
   font:700 12px -apple-system,sans-serif;color:#248A3D}
 .px-line svg{width:14px;height:14px;flex:none}
 .px-line .px-sep{color:#C7C7CC;font-weight:400}
 
-/* ---------- ADMIN (kartu putih) ---------- */
-.px-admin{margin:0 4px 12px;display:flex;flex-direction:column;gap:8px}
+/* ★ Chip jam live (frosted — widget iOS) */
+.px-clock{flex:none;font:700 12px 'Space Grotesk',monospace;color:#1E3A8A;background:#fff;
+  padding:5px 10px;border-radius:99px;white-space:nowrap;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.05);
+  backdrop-filter:blur(10px)}
+
+/* ---------- ADMIN ---------- */
+.px-admin{margin:0 2px 10px;display:flex;flex-direction:column;gap:8px}
 .px-search{display:flex;background:#fff;border-radius:13px;padding:0 12px;
-  box-shadow:0 2px 6px rgba(0,0,0,.05)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
 .px-search input{flex:1;min-width:0;background:transparent;border:0;color:#000;
   font:500 13px -apple-system,sans-serif;padding:11px 0;outline:0}
 .px-search input::placeholder{color:#8E8E93}
 .px-chips{display:flex;flex-wrap:wrap;gap:6px}
 .px-chip{border:0;background:#fff;color:#3C3C43;font:700 10px var(--font);
   letter-spacing:.06em;padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s;
-  box-shadow:0 2px 6px rgba(0,0,0,.05)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
+.px-chip:active{opacity:.6}
 .px-chip.active{background:#FDB813;color:#1E3A8A;
   box-shadow:0 4px 12px rgba(253,184,19,.4)}
 
 /* ============================================================
-   KARTU MAP (inset grouped) + v21.4 MAP 3D + DOT KOORDINAT
+   KARTU MAP + v21.4 MAP 3D + DOT KOORDINAT
    ============================================================ */
 .px-card{position:relative;background:#fff;border-radius:18px;overflow:hidden;
-  box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
-.px-map{height:260px;margin-bottom:12px}          /* ★ 240 → 260 (v21.4) */
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
+.px-map{height:260px;margin-bottom:12px}
 .px-map #miniMap{width:100%;height:100%;background:#E8EDF5;z-index:1;
-  transform:perspective(1000px) rotateX(30deg) scale(1.2);   /* ★ tilt 3D */
+  transform:perspective(1000px) rotateX(30deg) scale(1.2);
   transform-origin:50% 85%;
   will-change:transform}
 .pin-biru{filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
 .leaflet-control-attribution{font-size:8.5px !important;background:rgba(255,255,255,.75) !important}
+/* ★ attribution diangkat di atas GPS pill */
+.px-map .leaflet-bottom.leaflet-right{bottom:72px}
 
-/* ★ v21.4: Dot koordinat berdenyut (gaya iOS/Google Maps) */
+/* ★ v21.4: Dot koordinat berdenyut */
 .geo-dot{position:relative;width:24px;height:24px}
 .geo-dot-core{position:absolute;inset:6px;background:#1E3A8A;
   border:2.5px solid #fff;border-radius:50%;
@@ -430,10 +439,10 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
   100%{transform:scale(2.4);opacity:0}
 }
 
-/* ★ GPS pill MELAYANG di atas map */
-.gps-float{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;
+/* ---------- GPS PILL MELAYANG ---------- */
+.gps-float{position:absolute;left:6px;right:6px;bottom:6px;z-index:5;
   display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.94);
-  backdrop-filter:blur(14px);border-radius:14px;padding:10px 12px;
+  backdrop-filter:blur(14px);border-radius:14px;padding:9px 10px;
   box-shadow:0 6px 20px rgba(0,0,0,.16)}
 .gps-ic{width:26px;height:26px;flex:none;border-radius:8px;background:#E8F8F1;
   color:#248A3D;display:grid;place-items:center}
@@ -449,21 +458,34 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .gps-float button{width:32px;height:32px;flex:none;border:0;border-radius:50%;
   background:#F2F2F7;color:#1E3A8A;display:grid;place-items:center;cursor:pointer}
 .gps-float button svg{width:15px;height:15px}
+.gps-float button:active{opacity:.6}
 .gps-float button.spun svg{animation:spin 1s linear infinite}
 
-/* ---------- ALERT (kartu pastel terpisah) ---------- */
+/* ★ v21.5: Tombol zoom custom — tegak di atas map miring */
+.map-zoom{position:absolute;right:8px;top:8px;z-index:6;
+  display:flex;flex-direction:column;gap:6px}
+.map-zoom button{width:34px;height:34px;border:0;border-radius:10px;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+  color:#1E3A8A;font:700 18px/1 -apple-system,sans-serif;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer}
+.map-zoom button:active{opacity:.6}
+
+/* ---------- ALERT (pastel + hairline senada) ---------- */
 .px-alert{display:flex;align-items:center;gap:8px;border-radius:15px;padding:12px 14px;
-  margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  margin-bottom:12px}
 .al-ic{width:22px;height:22px;flex:none;display:grid;place-items:center}
 .al-ic svg{width:18px;height:18px}
 .px-alert b{font:700 13px var(--font)}
 .al-sep{opacity:.5}
 .px-alert span:last-child{font:600 12px -apple-system,sans-serif;opacity:.85}
-.px-alert.t-ok  {background:#E8F8F1;color:#248A3D}
-.px-alert.t-warn{background:#FFF4E0;color:#B36200}
-.px-alert.t-bad {background:#FEECEB;color:#C41E18}
+.px-alert.t-ok  {background:#E8F8F1;color:#248A3D;
+  box-shadow:0 0 0 .5px rgba(36,138,61,.12),0 2px 8px rgba(0,0,0,.03)}
+.px-alert.t-warn{background:#FFF4E0;color:#B36200;
+  box-shadow:0 0 0 .5px rgba(179,98,0,.14),0 2px 8px rgba(0,0,0,.03)}
+.px-alert.t-bad {background:#FEECEB;color:#C41E18;
+  box-shadow:0 0 0 .5px rgba(196,30,24,.14),0 2px 8px rgba(0,0,0,.03)}
 
-/* ---------- CHECK-IN / CHECK-OUT (2 kartu terpisah) ---------- */
+/* ---------- CHECK-IN / CHECK-OUT (flat navy khas iOS) ---------- */
 .px-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .px-act{border:0;border-radius:18px;padding:16px 14px 14px;display:flex;flex-direction:column;
   align-items:flex-start;gap:10px;cursor:pointer;transition:.2s;font-family:var(--font);text-align:left}
@@ -473,88 +495,72 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .pxa-ic.moon{background:#FFF6E0;color:#E9A800}
 .px-act b{font:800 14px var(--font);letter-spacing:.05em}
 .px-act small{font:600 10.5px -apple-system,sans-serif;min-height:13px}
-
-/* aktif = navy PUPR */
-.px-act.on{background:linear-gradient(150deg,#1E3A8A 0%,#2B5CFF 100%);
-  box-shadow:0 8px 20px rgba(30,58,138,.32)}
+.px-act.on{background:#1E3A8A;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.05),0 4px 14px rgba(30,58,138,.28)}
 .px-act.on b{color:#fff}
 .px-act.on small{color:rgba(255,255,255,.75)}
-.px-act.on:active{transform:scale(.97)}
-
-/* nonaktif = kartu putih */
+.px-act.on:active{opacity:.75;transform:none}
 .px-act.off{background:#fff;cursor:not-allowed;
-  box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
 .px-act.off b{color:#C7C7CC}
 .px-act.off small{color:#8E8E93}
 .px-act.off .pxa-ic{background:#F2F2F7;color:#C7C7CC}
 .px-act.off .pxa-ic.moon{background:#F7F3E4;color:#D8B84D}
 
-/* ---------- KICKER + ACCORDION (kartu putih) ---------- */
-.px-kicker{margin:2px 6px 8px;font:800 10px var(--font);letter-spacing:.14em;
+/* ---------- KICKER + ACCORDION ---------- */
+.px-kicker{margin:2px 2px 6px;font:800 10px var(--font);letter-spacing:.14em;
   text-transform:uppercase;color:#8E8E93}
 .px-acc{background:#fff;border-radius:18px;overflow:hidden;margin-bottom:12px;
-  box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04)}
 .acc-head{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;
   padding:14px;cursor:pointer;color:#000;font-family:var(--font)}
+.acc-head:active{opacity:.6}
 .ah-ic{width:30px;height:30px;border-radius:9px;background:#E8F1FF;color:#1E3A8A;
   display:grid;place-items:center;flex:none}
 .ah-ic svg{width:16px;height:16px}
 .acc-head b{flex:1;text-align:left;font:700 13.5px var(--font);color:#000}
 .acc-head .chev{width:18px;height:18px;color:#8E8E93;transition:transform .25s}
 .px-acc.open .chev{transform:rotate(180deg)}
-.acc-body{padding:2px 12px 12px}
+.acc-body{padding:2px 6px 8px}
 
-/* ---------- PENGAJUAN PASTEL (kartu full pastel) ---------- */
+/* ---------- PENGAJUAN PASTEL ---------- */
 .px-qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
 .px-q{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;border-radius:16px;
   padding:12px 4px 10px;cursor:pointer;transition:.15s;
   font:700 10.5px -apple-system,sans-serif;
-  box-shadow:0 1px 3px rgba(0,0,0,.04),0 3px 10px rgba(0,0,0,.05)}
-.px-q:active{transform:scale(.95)}
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04),0 3px 10px rgba(0,0,0,.05)}
+.px-q:active{opacity:.6;transform:none}
 .px-q i,.px-q svg{width:20px;height:20px}
-/* chip icon putih di atas kartu pastel */
 .px-q i{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;
   background:rgba(255,255,255,.85)}
-
-/* ★ SAKIT — pink pastel */
 .px-q.q-sakit{background:#FFE9EC;color:#C0392B}
 .px-q.q-sakit i{color:#E5484D}
-
-/* ★ IZIN — kuning PUPR pastel */
 .px-q.q-izin{background:#FFF3D6;color:#A86A00}
 .px-q.q-izin i{color:#D99000}
-
-/* ★ DINAS — biru navy pastel */
 .px-q.q-dinas{background:#E8F1FF;color:#1E3A8A}
 .px-q.q-dinas i{color:#2B5CFF}
-
-/* ★ LUPA — ungu pastel */
 .px-q.q-lupa{background:#F1EBFF;color:#6B3FBF}
 .px-q.q-lupa i{color:#7C4DD8}
-
-/* ★ KERJA GABUNGAN (QR) — ungu pastel, satu baris */
 .px-q.qr{width:100%;flex-direction:row;justify-content:center;gap:8px;
   background:#F1EBFF;color:#6B3FBF;padding:12px;font:700 12px var(--font)}
 .px-q.qr i{background:transparent;width:auto;height:auto}
 .px-q.qr.active{background:#7C4DD8;color:#fff;
   box-shadow:0 6px 16px rgba(124,77,216,.35)}
 
-/* ---------- REVIEW CARD (kartu putih) ---------- */
-.px-review{padding:10px;margin-bottom:12px}
+/* ★ Footnote jam kerja (ganti "Memuat...") — gaya iOS footnote */
+.px-note{background:transparent;padding:6px 4px 2px;text-align:center;
+  font:500 11.5px/1.5 -apple-system,sans-serif;color:#8E8E93}
+
+/* ---------- REVIEW CARD ---------- */
+.px-review{padding:6px;margin-bottom:10px}
 .px-review img{width:100%;border-radius:12px;display:block}
 .rv-btns{display:flex;gap:8px;margin-top:10px}
 .rv-btns button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:0;
   border-radius:12px;padding:12px;font:700 13px var(--font);cursor:pointer;transition:.15s}
-.rv-btns button:active{transform:scale(.97)}
+.rv-btns button:active{opacity:.6;transform:none}
 .rv-btns svg{width:15px;height:15px}
 .rv-btns #btnRetake{background:#F2F2F7;color:#1E3A8A}
-.rv-btns .primary{background:linear-gradient(150deg,#1E3A8A,#2B5CFF);color:#fff}
-
-@media (max-width:380px){
-  .px-cut{height:104px}
-  .px-map{height:210px}
-  .px-qgrid{gap:6px}
-}
+.rv-btns .primary{background:#1E3A8A;color:#fff}
 
 /* ---------- MODAL PENGAJUAN ---------- */
 .pj-backdrop{z-index:10050}
@@ -562,12 +568,18 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
   display:flex;flex-direction:column;overflow:hidden;transform:scale(.92);
   transition:.25s cubic-bezier(.32,.72,0,1)}
 .pj-backdrop.open .pj-card{transform:scale(1)}
-.pj-body{padding:14px 16px;overflow-y:auto;flex:1}
+.rp-modal-head{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 10px;border-bottom:1px solid #F2F2F7}
+.rp-modal-head h3{margin:0;font:700 16px -apple-system,sans-serif;color:#000}
+.rp-modal-close{border:0;background:#F2F2F7;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;color:#3C3C43}
+.rp-modal-close svg{width:15px;height:15px}
+.pj-body{padding:12px 10px;overflow-y:auto;flex:1}
 .pj-badges{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .pj-badge{font:800 11px -apple-system,sans-serif;padding:5px 12px;border-radius:99px;color:#fff;
-  background:linear-gradient(135deg,#1E3A8A,#2563EB)}
+  background:#1E3A8A}
 .pj-quota-sm{font:600 11px -apple-system,sans-serif;color:#8E8E93}
-.pj-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.pj-field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .pj-field label{font:700 10px var(--font);letter-spacing:.08em;text-transform:uppercase;color:#8E8E93}
 .pj-field label small{text-transform:none;letter-spacing:0;font-weight:500;color:#8E8E93}
 .pj-field input,.pj-field textarea{border:0;background:#F2F2F7;border-radius:10px;
@@ -575,20 +587,25 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .pj-field textarea{resize:vertical}
 .pj-field input:focus,.pj-field textarea:focus{outline:0;background:#E5E5EA;
   box-shadow:0 0 0 3px rgba(0,122,255,.15)}
+#pjDurasi{opacity:.65;font-style:italic}
 .pj-btn-row{display:flex;gap:8px;flex-wrap:wrap}
 .pj-up-btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;
   background:#007AFF;color:#fff;font:600 12.5px -apple-system,sans-serif;padding:9px 14px;cursor:pointer}
 .pj-up-btn.ghost{background:#F2F2F7;color:#007AFF}
 .pj-up-btn svg{width:15px;height:15px}
-.pj-preview{position:relative;border-radius:10px;overflow:hidden}
+.pj-up-btn:active{opacity:.7}
+.pj-preview{position:relative;border-radius:12px;overflow:hidden}
 .pj-preview img{width:100%;display:block}
 .pj-remove{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;
   background:rgba(0,0,0,.6);border:0;color:#fff;display:grid;place-items:center;cursor:pointer}
-.pj-foot{padding:12px 16px;border-top:1px solid #F2F2F7}
+.pj-foot{padding:10px 10px;border-top:1px solid #F2F2F7}
 .btn-ios-primary{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
-  background:#007AFF;color:#fff;border:0;border-radius:12px;padding:11px 16px;
-  font:600 14.5px -apple-system,sans-serif;cursor:pointer;transition:.2s}
+  background:#007AFF;color:#fff;border:0;border-radius:12px;padding:10px 14px;
+  font:600 14px -apple-system,sans-serif;cursor:pointer;transition:.2s}
 .btn-ios-primary svg{width:16px;height:16px}
+.btn-ios-primary:active{opacity:.75}
+#pjLoading{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 
 /* ---------- WATERMARK KAMERA ---------- */
 .ios-wm-card{position:absolute;bottom:140px;left:12px;right:12px;z-index:20;
@@ -742,10 +759,11 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 .ios-modal-actions{width:100%}
 .ios-btn-done{width:100%;height:48px;background:#007AFF;color:#fff;border:none;border-radius:14px;
   font-size:16px;font-weight:600;cursor:pointer}
+.ios-btn-done:active{opacity:.75}
 
-/* ---------- RESPONSIVE ---------- */
+/* ---------- RESPONSIVE (digabung, tanpa duplikat) ---------- */
 @media (max-width:560px){
-  section[data-page="presensi"]{padding:10px;border-radius:14px}
+  section[data-page="presensi"]{border-radius:14px}
   .px-cut{height:110px}
   .px-map{height:200px}
   .px-qgrid{gap:6px}
@@ -762,44 +780,9 @@ section[data-page="presensi"].no-cutout .px-cut{width:96px;height:96px;border-ra
 @media (max-width:380px){
   .px-cut{height:100px}
   .px-map{height:185px}
+  .px-clock{display:none}
 }
 @media (max-width:920px){
   body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
   .page{padding-bottom:12px}
 }
-/* ============================================================
-   ★ TIGHTENING: minimalkan padding kiri-kanan
-   ============================================================ */
-
-/* --- Halaman Presensi: padding samping 10px → 4px --- */
-section[data-page="presensi"]{padding:8px 4px}
-
-/* Header & kicker: margin samping 6px → 2px */
-.px-head{margin:4px 2px 12px}
-.px-kicker{margin:2px 2px 6px}
-.px-admin{margin:0 2px 10px}
-
-/* Accordion & kartu di dalamnya: body padding samping 12px → 6px */
-.acc-body{padding:2px 6px 8px}
-.px-note{padding:9px 10px}
-
-/* Review card: padding 10px → 6px */
-.px-review{padding:6px;margin-bottom:10px}
-
-/* GPS pill melayang: menempel lebih lebar di dalam map */
-.gps-float{left:6px;right:6px;bottom:6px;padding:9px 10px}
-
-/* --- Modal Pengajuan (pjModal): padding samping 16px → 10px --- */
-.pj-body{padding:12px 10px}
-.pj-foot{padding:10px 10px}
-.rp-modal-head{padding:12px 10px !important}
-
-/* Field & preview di modal: ikut rapat */
-.pj-field{margin-bottom:10px}
-.pj-preview{border-radius:12px}
-
-/* ★ Chip jam live di header presensi */
-.px-clock{flex:none;font:700 12px 'Space Grotesk',monospace;color:#1E3A8A;background:#fff;
-  padding:5px 10px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.08);white-space:nowrap}
-@media (max-width:380px){ .px-clock{display:none} }
-</style>
